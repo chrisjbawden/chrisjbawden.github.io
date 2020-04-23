@@ -10,6 +10,15 @@ body {
   margin: 0 0 10px 10px;
 }
 
+
+#back-arrow {
+  
+  height:30;
+  width:30;
+  align:left;
+  
+}
+
 #main-menu {
   padding-top:200px;
 }
