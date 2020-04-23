@@ -117,8 +117,9 @@ img {
 
 header {
   width:290px;
-  float:center;
+  float:left;
   position:fixed;
+  text-align:center;
   -webkit-font-smoothing:subpixel-antialiased;
 }
 
