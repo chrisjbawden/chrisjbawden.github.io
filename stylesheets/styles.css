@@ -200,8 +200,9 @@ hr {
 
 footer {
   width:270px;
-  float:center;
+  float:left;
   position:fixed;
+  text-align:center;
   bottom:50px;
   -webkit-font-smoothing:subpixel-antialiased;
 }
