@@ -123,9 +123,8 @@ img {
 
 header {
   width:290px;
-  float:left;
   position:fixed;
-  text-align:center;
+  align:center;
   -webkit-font-smoothing:subpixel-antialiased;
 }
 
