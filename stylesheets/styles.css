@@ -6,8 +6,12 @@ body {
   font-weight:400;
 }
 
-.social-buttons {
+#social-buttons {
   margin: 0 0 10px 10px;
+}
+
+#main-menu {
+  margin:0 200px
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -19,7 +23,7 @@ p, ul, ol, table, pre, dl {
   margin:0 0 20px;
 }
 
-.container {
+#container {
   padding-top:50px; 
 }
 
