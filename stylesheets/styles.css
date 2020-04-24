@@ -31,7 +31,8 @@ p, ul, ol, table, pre, dl {
 }
 
 #container {
-  padding-top:50px; 
+  padding-top:50px;
+  border-top:1px;
 }
 
 h1, h2, h3 {
