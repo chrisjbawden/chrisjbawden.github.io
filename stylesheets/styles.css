@@ -16,7 +16,8 @@ text-align:center;
 
 #back-arrow {
   width:100%;
-  padding-left:3%;
+  padding-left:10%;
+  text-align:left;
 }
 
 #main-menu {
