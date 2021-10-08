@@ -8,10 +8,10 @@
       }
     },
     "color": {
-      "value": "#ffffff"
+      "value": "##a3a3a3"
     },
     "shape": {
-      "type": "circle",
+      "type": "square",
       "stroke": {
         "width": 0,
         "color": "#000000"
