@@ -47,7 +47,7 @@ EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoU
                   The following scenario design was intending to build a business case. The scope was to work within the constraints of an advisary with limited resources and expertise.
           </p>
           <p>
-            In summary, the following scenario uses a malicious PDF to enable a 'driveby' download to deliver a trojanized installer of a standard and typically benign application. The principle is to user 'issue fatigue'. The idea of 'issue fatigue' is to take advantage of behaivoural traits within human nature. Creating the whole attack could be broken down into four steps.
+            In summary, the following scenario uses a malicious PDF to enable a 'driveby' download to deliver a trojanized installer of a standard and typically benign application. The principle is to use 'issue fatigue'. The concept of 'issue fatigue' is to take advantage of behaivoural traits within human nature. This attach can be built with four steps.
           </p>
           <p>
             The error, I am sure we have all seen this -
@@ -71,10 +71,10 @@ EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoU
       Step two.
   </br>
 </br>
-      The website, a simple .html file is just that. Its main goal is to force the download of a file and quickly redirect the user to a legitamite website. In this case, Adobe. The idea is to build merit for the payload - making it seem as geniune as possible.
+      The website, a simple index.html file is just that. Its main goal is to act and a landing page to force the download of a file and quickly redirect the user to a legitamite website. In this case, Adobe. The idea is to build merit for the payload - making it seem as geniune as possible.
     </br>
 </br>
-  The code for the html - 
+  The code within the landing page - 
   </br>
   <xmp>
   <head>
@@ -95,17 +95,22 @@ setTimeout(() => {  window.location.href="https://get.adobe.com/reader/download/
 </body>
   </xmp>
 </br>
-</br>
 This brings us to the payload. 
 </br>
+</br>
 Step three.
+</br>
 </br>
 The payload is a simple batch script and Adobe installation executable combined into a single executable. I used iexpress - obviously there would be better methodes to refine each step for better maturity but the focus was to invasion a low level threat.
 </br>
 </br>
 Step four.
 </br>
+</br>
 Delivery - this could be as simple as an email.
+</br>
+</br>
+That's it. within an hour and access to hosting (like github) you can quickly create the scenario we discussed. With a little social engineering and refinement towards obfuscation for the payload, the successrate would improve. Mitigation - building positive behaivors of users when it comes to known issues and processes.
     </p>
 
       </section>
