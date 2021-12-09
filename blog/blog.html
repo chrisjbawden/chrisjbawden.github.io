@@ -41,7 +41,7 @@ EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoU
         <div id="adobe-attack" align="justify">
                <h4>Adobe attack scenario</h4>
                <p>
-                 This is for educational purposes.
+                 This is for educational purposes only.
                  </p>
           <p>
                   The following scenario design was intending to build a business case. The scope was to work within the constraints of an advisary with limited resources and expertise.
@@ -51,22 +51,29 @@ EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoU
           </p>
           <p>
             The error, I am sure we have all seen this -
-            <img src="media\Image%20001%2020%2044.png">
+          </br>
+            <img src="media\Image 001 20 45.png">
           </p>
           <p>
+      </br>
             Step one.
           </br>
+    </br>
             Quiet simple. This PDF is not an document requiring Adobe but it pretends like it does for the simple goal of directing the target to download a malicious file. THe idea is that this would be a common site in some workplaces and would hopefully be something the users has already come across - so it familar. Letting down their guard to something familar, and issue they have faced before - simply getting the right software.
           </br>
+</br>
                <b>Note: the file used in this example while modified should only execute an notification to provide value to the example.</b>
                </br>
+</br>
       Let start with the PDF. <a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/template.pdf">Here is a link to the template</a> - which can be modified simply by opening in Word, creating a hyperlink from the image and than exporting to back to a .PDF. <a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/79693h0chh0icdaw.pdf">Here is the malicious .pdf</a> I created for this scenario. Upon opening the PDF, the hope is that the user will click on the hyperlinked image which will redirect them to a website. This website is unique.
           </p>
     <p>
       Step two.
   </br>
+</br>
       The website, a simple .html file is just that. Its main goal is to force the download of a file and quickly redirect the user to a legitamite website. In this case, Adobe. The idea is to build merit for the payload - making it seem as geniune as possible.
     </br>
+</br>
   The code for the html - 
   </br>
 <code>
