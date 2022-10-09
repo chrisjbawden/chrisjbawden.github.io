@@ -40,9 +40,29 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/3.1.2/components/md5.js"></script>
 <input id="my-file-input" type="file">
 <button onclick="process()">Process</button>
+	      
+	      <br>
+	      <pre id="log"></pre>
+
 
 
     <script type="text/javascript">
+	    
+	    (function () {
+    var old = console.log;
+    var logger = document.getElementById('log');
+    console.log = function () {
+      for (var i = 0; i < arguments.length; i++) {
+        if (typeof arguments[i] == 'object') {
+            logger.innerHTML += (JSON && JSON.stringify ? JSON.stringify(arguments[i], undefined, 2) : arguments[i]) + '<br />';
+        } else {
+            logger.innerHTML += arguments[i] + '<br />';
+        }
+      }
+    }
+})();
+	    
+	    
         function process() {
   getMD5(
     document.getElementById("my-file-input").files[0],
