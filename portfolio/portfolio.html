@@ -10,38 +10,75 @@
     <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
     
     <style>
-        #thumbnail-container {
+        /* General styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .wrapper {
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+        }
+
+        h2 {
+            text-align: center;
+        }
+
+        .category h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Flexbox container for thumbnails */
+        .thumbnail-container {
             display: flex;
+            justify-content: center;
             flex-wrap: wrap;
             gap: 20px;
         }
+
         .thumbnail {
             border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
             width: 150px;
+            flex: 0 1 auto;
         }
-        .thumbnail canvas {
-            width: 100px;
-            height: 150px;
+
+        .thumbnail canvas, .thumbnail img {
             display: block;
             margin: auto;
+            max-width: 100%;
+            height: auto;
         }
-        .thumbnail img {
-            display: block;
-            margin: auto;
-        }
+
         .thumbnail a {
             display: block;
             margin-top: 10px;
             text-decoration: none;
             color: #000;
         }
+
         .category {
             margin-top: 20px;
         }
-        .category h3 {
-            border-bottom: 2px solid #000;
+        
+        /* Responsive styling */
+        @media (max-width: 600px) {
+            .thumbnail {
+                width: 120px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .thumbnail {
+                width: 100px;
+            }
         }
     </style>
 </head>
@@ -61,7 +98,7 @@
         </header>
 
         <section style="padding-top:10%;">
-            <!--<h2>Portfolio</h2>-->
+            <h2>Portfolio</h2>
 
             <!-- Container for dynamically generated content -->
             <div id="pdf-container"></div>
@@ -72,7 +109,7 @@
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
                 // Fetch the manually created JSON file with PDF and link details
-                fetch('https://chrisjbawden.github.io/portfolio/pdfFiles.json')
+                fetch('/portfolio/pdfFiles.json')
                     .then(response => response.json())
                     .then(pdfFiles => {
                         const pdfContainer = document.getElementById('pdf-container');
@@ -133,7 +170,7 @@
                                 
                                 // Create an image or default thumbnail for non-PDFs
                                 const defaultThumbnail = document.createElement('img');
-                                defaultThumbnail.src = 'https://www.citypng.com/public/uploads/preview/web-page-internet-network-black-icon-png-701751694974337ex5b3n87cj.png'; // Placeholder or your custom image
+                                defaultThumbnail.src = 'https://via.placeholder.com/100x150?text=Link'; // Placeholder or your custom image
                                 defaultThumbnail.alt = 'Link Thumbnail';
                                 defaultThumbnail.style.width = '100px';
                                 defaultThumbnail.style.height = '150px';
@@ -158,9 +195,14 @@
                             categoryTitle.innerText = category;
                             categoryDiv.appendChild(categoryTitle);
 
+                            // Create a container for the thumbnails
+                            const thumbnailContainer = document.createElement('div');
+                            thumbnailContainer.classList.add('thumbnail-container');
+                            categoryDiv.appendChild(thumbnailContainer);
+
                             // Generate thumbnails or links for each file in the category
                             files.forEach(pdfFile => {
-                                generateThumbnail(pdfFile, categoryDiv);
+                                generateThumbnail(pdfFile, thumbnailContainer);
                             });
 
                             // Append the category section to the main container
