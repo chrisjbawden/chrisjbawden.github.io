@@ -43,5 +43,15 @@
     "name": "ISC Graduate",
     "path": "https://chrisjbawden.github.io/portfolio/isccand.png",
     "category": "Badges"
+  },
+  {
+    "name": "Cert III in Web Technologies",
+    "path": "https://chrisjbawden.github.io/portfolio/SBIT%20-%20cert%20III%20in%20web%20technologies.pdf",
+    "category": "Tertiary"
+  },
+  {
+    "name": "DCNP Security",
+    "path": "https://chrisjbawden.github.io/portfolio/DCNP%20Security.pdf",
+    "category": "Certifcations"
   }
 ]
