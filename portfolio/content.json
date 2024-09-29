@@ -18,10 +18,15 @@
     "name": "Advanced Network Security Certification",
     "path": "https://chrisjbawden.github.io/portfolio/Advanced_Network_Security_Certification.pdf",
     "category": "Certification"
-  }
-    {
+  },
+  {
     "name": "Digital Forensics Certification",
     "path": "https://chrisjbawden.github.io/portfolio/Diploma%20in%20Information%20Technology%20-%20Networking.pdf",
     "category": "Certification"
+  }
+  {
+    "name": "Google Cyber Security",
+    "path": "https://chrisjbawden.github.io/portfolio/gcsb.png",
+    "category": "Badge"
   }
 ]
