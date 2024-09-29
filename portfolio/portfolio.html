@@ -137,15 +137,10 @@
                                 img.alt = pdfFile.name;
                                 img.style.width = '100px';
                                 img.style.height = '150px';
-
-                                const link = document.createElement('a');
-                                link.href = pdfFile.path;
-                                link.target = '_blank';
-                                link.innerText = pdfFile.name;
-
-                                div.appendChild(img);   // Add the image as thumbnail
-                                div.appendChild(link);  // Add the link below the image
-                                categoryDiv.appendChild(div);
+                            
+                                // No link wrapping around the image for badges
+                                div.appendChild(img);  // Add the image as a badge
+                                categoryDiv.appendChild(div);  // Append to the category container
                             } else if (isPdf) {
                                 // Generate a PDF thumbnail if no image is provided
                                 const loadingTask = pdfjsLib.getDocument(pdfFile.path);
