@@ -1,149 +1,102 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chris Bawden - Portfolio</title>
-    <link rel="stylesheet" href="https://chrisjbawden.github.io/stylesheets/styles.css">
-    <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-    <style>
-        #thumbnail-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-        }
-        .thumbnail {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: center;
-            width: 150px;
-        }
-        .thumbnail canvas {
-            width: 100px;
-            height: 150px;
-            display: block;
-            margin: auto;
-        }
-        .thumbnail a {
-            display: block;
-            margin-top: 10px;
-            text-decoration: none;
-            color: #000;
-        }
-        .category {
-            margin-top: 20px;
-        }
-        .category h3 {
-            border-bottom: 2px solid #000;
-        }
-    </style>
-</head>
-<body>
-    <div class="wrapper">
-        <header>
-            <div id="back-arrow">
-                <a href="/index.html">BACK</a>
-            </div>
-            <div id="main-menu" style="max-height:30%;">
-                <p style="text-align:center;padding-top:10%;">Quick links</p>
-                <div style="padding-top:5%;">
-                    <a href="/projects/projects.html"><strong>PROJECTS</strong></a><br>
-                    <a href="/blog/blog.html"><strong>BLOG</strong></a><br>
-                </div>
-            </div>
-        </header>
+<script>
+    // PDF.js setup
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
-        <section style="padding-top:10%;">
-            <h2>Portfolio</h2>
+    // Fetch the manually created JSON file with PDF details
+    fetch('/pdfFiles.json')
+        .then(response => response.json())
+        .then(pdfFiles => {
+            const pdfContainer = document.getElementById('pdf-container');
 
-            <!-- Container for dynamically generated content -->
-            <div id="pdf-container"></div>
+            // Group PDFs by category
+            const categories = {};
+            pdfFiles.forEach(file => {
+                if (!categories[file.category]) {
+                    categories[file.category] = [];
+                }
+                categories[file.category].push(file);
+            });
 
-            <script>
-                // PDF.js setup
-                const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js';
+            // Function to render PDF thumbnail or fallback for links
+            function generateThumbnail(pdfFile, categoryDiv) {
+                const isPdf = pdfFile.path.endsWith(".pdf");
 
-                // Fetch the manually created JSON file with PDF details
-                fetch('pdfFiles.json')
-                    .then(response => response.json())
-                    .then(pdfFiles => {
-                        const pdfContainer = document.getElementById('pdf-container');
+                if (isPdf) {
+                    // Generate a PDF thumbnail
+                    const loadingTask = pdfjsLib.getDocument(pdfFile.path);
+                    loadingTask.promise.then(function(pdf) {
+                        // Get the first page
+                        pdf.getPage(1).then(function(page) {
+                            const scale = 0.3; // Set thumbnail size
+                            const viewport = page.getViewport({ scale: scale });
 
-                        // Group PDFs by category
-                        const categories = {};
-                        pdfFiles.forEach(file => {
-                            if (!categories[file.category]) {
-                                categories[file.category] = [];
-                            }
-                            categories[file.category].push(file);
+                            // Create a canvas element to render the PDF page
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+
+                            // Render the page into the canvas context
+                            const renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            page.render(renderContext).promise.then(function() {
+                                // Create the thumbnail div
+                                const div = document.createElement('div');
+                                div.classList.add('thumbnail');
+                                const link = document.createElement('a');
+                                link.href = pdfFile.path;
+                                link.target = '_blank';
+                                link.innerText = pdfFile.name;
+                                div.appendChild(canvas);
+                                div.appendChild(link);
+                                categoryDiv.appendChild(div);
+                            });
                         });
-
-                        // Function to render PDF thumbnail
-                        function generateThumbnail(pdfFile, categoryDiv) {
-                            const loadingTask = pdfjsLib.getDocument(pdfFile.path);
-                            loadingTask.promise.then(function(pdf) {
-                                // Get the first page
-                                pdf.getPage(1).then(function(page) {
-                                    const scale = 0.3; // Set thumbnail size
-                                    const viewport = page.getViewport({ scale: scale });
-
-                                    // Create a canvas element to render the PDF page
-                                    const canvas = document.createElement('canvas');
-                                    const context = canvas.getContext('2d');
-                                    canvas.width = viewport.width;
-                                    canvas.height = viewport.height;
-
-                                    // Render the page into the canvas context
-                                    const renderContext = {
-                                        canvasContext: context,
-                                        viewport: viewport
-                                    };
-                                    page.render(renderContext).promise.then(function() {
-                                        // Create the thumbnail div
-                                        const div = document.createElement('div');
-                                        div.classList.add('thumbnail');
-                                        const link = document.createElement('a');
-                                        link.href = pdfFile.path;
-                                        link.target = '_blank';
-                                        link.innerText = pdfFile.name;
-                                        div.appendChild(canvas);
-                                        div.appendChild(link);
-                                        categoryDiv.appendChild(div);
-                                    });
-                                });
-                            }, function(reason) {
-                                console.error('Error loading PDF: ' + reason);
-                            });
-                        }
-
-                        // Render PDFs by category
-                        for (const [category, files] of Object.entries(categories)) {
-                            // Create a section for each category
-                            const categoryDiv = document.createElement('div');
-                            categoryDiv.classList.add('category');
-                            const categoryTitle = document.createElement('h3');
-                            categoryTitle.innerText = category;
-                            categoryDiv.appendChild(categoryTitle);
-
-                            // Generate thumbnails for each PDF in the category
-                            files.forEach(pdfFile => {
-                                generateThumbnail(pdfFile, categoryDiv);
-                            });
-
-                            // Append the category section to the main container
-                            pdfContainer.appendChild(categoryDiv);
-                        }
+                    }, function(reason) {
+                        console.error('Error loading PDF: ' + reason);
                     });
-            </script>
-        </section>
+                } else {
+                    // Handle external or non-PDF links (use a default thumbnail or icon)
+                    const div = document.createElement('div');
+                    div.classList.add('thumbnail');
+                    
+                    // Create an image or default thumbnail for non-PDFs
+                    const defaultThumbnail = document.createElement('img');
+                    defaultThumbnail.src = 'https://via.placeholder.com/100x150?text=Link'; // Placeholder or your custom image
+                    defaultThumbnail.alt = 'Link Thumbnail';
+                    defaultThumbnail.style.width = '100px';
+                    defaultThumbnail.style.height = '150px';
 
-        <footer>
-            <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
-            <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
-        </footer>
-    </div>
+                    const link = document.createElement('a');
+                    link.href = pdfFile.path;
+                    link.target = '_blank';
+                    link.innerText = pdfFile.name;
 
-    <script src="/javascripts/scale.fix.js"></script>
-</body>
-</html>
+                    div.appendChild(defaultThumbnail); // Append the image as thumbnail
+                    div.appendChild(link);             // Append the link below the image
+                    categoryDiv.appendChild(div);      // Add this to the category div
+                }
+            }
+
+            // Render PDFs and external links by category
+            for (const [category, files] of Object.entries(categories)) {
+                // Create a section for each category
+                const categoryDiv = document.createElement('div');
+                categoryDiv.classList.add('category');
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.innerText = category;
+                categoryDiv.appendChild(categoryTitle);
+
+                // Generate thumbnails or links for each file in the category
+                files.forEach(pdfFile => {
+                    generateThumbnail(pdfFile, categoryDiv);
+                });
+
+                // Append the category section to the main container
+                pdfContainer.appendChild(categoryDiv);
+            }
+        });
+</script>
