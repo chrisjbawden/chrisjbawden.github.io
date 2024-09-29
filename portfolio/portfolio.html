@@ -109,7 +109,7 @@
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
                 // Fetch the manually created JSON file with PDF and link details
-                fetch('/portfolio/content.json')
+                fetch('/portfolio/pdfFiles.json')
                     .then(response => response.json())
                     .then(pdfFiles => {
                         const pdfContainer = document.getElementById('pdf-container');
@@ -123,12 +123,31 @@
                             categories[file.category].push(file);
                         });
 
-                        // Function to render PDF thumbnail or fallback for links
+                        // Function to render PDF thumbnail, image, or fallback for links
                         function generateThumbnail(pdfFile, categoryDiv) {
                             const isPdf = pdfFile.path.endsWith(".pdf");
 
-                            if (isPdf) {
-                                // Generate a PDF thumbnail
+                            if (pdfFile.image) {
+                                // Display the image or badge if provided in the JSON
+                                const div = document.createElement('div');
+                                div.classList.add('thumbnail');
+                                
+                                const img = document.createElement('img');
+                                img.src = pdfFile.image;
+                                img.alt = pdfFile.name;
+                                img.style.width = '100px';
+                                img.style.height = '150px';
+
+                                const link = document.createElement('a');
+                                link.href = pdfFile.path;
+                                link.target = '_blank';
+                                link.innerText = pdfFile.name;
+
+                                div.appendChild(img);   // Add the image as thumbnail
+                                div.appendChild(link);  // Add the link below the image
+                                categoryDiv.appendChild(div);
+                            } else if (isPdf) {
+                                // Generate a PDF thumbnail if no image is provided
                                 const loadingTask = pdfjsLib.getDocument(pdfFile.path);
                                 loadingTask.promise.then(function(pdf) {
                                     // Get the first page
