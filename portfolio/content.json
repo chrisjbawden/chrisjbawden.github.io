@@ -7,16 +7,21 @@
   {
     "name": "Ubiquiti Broadband Wireless Admin",
     "path": "https://chrisjbawden.github.io/portfolio/UBWA.pdf",
-    "category": "Certificates"
+    "category": "Certification"
   },
   {
     "name": "Ubiquiti Enterprise Wireless Admin",
     "path": "https://chrisjbawden.github.io/portfolio/UEWA.pdf",
-    "category": "Certificates"
+    "category": "Certification"
   },
   {
     "name": "Advanced Network Security Certification",
     "path": "https://chrisjbawden.github.io/portfolio/Advanced_Network_Security_Certification.pdf",
-    "category": "Certificates"
+    "category": "Certification"
+  }
+    {
+    "name": "Digital Forensics Certification",
+    "path": "Digital Forensics - Certificate of Achievement.pdf",
+    "category": "Certification"
   }
 ]
