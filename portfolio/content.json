@@ -30,6 +30,11 @@
     "category": "Badges"
   },
   {
+    "name": "Google Cyber Security Certificate",
+    "path": "/portfolio/Coursera%20-%20Google%20Cyber%20Security%20Certificate.pdf",
+    "category": "Certifications"
+  }, 
+  {
     "name": "Graduate Certification of Cyber Security",
     "path": "https://chrisjbawden.github.io/portfolio/CSU%20-%20Graduate%20Certificate%20in%20Cyber%20Security.pdf",
     "category": "Tertiary"
