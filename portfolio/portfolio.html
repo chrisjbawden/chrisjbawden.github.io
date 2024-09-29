@@ -72,7 +72,7 @@
                 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
                 // Fetch the manually created JSON file with PDF and link details
-                fetch('/pdfFiles.json')
+                fetch('https://chrisjbawden.github.io/portfolio/pdfFiles.json')
                     .then(response => response.json())
                     .then(pdfFiles => {
                         const pdfContainer = document.getElementById('pdf-container');
