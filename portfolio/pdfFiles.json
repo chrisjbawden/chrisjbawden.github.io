@@ -1,0 +1,22 @@
+[
+  {
+    "name": "Diploma in Information Technology - Networking",
+    "path": "https://chrisjbawden.github.io/portfolio/Diploma_in_Information_Technology_Networking.pdf",
+    "category": "Tertiary"
+  },
+  {
+    "name": "Ubiquiti Broadband Wireless Admin",
+    "path": "https://chrisjbawden.github.io/portfolio/UBWA.pdf",
+    "category": "Certificates"
+  },
+  {
+    "name": "Ubiquiti Enterprise Wireless Admin",
+    "path": "https://chrisjbawden.github.io/portfolio/UEWA.pdf",
+    "category": "Certificates"
+  },
+  {
+    "name": "Advanced Network Security Certification",
+    "path": "https://chrisjbawden.github.io/portfolio/Advanced_Network_Security_Certification.pdf",
+    "category": "Certificates"
+  }
+]
