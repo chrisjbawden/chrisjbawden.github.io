@@ -102,127 +102,118 @@
             <!-- Container for dynamically generated content -->
             <div id="pdf-container"></div>
 
-            <script>
-                // PDF.js setup
-                const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+<script>
+    // PDF.js setup
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
-                // Fetch the manually created JSON file with PDF and link details
-                fetch('/portfolio/content.json')
-                    .then(response => response.json())
-                    .then(pdfFiles => {
-                        const pdfContainer = document.getElementById('pdf-container');
+    // Fetch the JSON file with PDF and link details
+    fetch('/pdfFiles.json')
+        .then(response => response.json())
+        .then(pdfFiles => {
+            const pdfContainer = document.getElementById('pdf-container');
 
-                        // Group PDFs and links by category
-                        const categories = {};
-                        pdfFiles.forEach(file => {
-                            if (!categories[file.category]) {
-                                categories[file.category] = [];
-                            }
-                            categories[file.category].push(file);
-                        });
+            // Group PDFs and links by category
+            const categories = {};
+            pdfFiles.forEach(file => {
+                if (!categories[file.category]) {
+                    categories[file.category] = [];
+                }
+                categories[file.category].push(file);
+            });
 
-                        // Function to render PDF thumbnail, image, or fallback for links
-                        function generateThumbnail(pdfFile, categoryDiv) {
-                            const isPdf = pdfFile.path.endsWith(".pdf");
+            // Function to render PDF thumbnail, badge, or link
+            function generateThumbnail(pdfFile, categoryDiv) {
+                const isBadge = pdfFile.category === "Badges";  // Check if it's a badge
+                const isPdf = pdfFile.path.endsWith(".pdf");
 
-                            if (pdfFile.image) {
-                                // Display the image or badge if provided in the JSON
+                if (isBadge) {
+                    // Render as a badge (static image, no link)
+                    const div = document.createElement('div');
+                    div.classList.add('thumbnail');
+                    
+                    const img = document.createElement('img');
+                    img.src = pdfFile.path;  // Use the path as the image source
+                    img.alt = pdfFile.name;
+                    img.style.width = '150px';
+                    img.style.height = '150px';
+
+                    div.appendChild(img);  // Add the image
+                    categoryDiv.appendChild(div);  // Append to the category container
+                } else if (isPdf) {
+                    // Handle PDF files as before (generate a thumbnail with PDF.js)
+                    const loadingTask = pdfjsLib.getDocument(pdfFile.path);
+                    loadingTask.promise.then(function(pdf) {
+                        pdf.getPage(1).then(function(page) {
+                            const scale = 0.3;
+                            const viewport = page.getViewport({ scale: scale });
+
+                            const canvas = document.createElement('canvas');
+                            const context = canvas.getContext('2d');
+                            canvas.width = viewport.width;
+                            canvas.height = viewport.height;
+
+                            const renderContext = { canvasContext: context, viewport: viewport };
+                            page.render(renderContext).promise.then(function() {
                                 const div = document.createElement('div');
                                 div.classList.add('thumbnail');
-                                
-                                const img = document.createElement('img');
-                                img.src = pdfFile.image;
-                                img.alt = pdfFile.name;
-                                img.style.width = '150px';
-                                img.style.height = '150px';
-                            
-                                // No link wrapping around the image for badges
-                                div.appendChild(img);  // Add the image as a badge
-                                categoryDiv.appendChild(div);  // Append to the category container
-                            } else if (isPdf) {
-                                // Generate a PDF thumbnail if no image is provided
-                                const loadingTask = pdfjsLib.getDocument(pdfFile.path);
-                                loadingTask.promise.then(function(pdf) {
-                                    // Get the first page
-                                    pdf.getPage(1).then(function(page) {
-                                        const scale = 0.3; // Set thumbnail size
-                                        const viewport = page.getViewport({ scale: scale });
-
-                                        // Create a canvas element to render the PDF page
-                                        const canvas = document.createElement('canvas');
-                                        const context = canvas.getContext('2d');
-                                        canvas.width = viewport.width;
-                                        canvas.height = viewport.height;
-
-                                        // Render the page into the canvas context
-                                        const renderContext = {
-                                            canvasContext: context,
-                                            viewport: viewport
-                                        };
-                                        page.render(renderContext).promise.then(function() {
-                                            // Create the thumbnail div
-                                            const div = document.createElement('div');
-                                            div.classList.add('thumbnail');
-                                            const link = document.createElement('a');
-                                            link.href = pdfFile.path;
-                                            link.target = '_blank';
-                                            link.innerText = pdfFile.name;
-                                            div.appendChild(canvas);
-                                            div.appendChild(link);
-                                            categoryDiv.appendChild(div);
-                                        });
-                                    });
-                                }, function(reason) {
-                                    console.error('Error loading PDF: ' + reason);
-                                });
-                            } else {
-                                // Handle external or non-PDF links (use a default thumbnail or icon)
-                                const div = document.createElement('div');
-                                div.classList.add('thumbnail');
-                                
-                                // Create an image or default thumbnail for non-PDFs
-                                const defaultThumbnail = document.createElement('img');
-                                defaultThumbnail.src = 'https://via.placeholder.com/100x150?text=Link'; // Placeholder or your custom image
-                                defaultThumbnail.alt = 'Link Thumbnail';
-                                defaultThumbnail.style.width = '150px';
-                                defaultThumbnail.style.height = '150px';
-
                                 const link = document.createElement('a');
                                 link.href = pdfFile.path;
                                 link.target = '_blank';
                                 link.innerText = pdfFile.name;
-
-                                div.appendChild(defaultThumbnail); // Append the image as thumbnail
-                                div.appendChild(link);             // Append the link below the image
-                                categoryDiv.appendChild(div);      // Add this to the category div
-                            }
-                        }
-
-                        // Render PDFs and external links by category
-                        for (const [category, files] of Object.entries(categories)) {
-                            // Create a section for each category
-                            const categoryDiv = document.createElement('div');
-                            categoryDiv.classList.add('category');
-                            const categoryTitle = document.createElement('h3');
-                            categoryTitle.innerText = category;
-                            categoryDiv.appendChild(categoryTitle);
-
-                            // Create a container for the thumbnails
-                            const thumbnailContainer = document.createElement('div');
-                            thumbnailContainer.classList.add('thumbnail-container');
-                            categoryDiv.appendChild(thumbnailContainer);
-
-                            // Generate thumbnails or links for each file in the category
-                            files.forEach(pdfFile => {
-                                generateThumbnail(pdfFile, thumbnailContainer);
+                                div.appendChild(canvas);
+                                div.appendChild(link);
+                                categoryDiv.appendChild(div);
                             });
-
-                            // Append the category section to the main container
-                            pdfContainer.appendChild(categoryDiv);
-                        }
+                        });
                     });
-            </script>
+                } else {
+                    // Handle other files (e.g., external links)
+                    const div = document.createElement('div');
+                    div.classList.add('thumbnail');
+
+                    const defaultThumbnail = document.createElement('img');
+                    defaultThumbnail.src = 'https://via.placeholder.com/100x150?text=Link';
+                    defaultThumbnail.alt = 'Link Thumbnail';
+                    defaultThumbnail.style.width = '150px';
+                    defaultThumbnail.style.height = '150px';
+
+                    const link = document.createElement('a');
+                    link.href = pdfFile.path;
+                    link.target = '_blank';
+                    link.innerText = pdfFile.name;
+
+                    div.appendChild(defaultThumbnail);
+                    div.appendChild(link);
+                    categoryDiv.appendChild(div);
+                }
+            }
+
+            // Render PDFs and links by category
+            for (const [category, files] of Object.entries(categories)) {
+                // Create a section for each category
+                const categoryDiv = document.createElement('div');
+                categoryDiv.classList.add('category');
+                const categoryTitle = document.createElement('h3');
+                categoryTitle.innerText = category;
+                categoryDiv.appendChild(categoryTitle);
+
+                // Create a container for the thumbnails
+                const thumbnailContainer = document.createElement('div');
+                thumbnailContainer.classList.add('thumbnail-container');
+                categoryDiv.appendChild(thumbnailContainer);
+
+                // Generate thumbnails for each file in the category
+                files.forEach(pdfFile => {
+                    generateThumbnail(pdfFile, thumbnailContainer);
+                });
+
+                // Append the category section to the main container
+                pdfContainer.appendChild(categoryDiv);
+            }
+        });
+</script>
+
         </section>
 
         <footer>
