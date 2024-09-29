@@ -43,7 +43,6 @@
         }
 
         .thumbnail {
-            border: 1px solid #ddd;
             padding: 10px;
             text-align: center;
             width: 150px;
@@ -135,7 +134,7 @@
                                 const img = document.createElement('img');
                                 img.src = pdfFile.image;
                                 img.alt = pdfFile.name;
-                                img.style.width = '100px';
+                                img.style.width = '150px';
                                 img.style.height = '150px';
                             
                                 // No link wrapping around the image for badges
@@ -186,7 +185,7 @@
                                 const defaultThumbnail = document.createElement('img');
                                 defaultThumbnail.src = 'https://via.placeholder.com/100x150?text=Link'; // Placeholder or your custom image
                                 defaultThumbnail.alt = 'Link Thumbnail';
-                                defaultThumbnail.style.width = '100px';
+                                defaultThumbnail.style.width = '150px';
                                 defaultThumbnail.style.height = '150px';
 
                                 const link = document.createElement('a');
