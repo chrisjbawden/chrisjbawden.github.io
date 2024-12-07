@@ -58,5 +58,10 @@
     "name": "DCNP Security",
     "path": "https://chrisjbawden.github.io/portfolio/DCNP%20Security.pdf",
     "category": "Certifications"
-  }
+  },
+  {
+    "name": "CCSK v5",
+    "path": "https://chrisjbawden.github.io/portfolio/certificate-of-cloud-security-knowledge-v-5.png",
+    "category": "Badges"
+  },
 ]
