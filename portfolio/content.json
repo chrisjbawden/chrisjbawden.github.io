@@ -78,5 +78,10 @@
     "name": "CCZT",
     "path": "https://chrisjbawden.github.io/portfolio/cczt-certificate_DEC-08-2024-redacted.pdf",
     "category": "Certifications"
+  },
+  {
+    "name": "CS50",
+    "path": "https://chrisjbawden.github.io/portfolio/cs50.pdf",
+    "category": "Certifications"
   }
 ]
