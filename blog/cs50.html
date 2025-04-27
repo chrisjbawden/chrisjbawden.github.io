@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Video Player</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        video {
+            max-width: 90%;
+            height: auto;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            background: black;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Video Demonstration</h1>
+
+    <video controls>
+        <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+
+</body>
+</html>
