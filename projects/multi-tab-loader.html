@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Dashboard Loader</title>
+  <title>Multi-page Loader</title>
   <style>
     body {
       text-align: center;
@@ -11,12 +11,13 @@
 
     #spinner {
       width: 80vw;
-      max-width: 400px;  /* Optional cap so it doesn't get ridiculously large */
+      max-width: 400px;
       aspect-ratio: 1 / 1;
       margin: 40px auto;
-      background-image: url('https://i.gifer.com/YCZH.gif'); /* Use any loading spinner you want */
+      background-image: url('https://i.gifer.com/YCZH.gif');
       background-size: contain;
       background-repeat: no-repeat;
+      background-position: center;
     }
 
     #message {
@@ -32,18 +33,7 @@
     <div id="message">Preparing your dashboard...</div>
   </div>
 
-
-
-
   <script>
-
-    if (!urlList) {
-      document.getElementById('loader').style.display = 'none';
-      document.body.innerHTML += "<p>No URLs provided.</p>";
-      return;
-    }
-
-    
     function getQueryParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
@@ -51,8 +41,10 @@
 
     async function openTabsSequentially() {
       const urlList = getQueryParam('urls');
+
       if (!urlList) {
-        document.getElementById('message').innerText = "No URLs provided.";
+        document.getElementById('loader').style.display = 'none';
+        document.body.innerHTML += "<p>No URLs provided.</p>";
         return;
       }
 
@@ -60,18 +52,17 @@
         const url = decodeURIComponent(raw.trim());
         return url.match(/^https?:\/\//i) ? url : 'https://' + url;
       });
-      const delayMs = 1000; // 1 second delay between each tab
+
+      const delayMs = 1000;
 
       for (let i = 1; i < urls.length; i++) {
         window.open(urls[i], '_blank');
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
 
-      // Update UI to indicate final redirect
       document.getElementById('message').innerText = "Loading final tab...";
       document.getElementById('spinner').style.display = 'none';
 
-      // Redirect to the first URL in this tab
       window.location.href = urls[0];
     }
 
