@@ -15,33 +15,33 @@
 <style>
 details summary {
   font-weight: bold;
-}
-
-details summary {
-  font-weight: bold;
   list-style: none;
   cursor: pointer;
   position: relative;
   padding-left: 24px;
+  outline: none; /* removes the blue outline */
+  background: none; /* removes any default background */
+  border: none;
 }
 
 details summary::before {
-  content: '▶';                   /* right-facing arrow when closed */
+  content: '▶';
   position: absolute;
   left: 0;
-  color: black;                   /* solid black arrow */
+  color: black;
   transition: transform 0.2s ease;
 }
 
 details[open] summary::before {
-  content: '▼';                   /* down-facing arrow when open */
+  content: '▼';
 }
 
-/* Optional: hover feedback */
+/* Optional: remove hover effects if you want zero styling */
 details summary:hover {
-  background-color: #f0f0f0;
-  border-radius: 4px;
+  background: none;
+  border-radius: 0;
 }
+
 
 </style>
 <script src="pick/js/karma.js?karma=bs?nosaj=faster.mo" ></script>
