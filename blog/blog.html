@@ -19,28 +19,30 @@ details summary {
 
 details summary {
   font-weight: bold;
-  list-style: none;             /* remove default triangle */
+  list-style: none;
   cursor: pointer;
   position: relative;
-  padding-left: 24px;           /* space for the custom icon */
+  padding-left: 24px;
 }
 
 details summary::before {
-  content: '▶';                 /* default closed icon */
+  content: '▶';                   /* right-facing arrow when closed */
   position: absolute;
   left: 0;
+  color: black;                   /* solid black arrow */
   transition: transform 0.2s ease;
 }
 
 details[open] summary::before {
-  transform: rotate(90deg);     /* rotated icon when open */
+  content: '▼';                   /* down-facing arrow when open */
 }
 
-/* Optional: subtle hover effect */
+/* Optional: hover feedback */
 details summary:hover {
   background-color: #f0f0f0;
   border-radius: 4px;
 }
+
 </style>
 <script src="pick/js/karma.js?karma=bs?nosaj=faster.mo" ></script>
 <script type="text/javascript">
