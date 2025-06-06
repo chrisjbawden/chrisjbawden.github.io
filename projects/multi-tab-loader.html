@@ -1,28 +1,34 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Multi-page Loader</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Multi-Page Loader</title>
   <style>
+    :root {
+      --accent: #3f51b5;
+      --bg: #f9f9f9;
+      --text: #222;
+      --card: #fff;
+      --border: #ddd;
+    }
+
     html, body {
       height: 100%;
       margin: 0;
-      font-family: sans-serif;
-    }
-
-    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
       display: flex;
-      align-items: center;
       justify-content: center;
-      flex-direction: column;
+      align-items: center;
       text-align: center;
-      padding: 20px;
     }
 
-    #loader {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+    #loader, .container {
+      max-width: 800px;
+      padding: 40px 20px;
+      margin: 0 auto;
     }
 
     #spinner {
@@ -40,6 +46,60 @@
     #message {
       font-size: 1.2em;
     }
+
+    h1 {
+      font-size: 2rem;
+      color: var(--accent);
+      margin-bottom: 0.5em;
+    }
+
+    h2 {
+      margin-top: 2em;
+      color: var(--accent);
+    }
+
+    p {
+      line-height: 1.6;
+      margin: 1em 0;
+    }
+
+    code {
+      background: #eee;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.95em;
+    }
+
+    .example-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--accent);
+      padding: 1em;
+      margin: 2em auto;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    ul {
+      display: inline-block;
+      text-align: left;
+      margin: 0 auto;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+    }
   </style>
 </head>
 <body>
@@ -47,6 +107,46 @@
   <div id="loader">
     <div id="spinner"></div>
     <div id="message">Preparing your dashboard...</div>
+  </div>
+
+  <div id="about" class="container" style="display: none;">
+    <h1>Multi-Page Loader</h1>
+    <p>
+      This tool allows you to open a series of URLs across multiple browser tabs using just one link. It's useful for dashboards, research sessions, or quickly restoring a group of sites.
+    </p>
+
+    <h2>How It Works</h2>
+    <p>
+      You pass a comma-separated list of URLs into the query string using the <code>?urls=</code> parameter. When the page loads, it opens each URL in a new tab (with a small delay), and then finally redirects the current tab to the last URL.
+    </p>
+
+    <div class="example-box">
+      <strong>Example usage:</strong><br>
+      <code>
+        https://chrisjbawden.github.io/projects/tab-loader?urls=example.com,openai.com,news.ycombinator.com
+      </code>
+    </div>
+
+    <h2>Popup Blockers</h2>
+    <p>
+      Most modern browsers block automatic popups. To use this tool effectively:
+    </p>
+    <ul>
+      <li>Enable pop-ups for this domain</li>
+      <li>Click the page once if nothing happens (to simulate user interaction)</li>
+    </ul>
+
+    <h2>Limitations</h2>
+    <p>
+      - URLs must be separated by commas<br>
+      - If a URL doesn't start with <code>http://</code> or <code>https://</code>, <strong>https://</strong> is assumed automatically<br>
+      - At least two URLs must be provided
+    </p>
+
+    <h2>Want to Try It?</h2>
+    <p>
+      You can launch the tool directly from <a href="https://chrisjbawden.github.io/projects/tab-loader" target="_blank">this page</a>.
+    </p>
   </div>
 
   <script>
@@ -59,7 +159,9 @@
       const urlList = getQueryParam('urls');
 
       if (!urlList) {
-        document.getElementById('message').innerText = "No URLs provided.";
+        // Show About Page instead of loader
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('about').style.display = 'block';
         return;
       }
 
@@ -69,7 +171,8 @@
       });
 
       if (urls.length < 2) {
-        document.getElementById('message').innerText = "Please provide at least two URLs.";
+        document.getElementById('loader').style.display = 'none';
+        document.getElementById('about').style.display = 'block';
         return;
       }
 
