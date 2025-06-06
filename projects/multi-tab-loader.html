@@ -25,10 +25,23 @@
 </head>
 <body>
 
-  <div id="spinner"></div>
-  <div id="message">Preparing your dashboard...</div>
+  <div id="loader">
+    <div id="spinner"></div>
+    <div id="message">Preparing your dashboard...</div>
+  </div>
+
+
+
 
   <script>
+
+    if (!urlList) {
+      document.getElementById('loader').style.display = 'none';
+      document.body.innerHTML += "<p>No URLs provided.</p>";
+      return;
+    }
+
+    
     function getQueryParam(name) {
       const urlParams = new URLSearchParams(window.location.search);
       return urlParams.get(name);
