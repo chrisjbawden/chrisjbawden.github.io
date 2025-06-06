@@ -25,20 +25,13 @@
       margin-top: 20px;
       font-size: 1.2em;
     }
-
-    #loadButton {
-      padding: 10px 20px;
-      font-size: 1.1em;
-      cursor: pointer;
-    }
   </style>
 </head>
 <body>
 
   <div id="loader">
     <div id="spinner"></div>
-    <div id="message">Click below to open your dashboard</div>
-    <button id="loadButton" onclick="openTabsSequentially()">Open Dashboard</button>
+    <div id="message">Preparing your dashboard...</div>
   </div>
 
   <script>
@@ -47,12 +40,11 @@
       return urlParams.get(name);
     }
 
-    async function openTabsSequentially() {
+    async function openTabs() {
       const urlList = getQueryParam('urls');
 
       if (!urlList) {
         document.getElementById('message').innerText = "No URLs provided.";
-        document.getElementById('loadButton').style.display = 'none';
         return;
       }
 
@@ -61,31 +53,41 @@
         return url.match(/^https?:\/\//i) ? url : 'https://' + url;
       });
 
-      // Show spinner and hide button
-      document.getElementById('spinner').style.display = 'block';
-      document.getElementById('loadButton').style.display = 'none';
-      document.getElementById('message').innerText = "Opening tabs...";
+      if (urls.length < 2) {
+        document.getElementById('message').innerText = "Please provide at least two URLs.";
+        return;
+      }
 
       const delayMs = 1000;
+      document.getElementById('spinner').style.display = 'block';
 
-      for (let i = 0; i < urls.length - 1; i++) {
-        const newTab = window.open(urls[i], '_blank');
+      // Try the first URL as a test for popup blocking
+      const firstTab = window.open(urls[0], '_blank');
 
-        if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
-          // Pop-up blocked
-          document.getElementById('spinner').style.display = 'none';
-          document.getElementById('message').innerText = "⚠️ Pop-ups are blocked! Please enable pop-ups for this site to use the dashboard.";
-          return;
-        }
+      if (!firstTab || firstTab.closed || typeof firstTab.closed === 'undefined') {
+        document.getElementById('spinner').style.display = 'none';
+        document.getElementById('message').innerHTML = `
+          ⚠️ Pop-ups were blocked by your browser.<br>
+          Please enable pop-ups for this site and refresh the page.
+        `;
+        return;
+      }
 
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+
+      // Continue opening remaining middle URLs (excluding first and last)
+      for (let i = 1; i < urls.length - 1; i++) {
+        window.open(urls[i], '_blank');
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
 
+      // Final URL opens in current tab
       document.getElementById('message').innerText = "Loading final tab...";
       document.getElementById('spinner').style.display = 'none';
-
       window.location.href = urls[urls.length - 1];
     }
+
+    window.addEventListener('DOMContentLoaded', openTabs);
   </script>
 </body>
 </html>
