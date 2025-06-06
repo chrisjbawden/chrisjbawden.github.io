@@ -42,7 +42,10 @@
         return;
       }
 
-      const urls = urlList.split(',').map(url => decodeURIComponent(url.trim()));
+      const urls = urlList.split(',').map(raw => {
+        const url = decodeURIComponent(raw.trim());
+        return url.match(/^https?:\/\//i) ? url : 'https://' + url;
+      });
       const delayMs = 1000; // 1 second delay between each tab
 
       for (let i = 1; i < urls.length; i++) {
