@@ -3,10 +3,26 @@
 <head>
   <title>Multi-page Loader</title>
   <style>
-    body {
-      text-align: center;
+    html, body {
+      height: 100%;
+      margin: 0;
       font-family: sans-serif;
-      margin-top: 100px;
+    }
+
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
     }
 
     #spinner {
@@ -22,7 +38,6 @@
     }
 
     #message {
-      margin-top: 20px;
       font-size: 1.2em;
     }
   </style>
@@ -61,7 +76,6 @@
       const delayMs = 1000;
       document.getElementById('spinner').style.display = 'block';
 
-      // Try the first URL as a test for popup blocking
       const firstTab = window.open(urls[0], '_blank');
 
       if (!firstTab || firstTab.closed || typeof firstTab.closed === 'undefined') {
@@ -75,13 +89,11 @@
 
       await new Promise(resolve => setTimeout(resolve, delayMs));
 
-      // Continue opening remaining middle URLs (excluding first and last)
       for (let i = 1; i < urls.length - 1; i++) {
         window.open(urls[i], '_blank');
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
 
-      // Final URL opens in current tab
       document.getElementById('message').innerText = "Loading final tab...";
       document.getElementById('spinner').style.display = 'none';
       window.location.href = urls[urls.length - 1];
