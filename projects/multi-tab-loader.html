@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Dashboard Loader</title>
+  <style>
+    body {
+      text-align: center;
+      font-family: sans-serif;
+      margin-top: 100px;
+    }
+
+    #spinner {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto;
+      background-image: url('https://i.gifer.com/YCZH.gif'); /* Use any loading spinner you want */
+      background-size: contain;
+      background-repeat: no-repeat;
+    }
+
+    #message {
+      margin-top: 20px;
+      font-size: 1.2em;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="spinner"></div>
+  <div id="message">Preparing your dashboard...</div>
+
+  <script>
+    function getQueryParam(name) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(name);
+    }
+
+    async function openTabsSequentially() {
+      const urlList = getQueryParam('urls');
+      if (!urlList) {
+        document.getElementById('message').innerText = "No URLs provided.";
+        return;
+      }
+
+      const urls = urlList.split(',').map(url => decodeURIComponent(url.trim()));
+      const delayMs = 1000; // 1 second delay between each tab
+
+      for (let i = 1; i < urls.length; i++) {
+        window.open(urls[i], '_blank');
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+
+      // Update UI to indicate final redirect
+      document.getElementById('message').innerText = "Loading final tab...";
+      document.getElementById('spinner').style.display = 'none';
+
+      // Redirect to the first URL in this tab
+      window.location.href = urls[0];
+    }
+
+    openTabsSequentially();
+  </script>
+</body>
+</html>
