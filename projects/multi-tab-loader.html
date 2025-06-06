@@ -18,11 +18,18 @@
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
+      display: none;
     }
 
     #message {
       margin-top: 20px;
       font-size: 1.2em;
+    }
+
+    #loadButton {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -30,7 +37,8 @@
 
   <div id="loader">
     <div id="spinner"></div>
-    <div id="message">Preparing your dashboard...</div>
+    <div id="message">Click below to open your dashboard</div>
+    <button id="loadButton" onclick="openTabsSequentially()">Open Dashboard</button>
   </div>
 
   <script>
@@ -43,8 +51,8 @@
       const urlList = getQueryParam('urls');
 
       if (!urlList) {
-        document.getElementById('loader').style.display = 'none';
-        document.body.innerHTML += "<p>No URLs provided.</p>";
+        document.getElementById('message').innerText = "No URLs provided.";
+        document.getElementById('loadButton').style.display = 'none';
         return;
       }
 
@@ -53,21 +61,31 @@
         return url.match(/^https?:\/\//i) ? url : 'https://' + url;
       });
 
+      // Show spinner and hide button
+      document.getElementById('spinner').style.display = 'block';
+      document.getElementById('loadButton').style.display = 'none';
+      document.getElementById('message').innerText = "Opening tabs...";
+
       const delayMs = 1000;
 
       for (let i = 0; i < urls.length - 1; i++) {
-        window.open(urls[i], '_blank');
+        const newTab = window.open(urls[i], '_blank');
+
+        if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+          // Pop-up blocked
+          document.getElementById('spinner').style.display = 'none';
+          document.getElementById('message').innerText = "⚠️ Pop-ups are blocked! Please enable pop-ups for this site to use the dashboard.";
+          return;
+        }
+
         await new Promise(resolve => setTimeout(resolve, delayMs));
       }
 
-      // Update UI before redirecting to the final URL
       document.getElementById('message').innerText = "Loading final tab...";
       document.getElementById('spinner').style.display = 'none';
 
       window.location.href = urls[urls.length - 1];
     }
-
-    openTabsSequentially();
   </script>
 </body>
 </html>
