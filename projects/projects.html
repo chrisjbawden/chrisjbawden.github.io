@@ -1,201 +1,123 @@
 <!doctype html>
-<html lang="en">
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Chris Bawden</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <div id="back-arrow">
+          <a href="/index.html">BACK</a>
+        </div>
+        <div id="main-menu" style="max-height:30%;">
+          <p style="text-align:center;padding-top:10%;"> Quick links </p>
+          <div style="padding-top:5%;"></div>
+          <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a><br>
+          <a href="https://chrisjbawden.github.io/blog/blog.html"><strong>BLOG</strong></a><br>
+        </div>
+      </header>
 
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="chrome=1">
-  <title>Chris Bawden – Projects</title>
-  <link rel="stylesheet" href="/stylesheets/styles.css">
-  <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <section style="overflow-x:auto; padding-top:10%;">
+        <table class="project-table" style="width:100%;">
+          <!-- row 1 -->
+          <tr>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-terminal-80.png" alt="Scripts Icon" />
+                <br><a href="https://github.com/chrisjbawden/scripts-programs" target="_blank">SCRIPTS / PROGRAMS</a>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-link-80.png" alt="URL Encoder Icon" />
+                <br><a href="https://chrisjbawden.github.io/blog/bin/encode/au-encode.html" target="_blank">SNOW URL Encoder</a>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-security-lock-80.png" alt="Coming Soon" />
+                <br><strong>Coming Soon</strong>
+              </div>
+            </th>
+          </tr>
 
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      background: #f5f5f5;
-    }
+          <!-- row 2 -->
+          <tr>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-earth-globe-80.png" alt="Domains Icon" />
+                <br><a href="https://github.com/chrisjbawden/newly-registered-domains-tracker" target="_blank">New Domains Tracker</a>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-security-lock-80.png" alt="Coming Soon" />
+                <br><strong>Coming Soon</strong>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-blog-80.png" alt="Blog Icon" />
+                <br><a href="https://github.com/chrisjbawden/blogs" target="_blank">BLOG</a>
+              </div>
+            </th>
+          </tr>
 
-    .wrapper {
-      flex: 1;
-      padding: 0 5%;
-    }
+          <!-- row 3 -->
+          <tr>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-hash-80.png" alt="MD5 Icon" />
+                <br><a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank">MD5 Generator</a>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-security-lock-80.png" alt="Coming Soon" />
+                <br><strong>Coming Soon</strong>
+              </div>
+            </th>
+            <th style="min-width:30%; min-height:30%;">
+              <div align="middle">
+                <img src="/media/icons8-security-lock-80.png" alt="Coming Soon" />
+                <br><strong>Coming Soon</strong>
+              </div>
+            </th>
+          </tr>
+        </table>
 
-    header {
-      background: #fff;
-      padding: 20px 0;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
+        <hr style="margin-top: 40px;">
 
-    #back-arrow {
-      text-align: left;
-      padding-left: 10px;
-      font-weight: bold;
-    }
-
-    #main-menu {
-      text-align: center;
-      padding-top: 10px;
-    }
-
-    #main-menu a {
-      display: block;
-      padding: 5px 0;
-      color: #000;
-      text-decoration: none;
-    }
-
-    main {
-      padding-top: 30px;
-    }
-
-    .project-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 30px;
-      max-width: 960px;
-      margin: 0 auto;
-    }
-
-    .project-card {
-      width: 250px;
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-      padding: 20px 15px;
-      text-align: center;
-      transition: transform 0.2s, background 0.2s;
-    }
-
-    .project-card:hover {
-      transform: scale(1.03);
-      background: #fafafa;
-    }
-
-    .project-card img {
-      width: 64px;
-      height: 64px;
-      margin-bottom: 15px;
-    }
-
-    .project-card a {
-      display: block;
-      font-weight: bold;
-      color: #333;
-      text-decoration: none;
-      margin-top: 10px;
-    }
-
-    .project-card a:hover {
-      text-decoration: underline;
-    }
-
-    footer {
-      margin-top: 50px;
-      padding: 30px 0;
-      text-align: center;
-      font-size: 0.9em;
-      color: #888;
-      background: #fff;
-      border-top: 1px solid #ddd;
-    }
-  </style>
-</head>
-
-<body>
-  <div class="wrapper">
-    <header>
-      <div id="back-arrow">
-        <a href="/index.html">BACK</a>
-      </div>
-      <div id="main-menu">
-        <p>Quick links</p>
-        <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a>
-        <a href="https://chrisjbawden.github.io/blog/blog.html"><strong>BLOG</strong></a>
-      </div>
-    </header>
-
-    <main>
-      <div class="project-grid">
-
-        <!-- Scripts/Programs -->
-        <div class="project-card">
-          <img src="/media/icons8-terminal-80.png" alt="Scripts Icon" />
-          <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank">
-            Scripts / Programs
+        <div style="text-align: center; padding-top: 30px;">
+          <a href="https://github.com/chrisjbawden" target="_blank">
+            <strong>View my GitHub Profile</strong>
           </a>
         </div>
+      </section>
 
-        <!-- Snow URL Encoder -->
-        <div class="project-card">
-          <img src="/media/icons8-link-80.png" alt="URL Encoder Icon" />
-          <a href="https://chrisjbawden.github.io/blog/bin/encode/au-encode.html" target="_blank">
-            Snow URL Encoder
-          </a>
-        </div>
+      <footer>
+        <p>
+          <span>Projects maintained by </span>
+          <script>
+            var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+            var m = "";
+            for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
+            document.write(m);
+          </script>
+          <noscript>You must enable JavaScript to see this text.</noscript>
+        </p>
+        <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+      </footer>
+    </div>
 
-        <!-- New Domains Tracker -->
-        <div class="project-card">
-          <img src="/media/icons8-earth-globe-80.png" alt="Domains Tracker Icon" />
-          <a href="https://github.com/chrisjbawden/newly-registered-domains-tracker" target="_blank">
-            New Domains Tracker
-          </a>
-        </div>
-
-        <!-- Blog -->
-        <div class="project-card">
-          <img src="/media/icons8-blog-80.png" alt="Blog Icon" />
-          <a href="https://github.com/chrisjbawden/blogs" target="_blank">
-            Blog
-          </a>
-        </div>
-
-        <!-- MD5 Generator -->
-        <div class="project-card">
-          <img src="/media/icons8-hash-80.png" alt="MD5 Icon" />
-          <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank">
-            MD5 Generator
-          </a>
-        </div>
-
-        <!-- Placeholder / Coming Soon -->
-        <div class="project-card">
-          <img src="/media/icons8-security-lock-80.png" alt="Coming Soon Icon" />
-          <span>Coming Soon</span>
-        </div>
-
-      </div>
-
-      <hr style="margin-top: 60px;">
-
-      <div style="text-align: center; padding-top: 30px;">
-        <a href="https://github.com/chrisjbawden" target="_blank">
-          <strong>View my GitHub Profile</strong>
-        </a>
-      </div>
-    </main>
-
-    <footer>
-      <p>
-        <span>Projects maintained by </span>
-        <script>
-          var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
-          var m = "";
-          for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
-          document.write(m);
-        </script>
-        <noscript>You must enable JavaScript to see this text.</noscript>
-      </p>
-      <p><small>Hosted with GitHub Pages — <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">Instructions</a></small></p>
-    </footer>
-  </div>
-
-  <script src="/javascripts/scale.fix.js"></script>
-</body>
-
+    <script src="/javascripts/scale.fix.js"></script>
+  </body>
 </html>
