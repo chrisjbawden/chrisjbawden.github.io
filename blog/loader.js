@@ -21,11 +21,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
 
   try {
-    const postFiles = [
-      "wifi-password.md",
-      "browser-mining.md",
-      "adobe-attack.md"
-    ];
+    const postFiles = await fetch("/blog/posts/index.json").then(res => res.json());
+
 
     for (const file of postFiles) {
       const path = `/blog/posts/${file}`;
