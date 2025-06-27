@@ -94,16 +94,27 @@
 
 <body>
   <div class="wrapper">
-    <header>
-      <div id="back-arrow">
-        <a href="/index.html">BACK</a>
-      </div>
-      <div id="main-menu">
-        <p>Quick links</p>
-        <a href="/portfolio/portfolio.html">PORTFOLIO</a>
-        <a href="https://chrisjbawden.github.io/blog/blog.html">BLOG</a>
-      </div>
-    </header>
+      <div id="sidebar-placeholder"></div>
+
+
+      <script>
+        fetch('/sidebar.html')
+          .then(res => res.text())
+          .then(html => {
+            const container = document.getElementById('sidebar-placeholder');
+            container.innerHTML = html;
+      
+            // Hide the link to the current page
+            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+            const links = container.querySelectorAll('#main-menu a');
+            links.forEach(link => {
+              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+              if (href === currentPath) {
+                link.style.display = 'none'; // Hides the link
+              }
+            });
+          });
+      </script>
 
     <div style="margin-top:10%;">
     </div>
