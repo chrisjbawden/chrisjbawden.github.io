@@ -248,6 +248,10 @@ header ul a {
   height: 34px;
 }
 
+summary {
+  cursor: pointer;
+}
+
 header ul a:hover {
   color: #999;
 }
