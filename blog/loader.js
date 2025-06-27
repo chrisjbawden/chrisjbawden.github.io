@@ -1,4 +1,3 @@
-<script>
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
 
@@ -30,4 +29,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error(err);
   }
 });
-</script>
+
