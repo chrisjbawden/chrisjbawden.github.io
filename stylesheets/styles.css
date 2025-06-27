@@ -342,6 +342,59 @@ img {
   font-weight: bold;
 }
 
+.qr-icon-container {
+  display: none; /* hidden by default */
+  text-align: center;
+  margin-top: 20px;
+}
+
+@media (max-width: 768px) {
+  .qr-icon-container {
+    display: block;
+  }
+}
+
+/* --- Fullscreen QR Overlay --- */
+#qr-overlay {
+  display: none; /* hidden initially */
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 9999;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+#qr-content {
+  position: relative;
+  text-align: center;
+}
+
+#qr-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+/* --- Close Button --- */
+#qr-close {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  font-size: 40px;
+  color: white;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 0 12px;
+  border-radius: 50%;
+  line-height: 1;
+  font-weight: bold;
+}
+
 /* --- Responsive Tweaks --- */
 @media print, screen and (max-width: 960px) {
   div.wrapper {
