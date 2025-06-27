@@ -2,12 +2,14 @@
   {
     "link": "https://github.com/chrisjbawden/scripts-programs",
     "label": "Scripts / Programs",
-    "hover": "Various command-line tools and scripts"
+    "hover": "Various command-line tools and scripts",
+    "icon": "terminal"
   },
   {
     "link": "https://chrisjbawden.github.io/blog/bin/encode/au-encode.html",
     "label": "Snow URL Encoder",
-    "hover": "AU-specific URL encoder"
+    "hover": "AU-specific URL encoder",
+    "icon": "link"
   },
   {
     "blank": true
@@ -15,7 +17,8 @@
   {
     "link": "https://github.com/chrisjbawden/newly-registered-domains-tracker",
     "label": "New Domains Tracker",
-    "hover": "Tracks newly registered domains"
+    "hover": "Tracks newly registered domains",
+    "icon": "globe"
   },
   {
     "blank": true
@@ -23,12 +26,14 @@
   {
     "link": "https://github.com/chrisjbawden/blogs",
     "label": "Blog",
-    "hover": "Markdown-based blog posts"
+    "hover": "Markdown-based blog posts",
+    "icon": "blog"
   },
   {
     "link": "https://chrisjbawden.github.io/projects/java-md5-tool/index.html",
     "label": "MD5 Generator",
-    "hover": "Simple online MD5 tool"
+    "hover": "Simple online MD5 tool",
+    "icon": "hashtag"
   },
   {
     "blank": true
