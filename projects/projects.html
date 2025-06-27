@@ -7,25 +7,45 @@
   <link rel="stylesheet" href="/stylesheets/styles.css">
   <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
   <meta name="viewport" content="width=device-width">
-  <!-- Font Awesome CDN -->
+
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
   <style>
     .icon-container {
       text-align: center;
-      padding: 10px;
+      padding: 20px;
     }
 
     .icon-link {
       display: inline-block;
+      position: relative;
       text-align: center;
       text-decoration: none;
       color: inherit;
+      width: 80px;
+      height: 80px;
     }
 
-    .icon {
-      font-size: 40px;
-      margin-bottom: 10px;
-      display: block;
+    .icon-link .fa {
+      font-size: 80px;
+      color: #444;
+      transition: transform 0.2s ease;
+    }
+
+    .icon-link:hover .fa {
+      transform: scale(1.1);
+    }
+
+    .icon-label {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-weight: bold;
+      color: white;
+      font-size: 12px;
+      pointer-events: none;
     }
 
     .project-table {
@@ -38,12 +58,19 @@
       padding: 20px;
     }
 
-    .coming-soon {
-      font-size: 16px;
-      color: #666;
+    .coming-soon .fa {
+      font-size: 80px;
+      color: #888;
+    }
+
+    .coming-soon .icon-label {
+      color: #444;
+      top: 100%;
+      transform: translate(-50%, -10%);
     }
   </style>
 </head>
+
 <body>
   <div class="wrapper">
     <header>
@@ -106,15 +133,17 @@
 
         if (slot.blank) {
           container.innerHTML = `
-            <i class="fas fa-lock icon" title="Coming Soon"></i>
-            <div class="coming-soon"><strong>Coming Soon</strong></div>
+            <div class="coming-soon">
+              <i class="fas fa-lock"></i>
+              <div class="icon-label">Coming Soon</div>
+            </div>
           `;
         } else {
           const icon = slot.icon || "circle";
           container.innerHTML = `
             <a href="${slot.link}" class="icon-link" title="${slot.hover}" target="_blank">
-              <i class="fas fa-${icon} icon"></i>
-              <div><strong>${slot.label}</strong></div>
+              <i class="fas fa-${icon}"></i>
+              <div class="icon-label">${slot.label}</div>
             </a>
           `;
         }
