@@ -1,11 +1,11 @@
 const postFiles = [
+  "wifi-password.json",
+  "browser-mining.json",
+  "adobe-attack.json",
   "multi-tab-loader.json",
   "cs50-project.json",
   "md5-java.json",
   "zip-bomb.json",
   "snow-encoder.json",
-  "adobe-attack.json",
-  "browser-mining.json",
-  "wifi-password.json",
   "instructions.json"
 ];
