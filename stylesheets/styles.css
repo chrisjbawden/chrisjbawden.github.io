@@ -62,20 +62,18 @@ body {
 .thumbnail canvas {
   display: block;
   margin: 0 auto 10px auto;
-  width: 150px;
+  width: 100%;
   height: auto;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+  max-width: 150px; /* limits them to a reasonable size on large screens */
   transition: transform 0.2s ease;
-  aspect-ratio: 1 / 1;
-  object-fit: contain;
+  /* removed: border, box-shadow, border-radius, aspect-ratio, object-fit */
 }
 
 .thumbnail:hover img,
 .thumbnail:hover canvas {
-  transform: scale(1.05);
+  transform: scale(1.03); /* slight optional polish */
 }
+
 
 .thumbnail span,
 .thumbnail a {
