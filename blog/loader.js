@@ -1,3 +1,4 @@
+<script>
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
 
@@ -15,7 +16,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       const summary = document.createElement("summary");
       const title = file.replace(".html", "").replace(/-/g, " ");
-      summary.textContent = title.charAt(0).toUpperCase() + title.slice(1);
+      summary.textContent = title; // Use raw title, no uppercase formatting
       details.appendChild(summary);
 
       const content = document.createElement("div");
@@ -29,3 +30,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     console.error(err);
   }
 });
+</script>
