@@ -1,133 +1,130 @@
 <!doctype html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
-    <title>Chris Bawden</title>
-    <link rel="stylesheet" href="/stylesheets/styles.css">
-    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width">
-    <!-- Font Awesome CDN -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <style>
-      .icon {
-        font-size: 40px;
-        margin-bottom: 10px;
-        display: block;
-        color: #333;
-      }
-    </style>
-  </head>
-  <body>
-    <div class="wrapper">
-      <header>
-        <div id="back-arrow">
-          <a href="/index.html">BACK</a>
-        </div>
-        <div id="main-menu" style="max-height:30%;">
-          <p style="text-align:center;padding-top:10%;"> Quick links </p>
-          <div style="padding-top:5%;"></div>
-          <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a><br>
-          <a href="https://chrisjbawden.github.io/blog/blog.html"><strong>BLOG</strong></a><br>
-        </div>
-      </header>
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="chrome=1">
+  <title>Chris Bawden</title>
+  <link rel="stylesheet" href="/stylesheets/styles.css">
+  <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+  <meta name="viewport" content="width=device-width">
+  <!-- Font Awesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    .icon-container {
+      text-align: center;
+      padding: 10px;
+    }
 
-      <section style="overflow-x:auto; padding-top:10%;">
-        <table class="project-table" style="width:100%;">
-          <!-- row 1 -->
-          <tr>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-terminal icon"></i>
-                <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank">SCRIPTS / PROGRAMS</a>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-link icon"></i>
-                <a href="https://chrisjbawden.github.io/blog/bin/encode/au-encode.html" target="_blank">SNOW URL Encoder</a>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-lock icon"></i>
-                <strong>Coming Soon</strong>
-              </div>
-            </th>
-          </tr>
+    .icon-link {
+      display: inline-block;
+      text-align: center;
+      text-decoration: none;
+      color: inherit;
+    }
 
-          <!-- row 2 -->
-          <tr>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-globe icon"></i>
-                <a href="https://github.com/chrisjbawden/newly-registered-domains-tracker" target="_blank">New Domains Tracker</a>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-lock icon"></i>
-                <strong>Coming Soon</strong>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-blog icon"></i>
-                <a href="https://github.com/chrisjbawden/blogs" target="_blank">BLOG</a>
-              </div>
-            </th>
-          </tr>
+    .icon {
+      font-size: 40px;
+      margin-bottom: 10px;
+      display: block;
+    }
 
-          <!-- row 3 -->
-          <tr>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-hashtag icon"></i>
-                <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank">MD5 Generator</a>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-lock icon"></i>
-                <strong>Coming Soon</strong>
-              </div>
-            </th>
-            <th style="min-width:30%; min-height:30%;">
-              <div align="middle">
-                <i class="fas fa-lock icon"></i>
-                <strong>Coming Soon</strong>
-              </div>
-            </th>
-          </tr>
-        </table>
+    .project-table {
+      width: 100%;
+    }
 
-        <hr style="margin-top: 40px;">
+    .project-table th {
+      min-width: 30%;
+      min-height: 30%;
+      padding: 20px;
+    }
 
-        <div style="text-align: center; padding-top: 30px;">
-          <a href="https://github.com/chrisjbawden" target="_blank">
-            <strong>View my GitHub Profile</strong>
-          </a>
-        </div>
-      </section>
+    .coming-soon {
+      font-size: 16px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div id="back-arrow">
+        <a href="/index.html">BACK</a>
+      </div>
+      <div id="main-menu" style="max-height:30%;">
+        <p style="text-align:center;padding-top:10%;"> Quick links </p>
+        <div style="padding-top:5%;"></div>
+        <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a><br>
+        <a href="https://chrisjbawden.github.io/blog/blog.html"><strong>BLOG</strong></a><br>
+      </div>
+    </header>
 
-      <footer>
-        <p>
-          <span>Projects maintained by </span>
-          <script>
-            var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
-            var m = "";
-            for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
-            document.write(m);
-          </script>
-          <noscript>You must enable JavaScript to see this text.</noscript>
-        </p>
-        <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
-      </footer>
-    </div>
+    <section style="overflow-x:auto; padding-top:10%;">
+      <table class="project-table"></table>
 
-    <script src="/javascripts/scale.fix.js"></script>
-  </body>
+      <hr style="margin-top: 40px;">
+
+      <div style="text-align: center; padding-top: 30px;">
+        <a href="https://github.com/chrisjbawden" target="_blank">
+          <strong>View my GitHub Profile</strong>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        <span>Projects maintained by </span>
+        <script>
+          var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+          var m = "";
+          for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
+          document.write(m);
+        </script>
+        <noscript>You must enable JavaScript to see this text.</noscript>
+      </p>
+      <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+    </footer>
+  </div>
+
+  <script src="/javascripts/scale.fix.js"></script>
+
+  <script>
+    async function loadProjects() {
+      const table = document.querySelector('.project-table');
+      const response = await fetch('/projects/index.json');
+      const data = await response.json();
+
+      let row;
+      data.forEach((slot, index) => {
+        if (index % 3 === 0) {
+          row = document.createElement('tr');
+          table.appendChild(row);
+        }
+
+        const cell = document.createElement('th');
+        const container = document.createElement('div');
+        container.className = 'icon-container';
+
+        if (slot.blank) {
+          container.innerHTML = `
+            <i class="fas fa-lock icon" title="Coming Soon"></i>
+            <div class="coming-soon"><strong>Coming Soon</strong></div>
+          `;
+        } else {
+          const icon = slot.icon || "circle";
+          container.innerHTML = `
+            <a href="${slot.link}" class="icon-link" title="${slot.hover}" target="_blank">
+              <i class="fas fa-${icon} icon"></i>
+              <div><strong>${slot.label}</strong></div>
+            </a>
+          `;
+        }
+
+        cell.appendChild(container);
+        row.appendChild(cell);
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", loadProjects);
+  </script>
+</body>
 </html>
