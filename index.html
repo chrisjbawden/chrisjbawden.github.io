@@ -56,6 +56,34 @@
 	      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
 	    </a>
 	  </div>
+	<!-- QR Code Icon (mobile only) -->
+	<div class="qr-icon-container">
+	  <img src="media/qr-icon.png" alt="QR Code" id="qr-trigger" style="width: 82px; height: 82px; cursor: pointer;">
+	</div>
+	
+	<!-- QR Code Overlay -->
+	<div id="qr-overlay">
+	  <div id="qr-content">
+	    <span id="qr-close">&times;</span>
+	    <img src="media/qr-code.png" alt="QR Code" id="qr-image">
+	  </div>
+	</div>
+	<script>
+	  document.getElementById('qr-trigger')?.addEventListener('click', () => {
+	    document.getElementById('qr-overlay').style.display = 'flex';
+	  });
+	
+	  document.getElementById('qr-close')?.addEventListener('click', () => {
+	    document.getElementById('qr-overlay').style.display = 'none';
+	  });
+	
+	  // Optional: allow tapping outside image to close
+	  document.getElementById('qr-overlay')?.addEventListener('click', (e) => {
+	    if (e.target.id === 'qr-overlay') {
+	      document.getElementById('qr-overlay').style.display = 'none';
+	    }
+	  });
+	</script>
 	</section>
       <footer>
         <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
