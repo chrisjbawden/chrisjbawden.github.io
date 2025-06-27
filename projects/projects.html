@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
   <meta name="viewport" content="width=device-width">
 
-  <!-- Font Awesome for icons -->
+  <!-- Font Awesome CDN for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
@@ -19,16 +19,13 @@
 
     .icon-link {
       display: inline-block;
-      position: relative;
       text-align: center;
       text-decoration: none;
       color: inherit;
-      width: 80px;
-      height: 80px;
     }
 
     .icon-link .fa {
-      font-size: 80px;
+      font-size: 100px;
       color: #444;
       transition: transform 0.2s ease;
     }
@@ -38,14 +35,24 @@
     }
 
     .icon-label {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      display: block;
+      margin-top: 12px;
       font-weight: bold;
-      color: white;
-      font-size: 12px;
-      pointer-events: none;
+      color: #222;
+      font-size: 14px;
+    }
+
+    .coming-soon .fa {
+      font-size: 64px;
+      color: #888;
+    }
+
+    .coming-soon .icon-label {
+      display: block;
+      margin-top: 8px;
+      font-weight: bold;
+      font-size: 14px;
+      color: #666;
     }
 
     .project-table {
@@ -56,17 +63,6 @@
       min-width: 30%;
       min-height: 30%;
       padding: 20px;
-    }
-
-    .coming-soon .fa {
-      font-size: 80px;
-      color: #888;
-    }
-
-    .coming-soon .icon-label {
-      color: #444;
-      top: 100%;
-      transform: translate(-50%, -10%);
     }
   </style>
 </head>
