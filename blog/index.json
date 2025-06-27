@@ -1,7 +1,11 @@
-[
-  "wifi-password.md",
-  "browser-mining.md",
-  "adobe-attack.md",
-  "cs50-project.md",
-  "md5-java.md"
-]
+const postFiles = [
+  "multi-tab-loader.json",
+  "cs50-project.json",
+  "md5-java.json",
+  "zip-bomb.json",
+  "snow-encoder.json",
+  "adobe-attack.json",
+  "browser-mining.json",
+  "wifi-password.json",
+  "instructions.json"
+];
