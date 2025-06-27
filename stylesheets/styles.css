@@ -400,6 +400,12 @@ img {
   font-weight: bold;
 }
 
+@media (max-width: 768px) {
+  .scripts-icon-container {
+    display: none;
+  }
+}
+
 /* --- Responsive Tweaks --- */
 @media print, screen and (max-width: 960px) {
   div.wrapper {
