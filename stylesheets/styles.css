@@ -13,6 +13,10 @@ body {
   margin-bottom: 30px;
 }
 
+#sidebar-placeholder a {
+  margin-top: 30px;
+}
+
 #main-menu {
   text-align: center;
   padding: 20px 0;
