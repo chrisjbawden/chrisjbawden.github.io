@@ -18,6 +18,51 @@ body {
   padding: 20px 0;
 }
 
+/* Thumbnail grid */
+.thumbnail-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 20px;
+  justify-items: center;
+  margin-bottom: 40px;
+  padding: 0 10px;
+}
+
+/* Each thumbnail wrapper */
+.thumbnail {
+  text-align: center;
+  max-width: 160px;
+}
+
+/* Thumbnail images/canvas */
+.thumbnail img,
+.thumbnail canvas {
+  display: block;
+  margin: 0 auto 10px auto;
+  width: 150px;
+  height: auto;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Link and label below thumbnails */
+.thumbnail span,
+.thumbnail a {
+  display: block;
+  font-size: 0.9em;
+  color: #333;
+  text-decoration: none;
+  word-wrap: break-word;
+}
+
+.category-title {
+  text-align: center;
+  margin-top: 40px;
+  margin-bottom: 20px;
+}
+
+
 #main-menu a {
   display: inline-block;
   margin: 0 10px;
