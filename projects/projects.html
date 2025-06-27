@@ -8,51 +8,67 @@
   <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
   <meta name="viewport" content="width=device-width">
 
-  <!-- Font Awesome CDN for icons -->
+  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
   <style>
     .icon-container {
       text-align: center;
       padding: 20px;
+      position: relative;
+      height: 160px;
     }
 
     .icon-link {
       display: inline-block;
-      text-align: center;
+      width: 120px;
+      height: 120px;
+      position: relative;
       text-decoration: none;
       color: inherit;
     }
 
     .icon-link .fa {
-      font-size: 100px;
+      font-size: 120px;
       color: #444;
-      transition: transform 0.2s ease;
-    }
-
-    .icon-link:hover .fa {
-      transform: scale(1.1);
     }
 
     .icon-label {
-      display: block;
-      margin-top: 12px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-weight: bold;
-      color: #222;
       font-size: 14px;
+      color: white;
+      text-shadow: 0 0 3px #000;
+      pointer-events: none;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    .coming-soon {
+      position: relative;
+      display: inline-block;
+      width: 80px;
+      height: 80px;
     }
 
     .coming-soon .fa {
-      font-size: 64px;
+      font-size: 80px;
       color: #888;
     }
 
     .coming-soon .icon-label {
-      display: block;
-      margin-top: 8px;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
       font-weight: bold;
-      font-size: 14px;
-      color: #666;
+      font-size: 13px;
+      color: #444;
+      white-space: nowrap;
+      text-align: center;
     }
 
     .project-table {
@@ -138,8 +154,8 @@
           const icon = slot.icon || "circle";
           container.innerHTML = `
             <a href="${slot.link}" class="icon-link" title="${slot.hover}" target="_blank">
-              <i class="fas fa-${icon}"></i>
               <div class="icon-label">${slot.label}</div>
+              <i class="fas fa-${icon}"></i>
             </a>
           `;
         }
