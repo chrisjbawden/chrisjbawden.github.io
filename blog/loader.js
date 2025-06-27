@@ -1,28 +1,16 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
 
-  // List of HTML files (each file = 1 blog post)
-  const postFiles = [
-    "multi-tab-loader.html",
-    "cs50-project.html",
-    "md5-java.html",
-    "zip-bomb.html",
-    "snow-encoder.html",
-    "adobe-attack.html",
-    "browser-mining.html",
-    "wifi-password.html",
-    "instructions.html"
-  ];
+  try {
+    const postFiles = await fetch('/blog/posts/index.json').then(res => res.json());
 
-  for (const file of postFiles) {
-    try {
+    for (const file of postFiles) {
       const path = `/blog/posts/${file}`;
       const html = await fetch(path).then(res => {
         if (!res.ok) throw new Error(`Failed to fetch ${path}`);
         return res.text();
       });
 
-      // Create <details> with <summary> and post content
       const details = document.createElement("details");
 
       const summary = document.createElement("summary");
@@ -35,8 +23,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       details.appendChild(content);
 
       container.appendChild(details);
-    } catch (err) {
-      console.error(`Error loading ${file}:`, err);
     }
+  } catch (err) {
+    container.innerHTML = "<p>Failed to load blog posts.</p>";
+    console.error(err);
   }
 });
