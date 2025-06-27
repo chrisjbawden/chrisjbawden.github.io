@@ -36,10 +36,12 @@
 
         /* Flexbox container for thumbnails */
         .thumbnail-container {
-            display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
-            gap: 20px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+          max-width: 600px; /* 3 × ~200px max icon width including gap */
+          margin: 0 auto;
+          gap: 20px;
+          justify-items: center;
         }
 
         .thumbnail {
