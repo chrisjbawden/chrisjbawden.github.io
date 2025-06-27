@@ -1,0 +1,39 @@
+[
+  {
+    "link": "https://github.com/chrisjbawden/scripts-programs",
+    "label": "Scripts / Programs",
+    "hover": "Various command-line tools and scripts"
+  },
+  {
+    "link": "https://chrisjbawden.github.io/blog/bin/encode/au-encode.html",
+    "label": "Snow URL Encoder",
+    "hover": "AU-specific URL encoder"
+  },
+  {
+    "blank": true
+  },
+  {
+    "link": "https://github.com/chrisjbawden/newly-registered-domains-tracker",
+    "label": "New Domains Tracker",
+    "hover": "Tracks newly registered domains"
+  },
+  {
+    "blank": true
+  },
+  {
+    "link": "https://github.com/chrisjbawden/blogs",
+    "label": "Blog",
+    "hover": "Markdown-based blog posts"
+  },
+  {
+    "link": "https://chrisjbawden.github.io/projects/java-md5-tool/index.html",
+    "label": "MD5 Generator",
+    "hover": "Simple online MD5 tool"
+  },
+  {
+    "blank": true
+  },
+  {
+    "blank": true
+  }
+]
