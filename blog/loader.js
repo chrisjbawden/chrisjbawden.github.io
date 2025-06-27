@@ -1,42 +1,42 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
 
-  try {
-    const postFiles = [
-      "wifi-password.json",
-      "browser-mining.json",
-      "adobe-attack.json"
-    ];
+  // List of HTML files (each file = 1 blog post)
+  const postFiles = [
+    "multi-tab-loader.html",
+    "cs50-project.html",
+    "md5-java.html",
+    "zip-bomb.html",
+    "snow-encoder.html",
+    "adobe-attack.html",
+    "browser-mining.html",
+    "wifi-password.html",
+    "instructions.html"
+  ];
 
-    for (const file of postFiles) {
+  for (const file of postFiles) {
+    try {
       const path = `/blog/posts/${file}`;
-      const post = await fetch(path).then(res => {
+      const html = await fetch(path).then(res => {
         if (!res.ok) throw new Error(`Failed to fetch ${path}`);
-        return res.json();
+        return res.text();
       });
 
+      // Create <details> with <summary> and post content
       const details = document.createElement("details");
+
       const summary = document.createElement("summary");
-      summary.textContent = post.title || file;
+      const title = file.replace(".html", "").replace(/-/g, " ");
+      summary.textContent = title.charAt(0).toUpperCase() + title.slice(1);
       details.appendChild(summary);
 
       const content = document.createElement("div");
-      content.innerHTML = post.body
-        .replace(/\n/g, "<br>")
-        .replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank">$1</a>');
-
+      content.innerHTML = html;
       details.appendChild(content);
 
-      if (post.link) {
-        const link = document.createElement("p");
-        link.innerHTML = `<a href="${post.link}" target="_blank">Download</a>`;
-        details.appendChild(link);
-      }
-
       container.appendChild(details);
+    } catch (err) {
+      console.error(`Error loading ${file}:`, err);
     }
-  } catch (err) {
-    container.innerHTML = "<p>Failed to load blog posts.</p>";
-    console.error(err);
   }
 });
