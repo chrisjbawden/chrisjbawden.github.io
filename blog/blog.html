@@ -12,18 +12,32 @@
     <![endif]-->
 
     <style>
+      /* Clean spacing between blog entries */
+      #blog-posts details {
+        margin-bottom: 24px;
+      }
+
+      /* Style the summary text and remove outline highlight */
       details summary {
         font-weight: bold;
         list-style: none;
         cursor: pointer;
         position: relative;
         padding-left: 24px;
+        font-size: 1.1em;
+        user-select: none;
         outline: none;
-        background: none;
         border: none;
+        background: none;
       }
 
-      details summary::before {
+      /* Remove default triangle marker in some browsers */
+      summary::-webkit-details-marker {
+        display: none;
+      }
+
+      /* Custom arrow */
+      summary::before {
         content: '▶';
         position: absolute;
         left: 0;
@@ -35,9 +49,16 @@
         content: '▼';
       }
 
-      details summary:hover {
+      /* Hover style */
+      summary:hover {
         background: none;
         border-radius: 0;
+      }
+
+      /* Optional: Style the content inside the details block */
+      #blog-posts p, #blog-posts div {
+        font-size: 0.95em;
+        line-height: 1.6;
       }
 
       .video-wrapper {
@@ -63,6 +84,7 @@
     </script>
     <script src="/blog/loader.js"></script>
   </head>
+
   <body>
     <div class="wrapper">
       <header>
@@ -79,13 +101,18 @@
 
       <br>
 
-<section id="blog-posts">
-  <!-- Blog posts will be dynamically loaded here -->
-</section>
+      <section id="blog-posts">
+        <!-- Blog posts will be dynamically loaded here -->
+      </section>
 
       <footer>
-        <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
-        <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+        <p><span>Projects maintained by </span>
+        <script>
+          var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+          var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);
+          document.write(m);
+        </script><noscript>You must enable JavaScript to see this text.</noscript></p>
+        <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
       </footer>
     </div>
     <script src="/javascripts/scale.fix.js"></script>
