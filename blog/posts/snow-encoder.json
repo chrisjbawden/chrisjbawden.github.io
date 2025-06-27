@@ -1,0 +1,4 @@
+{
+  "title": "ServiceNow URL Encoder",
+  "body": "You know how sometimes the links from ServiceNow (SNOW) won't work when you put them into a Word document? This is often due to Word\u2019s encoding. While a registry fix exists, it's not practical for external recipients.\n\nThis tool modifies the URL so it works across Word. Copy, paste, done.\n\nCheck it out [here](https://chrisjbawden.github.io/blog/bin/encode/encode.html)."
+}
