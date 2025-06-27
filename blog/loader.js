@@ -25,7 +25,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 
     for (const file of postFiles) {
-      const path = `/blog/posts/${file}`;
+      const path = `https://raw.githubusercontent.com/chrisjbawden/chrisjbawden.github.io/refs/heads/master/blog/posts/${file}`;
       console.log(`Loading ${path}`);
       const raw = await fetch(path).then(res => {
         if (!res.ok) throw new Error(`Failed to fetch ${path}`);
