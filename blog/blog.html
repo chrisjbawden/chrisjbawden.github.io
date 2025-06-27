@@ -6,7 +6,8 @@
     <title>Chris Bawden</title>
     <link rel="stylesheet" href="/stylesheets/styles.css">
     <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
-    <meta name="viewport" content="width=device-width">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -20,47 +21,43 @@
 
   <body>
 
-      <div id="sidebar-placeholder"></div>
+    <div id="sidebar-placeholder"></div>
 
+    <script>
+      fetch('/sidebar.html')
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById('sidebar-placeholder');
+          container.innerHTML = html;
 
-      <script>
-        fetch('/sidebar.html')
-          .then(res => res.text())
-          .then(html => {
-            const container = document.getElementById('sidebar-placeholder');
-            container.innerHTML = html;
-      
-            // Hide the link to the current page
-            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
-            const links = container.querySelectorAll('#main-menu a');
-            links.forEach(link => {
-              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
-              if (href === currentPath) {
-                link.style.display = 'none'; // Hides the link
-              }
-            });
+          // Hide the link to the current page
+          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+          const links = container.querySelectorAll('#main-menu a');
+          links.forEach(link => {
+            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+            if (href === currentPath) {
+              link.style.display = 'none'; // Hides the link
+            }
           });
-      </script>
+        });
+    </script>
 
-      <br>
+    <section id="blog-posts">
+      <!-- Blog posts will be dynamically loaded here -->
+    </section>
 
-    <div style="margin-top: 10%;">
-    </div>
-
-      <section id="blog-posts">
-        <!-- Blog posts will be dynamically loaded here -->
-      </section>
-
-      <footer>
-        <p><span>Projects maintained by </span>
+    <footer>
+      <p><span>Projects maintained by </span>
         <script>
           var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
           var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);
           document.write(m);
-        </script><noscript>You must enable JavaScript to see this text.</noscript></p>
-        <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
-      </footer>
-    </div>
+        </script>
+        <noscript>You must enable JavaScript to see this text.</noscript>
+      </p>
+      <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+    </footer>
+
     <script src="/javascripts/scale.fix.js"></script>
   </body>
 </html>
