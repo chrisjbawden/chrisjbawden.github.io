@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <title>File Hash Tool | Chris Bawden</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  
+
   <!-- GitHub-style CSS -->
   <style>
     body {
@@ -20,7 +20,7 @@
       padding: 40px 20px;
       background: #fff;
       border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.05);
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
     }
 
     h1 {
@@ -28,30 +28,56 @@
       color: #24292e;
     }
 
+    p {
+      text-align: center;
+      color: #555;
+    }
+
+    /* Styled file input */
+    .file-input-wrapper {
+      text-align: center;
+      margin: 20px 0;
+    }
+
     input[type="file"] {
-      margin-top: 20px;
+      padding: 10px;
+      border: 2px dashed #ccc;
+      border-radius: 6px;
+      background: #fafafa;
+      cursor: pointer;
+    }
+
+    /* Buttons layout */
+    .button-group {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
     }
 
     button {
-      margin: 10px 10px 0 0;
-      padding: 10px 16px;
-      font-size: 14px;
+      padding: 12px 20px;
+      font-size: 15px;
       background: #2ea44f;
       color: white;
       border: none;
       border-radius: 6px;
       cursor: pointer;
+      min-width: 160px;
     }
 
     button:hover {
       background: #22863a;
     }
 
+    /* Output styling */
     pre {
       background: #f6f8fa;
       padding: 20px;
       border-radius: 6px;
-      white-space: pre-wrap;
+      white-space: pre-wrap; /* allow line wrapping */
+      word-wrap: break-word;
       overflow-x: auto;
       font-family: monospace;
     }
@@ -77,11 +103,14 @@
     <h1>File Hash Tool</h1>
     <p>Select a file to compute multiple hash values. All hashing is done in your browser.</p>
 
-    <input id="file-input" type="file">
-    <br>
-    <button onclick="generateHashes()">Generate Hashes</button>
-    <button onclick="clearOutput()">Clear Output</button>
-    <button onclick="window.location.reload()">Refresh Page</button>
+    <div class="file-input-wrapper">
+      <input id="file-input" type="file">
+    </div>
+
+    <div class="button-group">
+      <button onclick="generateHashes()">Generate Hashes</button>
+      <button onclick="clearOutput()">Clear Output</button>
+    </div>
 
     <pre id="output"></pre>
   </div>
