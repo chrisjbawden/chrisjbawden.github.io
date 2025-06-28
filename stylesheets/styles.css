@@ -28,6 +28,7 @@ body {
   text-decoration: none;
   font-weight: bold;
   color: #333;
+  padding-top: 20px;
 }
 
 #main-menu a:hover {
