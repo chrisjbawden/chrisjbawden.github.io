@@ -12,63 +12,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 
 
-</head>
-
-<body>
-  <div class="wrapper">
-      <div id="sidebar-placeholder"></div>
-
-
-      <script>
-        fetch('/sidebar.html')
-          .then(res => res.text())
-          .then(html => {
-            const container = document.getElementById('sidebar-placeholder');
-            container.innerHTML = html;
-      
-            // Hide the link to the current page
-            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
-            const links = container.querySelectorAll('#main-menu a');
-            links.forEach(link => {
-              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
-              if (href === currentPath) {
-                link.style.display = 'none'; // Hides the link
-              }
-            });
-          });
-      </script>
-
-    
-    </div>
-    <div style="margin-top:10%;">
-
-    <section>
-      <div class="project-grid" id="project-grid"></div>
-
-      <hr style="margin-top: 40px;">
-
-      <div style="text-align: center; padding-top: 30px;">
-        <a href="https://github.com/chrisjbawden" target="_blank">
-          <strong>View my GitHub Profile</strong>
-        </a>
-      </div>
-    </section>
-
-    <footer>
-      <p>
-        <span>Projects maintained by </span>
-        <script>
-          var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
-          var m = "";
-          for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
-          document.write(m);
-        </script>
-        <noscript>You must enable JavaScript to see this text.</noscript>
-      </p>
-      <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
-    </footer>
-  </div>
-
   <script>
     async function loadProjects() {
       const grid = document.getElementById('project-grid');
@@ -101,5 +44,64 @@
 
     document.addEventListener("DOMContentLoaded", loadProjects);
   </script>
+
+
+</head>
+
+<body>
+  <div class="wrapper">
+      <div id="sidebar-placeholder"></div>
+
+
+      <script>
+        fetch('/sidebar.html')
+          .then(res => res.text())
+          .then(html => {
+            const container = document.getElementById('sidebar-placeholder');
+            container.innerHTML = html;
+      
+            // Hide the link to the current page
+            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+            const links = container.querySelectorAll('#main-menu a');
+            links.forEach(link => {
+              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+              if (href === currentPath) {
+                link.style.display = 'none'; // Hides the link
+              }
+            });
+          });
+      </script>
+
+    
+    
+    <div style="margin-top:10%;">
+
+    <section>
+      <div class="project-grid" id="project-grid"></div>
+
+      <hr style="margin-top: 40px;">
+
+      <div style="text-align: center; padding-top: 30px;">
+        <a href="https://github.com/chrisjbawden" target="_blank">
+          <strong>View my GitHub Profile</strong>
+        </a>
+      </div>
+    </section>
+
+    <footer>
+      <p>
+        <span>Projects maintained by </span>
+        <script>
+          var s = "=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+          var m = "";
+          for (var i = 0; i < s.length; i++) m += String.fromCharCode(s.charCodeAt(i) - 1);
+          document.write(m);
+        </script>
+        <noscript>You must enable JavaScript to see this text.</noscript>
+      </p>
+      <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+    </footer>
+  </div>
+
 </body>
 </html>
