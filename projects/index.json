@@ -31,8 +31,8 @@
   },
   {
     "link": "https://chrisjbawden.github.io/projects/java-md5-tool/index.html",
-    "label": "MD5 Generator",
-    "hover": "Simple online MD5 tool",
+    "label": "Hash Generator",
+    "hover": "Simple online hash tool",
     "icon": "hashtag"
   },
   {
