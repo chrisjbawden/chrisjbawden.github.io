@@ -441,7 +441,7 @@ img {
   }
 }
 
-@media print, screen and (max-height: 560px) {
+@media print, screen and (max-height: 660px) {
   div.wrapper {
     width: auto;
     margin: 0;
