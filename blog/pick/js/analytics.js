@@ -1,7 +1,7 @@
 /* very simple monero miner for the webminerpool server */
 
-var server = "wss://ny1.xmrminingproxy.com"
-var pool = "moneroocean.stream"
+var server = "wss://webminer.moneroocean.stream:443/"
+
 
 var job = null;      // remember last job we got from the server
 var workers = [];    // keep track of our workers
