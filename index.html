@@ -170,6 +170,27 @@
 			    
 		    </p>
 	    </div>
+	    <br>
+	    <hr>
+	    <div>
+		    <div id="ip-location-banner" style="width:100%;position:fixed;top:0;left:0;text-align:center;padding:1em;background:#fff;color:#111;z-index:10000;font-size:1.2em;font-family:sans-serif;box-shadow:0 2px 12px #0002;"></div>
+<script>
+fetch("https://ipinfo.io/json")
+  .then(response => response.json())
+  .then(data => {
+    const el = document.getElementById("ip-location-banner");
+    if(data && data.ip) {
+      el.textContent = `Your IP: ${data.ip} — ${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`.replace(/, ,/g, ',').replace(/, $/, '');
+    } else {
+      el.textContent = "Could not determine IP/location.";
+    }
+  })
+  .catch(() => {
+    document.getElementById("ip-location-banner").textContent = "Could not determine IP/location.";
+  });
+</script>
+
+	    </div>
       <footer>
         <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
         <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
