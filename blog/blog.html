@@ -16,29 +16,49 @@
 
     <script src="/blog/loader.js"></script>
 
-    <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // Only proceed if there is a hash in the URL
-      if (window.location.hash) {
-        // Remove the "#" and find the target element
-        const targetId = window.location.hash.slice(1);
-        const target = document.getElementById(targetId);
-    
-        if (target) {
-          // Traverse up the DOM tree
-          let parent = target.parentElement;
-          while (parent) {
-            if (parent.tagName && parent.tagName.toLowerCase() === "details") {
-              parent.open = true;
-            }
-            parent = parent.parentElement;
-          }
-          // Optional: scroll to the target, now that it's visible
-          target.scrollIntoView({behavior: "smooth", block: "center"});
+<script>
+(function() {
+  function openDetailsForHashTarget() {
+    if (!window.location.hash) return;
+    const targetId = window.location.hash.slice(1);
+    const target = document.getElementById(targetId);
+    if (target) {
+      // Open all parent <details> elements
+      let parent = target.parentElement;
+      let opened = false;
+      while (parent) {
+        if (parent.tagName && parent.tagName.toLowerCase() === "details") {
+          parent.open = true;
+          opened = true;
         }
+        parent = parent.parentElement;
       }
-    });
-    </script>
+      // Only scroll if a details was opened (prevents double-scroll glitch)
+      if (opened) {
+        setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
+      }
+    }
+  }
+
+  // Run on DOMContentLoaded (may miss if content loads later)
+  document.addEventListener("DOMContentLoaded", function() {
+    // Try multiple times for dynamic content (like blog posts loaded after page load)
+    let tries = 0;
+    function tryOpen() {
+      openDetailsForHashTarget();
+      tries++;
+      if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
+        setTimeout(tryOpen, 200); // Keep retrying for up to 4 seconds
+      }
+    }
+    tryOpen();
+  });
+
+  // Also run when the hash changes (e.g., user clicks an in-page link)
+  window.addEventListener("hashchange", openDetailsForHashTarget);
+})();
+</script>
+
   </head>
 
   <body>
