@@ -2,10 +2,26 @@
 <br>
 <p>Sorry just going to use this space for my CS50 Project submission.</p>
 <br>
-<div style="width: 80%;">
+<div style="width: 80%; margin: 0 auto; text-align: center;">
   <!-- Button to load the video -->
-  <button id="loadVideoBtn" style="padding: 1em 2em; font-size: 1.2em; cursor: pointer;">
-    Load Video
+  <button
+    id="loadVideoBtn"
+    style="
+      padding: 1.2em 2.4em;
+      font-size: 1.3em;
+      cursor: pointer;
+      border-radius: 2em;
+      border: none;
+      background: linear-gradient(90deg, #3399ff, #66ccff);
+      color: #fff;
+      font-weight: 600;
+      box-shadow: 0 4px 16px #3399ff33;
+      transition: background 0.3s, box-shadow 0.3s;
+      margin: 2em auto;
+      display: inline-block;
+    "
+    >
+    ▶️ Load Video
   </button>
   <!-- Container for the video -->
   <div id="videoContainer"></div>
@@ -13,13 +29,17 @@
 
 <script>
 document.getElementById('loadVideoBtn').onclick = function() {
-  // Hide the button after clicking
-  this.style.display = 'none';
+  // Remove the button entirely
+  this.remove();
 
   // Create the video element
   var video = document.createElement('video');
   video.controls = true;
-  video.style.width = '100%';
+  video.style.width = "100%";
+  video.style.maxWidth = "640px";
+  video.style.margin = "2em auto 0 auto";
+  video.style.display = "block";
+  video.poster = "https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/OOjs_UI_icon_video.svg/512px-OOjs_UI_icon_video.svg.png"; // optional poster
 
   // Create the source element
   var source = document.createElement('source');
