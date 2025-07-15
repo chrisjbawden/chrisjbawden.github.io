@@ -16,6 +16,74 @@
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
+
+	  <script>
+(function() {
+  let buffer = "";
+  let overlay = null;
+  let timer = null;
+
+  // Replace with your own MP4 link!
+  const mp4Url = "media/error.mp4";
+
+  function showVideoOverlay() {
+    // Remove existing overlay if needed
+    if (overlay) overlay.remove();
+
+    // Create overlay div
+    overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "#000";
+    overlay.style.zIndex = "9999";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.transition = "opacity 0.5s";
+
+    // Create video element
+    const video = document.createElement("video");
+    video.src = mp4Url;
+    video.autoplay = true;
+    video.muted = true; // Avoids browser autoplay restrictions
+    video.loop = false;
+    video.controls = false;
+    video.style.maxWidth = "100vw";
+    video.style.maxHeight = "100vh";
+    video.style.boxShadow = "0 0 32px #000";
+    video.playsInline = true;
+
+    overlay.appendChild(video);
+    document.body.appendChild(overlay);
+
+    // Play the video (for some browsers)
+    video.play();
+
+    // Remove after 10 seconds
+    timer = setTimeout(() => {
+      overlay.style.opacity = "0";
+      setTimeout(() => { overlay.remove(); overlay = null; }, 500);
+    }, 10000);
+  }
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key.length === 1) {
+      buffer += e.key.toLowerCase();
+      if (buffer.length > 8) buffer = buffer.slice(-8);
+
+      if (buffer.endsWith("password")) {
+        buffer = "";
+        if (timer) clearTimeout(timer);
+        showVideoOverlay();
+      }
+    }
+  });
+})();
+</script>
+
   </head>
   <body>
     <div class="wrapper">
