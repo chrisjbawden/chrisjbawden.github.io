@@ -1,8 +1,182 @@
 <br>
-<h3>Attack scenario - Adobe</h3>
-<p>This blog outlines a theoretical attack scenario involving Adobe Reader and embedded PDFs — purely for educational purposes.<br><br>
-The attack begins with a victim receiving an apparently legitimate PDF attachment via email. This PDF uses embedded JavaScript and auto-launch mechanisms to redirect the user to a website hosting a second-stage payload. Combined with a vulnerable version of Adobe Reader, this could enable arbitrary code execution.<br><br>
-It’s also an example of social engineering — the document claims to contain financial or HR content to provoke curiosity.<br><br>
-<a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/template.pdf">View the template PDF</a><br>
-<a href="https://github.com/chrisjbawden/chrisjbawden.github.io/blob/master/blog/bin/adobe/79693h0chh0icdaw.pdf">View the malicious PDF</a><br><br>
-⚠️ This is not a real attack — it is a proof of concept for red team exercises, awareness training, and demonstrating the need for email attachment scanning.</p>
+<br>
+
+<p>
+  This blog outlines a theoretical attack scenario involving Adobe Reader and malicious PDFs, intended for educational and awareness purposes only.
+</p>
+
+<h4>1. Initial Reconnaissance & Target Selection</h4>
+<ul>
+  <li>
+    The attacker identifies a target, such as an employee within a finance or HR department, whose curiosity is likely to be piqued by an email attachment related to their work responsibilities.
+  </li>
+</ul>
+<ul>
+  <li>
+    <strong>MITRE ATT&CK Reference:</strong>
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1598/" target="_blank">T1598 – Phishing for Information</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>2. Malicious PDF Creation</h4>
+<ul>
+  <li>
+    The attacker crafts a specially-designed PDF file that appears to be a standard business document (invoice, payroll advice, tax form, etc.).
+  </li>
+  <li>
+    The PDF is engineered to mimic a genuine Adobe Reader error message—e.g., "This document cannot be opened. Please download the latest Adobe PDF plugin to view the content."
+  </li>
+  <li>
+    The document contains embedded JavaScript (where supported) or a clickable link/button, visually styled to look like a legitimate Adobe prompt.
+  </li>
+</ul>
+<ul>
+  <li>
+    <strong>MITRE ATT&CK Reference:</strong>
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1204/002/" target="_blank">T1204.002 – Malicious File</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>3. Delivery to Target</h4>
+<ul>
+  <li>
+    The attacker sends the PDF as an email attachment to the victim. The email is crafted to appear as if it comes from a trusted party (e.g., a business partner, HR, or payroll).
+  </li>
+  <li>
+    The email subject and body reinforce the legitimacy of the attachment—e.g., "Your updated payslip" or "Action required: Invoice attached."
+  </li>
+</ul>
+<ul>
+  <li>
+    <strong>MITRE ATT&CK Reference:</strong>
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1566/" target="_blank">T1566 – Phishing</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>4. Social Engineering and User Interaction</h4>
+<ul>
+  <li>
+    When the victim opens the PDF, they see what appears to be a genuine Adobe Reader error message or warning, instructing them to download a "required update" or "missing plugin" from a provided link.
+  </li>
+  <li>
+    The link points to an attacker-controlled website that closely resembles an official Adobe download page.
+  </li>
+</ul>
+<ul>
+  <li>
+    <strong>MITRE ATT&CK Reference:</strong>
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1204/" target="_blank">T1204 – User Execution</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>5. Payload Delivery and Execution</h4>
+<ul>
+  <li>
+    The victim, seeking to resolve the (fake) error and access the content, clicks the link and downloads an executable file (".exe") from the attacker’s site.
+  </li>
+  <li>
+    This executable is a wrapper containing both a legitimate Adobe Reader installer and a hidden malicious payload (e.g., a .bat script or other malware), all packaged with an authentic-looking Adobe icon.
+  </li>
+  <li>
+    When run, the executable launches the real Adobe installer, providing plausible deniability and lowering user suspicion, but also silently executes the embedded .bat script (or any attacker-chosen code).
+  </li>
+  <li>
+    The malicious script could perform actions such as downloading further payloads, exfiltrating data, creating persistence, or opening remote access to the system—all without the user’s knowledge.
+  </li>
+</ul>
+<ul>
+  <li>
+    <strong>MITRE ATT&CK References:</strong>
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1566/001/" target="_blank">T1566.001 – Spearphishing Attachment</a>
+      </li>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1027/" target="_blank">T1027 – Obfuscated Files or Information</a>
+      </li>
+      <li>
+        <a href="https://attack.mitre.org/techniques/T1105/" target="_blank">T1105 – Ingress Tool Transfer</a>
+      </li>
+    </ul>
+  </li>
+</ul>
+
+<h4>6. Potential Impact</h4>
+<ul>
+  <li>
+    Depending on the actions of the hidden payload, the attacker may gain full control of the victim’s device, access sensitive information, or move laterally within the target’s network.
+  </li>
+  <li>
+    The attack chain combines technical exploitation (of the user’s trust and lack of endpoint protection) with social engineering and payload obfuscation.
+  </li>
+</ul>
+
+<h4>7. Mitigations & Defensive Measures</h4>
+<ul>
+  <li>
+    <strong>Email & Web Filtering:</strong>
+    Employ robust email filtering solutions that block suspicious attachments and scan for known phishing indicators. Use web proxy/filtering to block access to known malicious domains.
+  </li>
+  <li>
+    <strong>Endpoint Protection:</strong>
+    Use advanced endpoint protection that inspects file behaviour, blocks known malware signatures, and flags suspicious process execution (e.g., an installer running a batch file).
+  </li>
+  <li>
+    <strong>Application Whitelisting:</strong>
+    Enforce application control policies so only approved executables (and signed installers) can be run on endpoints.
+    <ul>
+      <li>
+        <a href="https://attack.mitre.org/mitigations/M1038/" target="_blank">M1038 – Execution Prevention</a>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <strong>Attachment Sandboxing:</strong>
+    Detonate PDF and other document attachments in a sandboxed environment to detect malicious behaviour before delivery to the end user.
+  </li>
+  <li>
+    <strong>User Awareness:</strong>
+    Conduct ongoing phishing simulation and user training. Educate users not to trust prompts to download software from unexpected sources.
+  </li>
+  <li>
+    <strong>Signature & Heuristic Detection:</strong>
+    Keep antivirus and EDR solutions up-to-date to recognise malicious PDFs, wrapper executables, and suspicious scripts.
+  </li>
+  <li>
+    <strong>Least Privilege & Patching:</strong>
+    Operate endpoints with least privilege and keep applications (including Adobe Reader) patched to mitigate exploitation of known vulnerabilities.
+  </li>
+</ul>
+
+<h4>References</h4>
+<ul>
+  <li><a href="https://attack.mitre.org/" target="_blank">MITRE ATT&CK Framework</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1598/" target="_blank">T1598 – Phishing for Information</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1566/" target="_blank">T1566 – Phishing</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1566/001/" target="_blank">T1566.001 – Spearphishing Attachment</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1204/" target="_blank">T1204 – User Execution</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1204/002/" target="_blank">T1204.002 – Malicious File</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1027/" target="_blank">T1027 – Obfuscated Files or Information</a></li>
+  <li><a href="https://attack.mitre.org/techniques/T1105/" target="_blank">T1105 – Ingress Tool Transfer</a></li>
+  <li><a href="https://attack.mitre.org/mitigations/M1038/" target="_blank">M1038 – Execution Prevention</a></li>
+</ul>
+
+<p>
+  ⚠️ This is not a real attack—this demonstration is intended for red team exercises, awareness training, and to highlight the need for vigilant email and attachment scanning practices.
+</p>
