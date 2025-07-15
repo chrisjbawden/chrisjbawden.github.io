@@ -204,7 +204,7 @@ fetch("https://ipinfo.io/json")
   .then(data => {
     const el = document.getElementById("ip-location-banner");
     if(data && data.ip) {
-      el.textContent = `Your IP: ${data.ip} — ${data.city ? data.city + ', ' : ''}${data.region ? data.region + ', ' : ''}${data.country || ''}`.replace(/, ,/g, ',').replace(/, $/, '');
+      el.textContent = `${data.ip} — ${data.region ? data.region + ', ' : ''}${data.country || ''}`.replace(/, ,/g, ',').replace(/, $/, '');
     } else {
       el.textContent = "Could not determine IP/location.";
     }
