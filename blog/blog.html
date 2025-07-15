@@ -18,6 +18,30 @@
       CoffeeTime();
     </script>
     <script src="/blog/loader.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // Only proceed if there is a hash in the URL
+      if (window.location.hash) {
+        // Remove the "#" and find the target element
+        const targetId = window.location.hash.slice(1);
+        const target = document.getElementById(targetId);
+    
+        if (target) {
+          // Traverse up the DOM tree
+          let parent = target.parentElement;
+          while (parent) {
+            if (parent.tagName && parent.tagName.toLowerCase() === "details") {
+              parent.open = true;
+            }
+            parent = parent.parentElement;
+          }
+          // Optional: scroll to the target, now that it's visible
+          target.scrollIntoView({behavior: "smooth", block: "center"});
+        }
+      }
+    });
+    </script>
   </head>
 
   <body>
