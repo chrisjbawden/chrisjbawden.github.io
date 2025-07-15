@@ -134,6 +134,7 @@ document.addEventListener('contextmenu', function(e) {
 	    </a>
 	  </div>
 	<div class="qr-icon-container">
+		<hr>
 	  <i class="fas fa-qrcode" id="qr-trigger" style="font-size: 82px; cursor: pointer;"></i>
 	</div>
 	
@@ -172,14 +173,17 @@ document.addEventListener('contextmenu', function(e) {
 			<br>
 			> ...
 		</p>
-	    <hr>
-	    <br>
-
-		    <p style="text-align: center;">
-			    dont type 'password' :P
-		    </p>
-
-	    <br>
+<span class="hide-on-mobile">
+  <hr>
+  <br>
+  <p style="text-align: center;">dont type 'password' :P</p>
+  <br>
+</span>
+		<style>
+@media (max-width: 600px) {
+  .hide-on-mobile { display: none !important; }
+}
+</style>
 	    <hr>
 
 		    <p>
