@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Moving reCAPTCHA with Timer & Redirect</title>
+<style>
+  body, html {
+    margin: 0; padding: 0; height: 100vh; overflow: hidden;
+    background: #f9f9f9;
+    font-family: Arial, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+  }
+  #captcha-box, #result-box {
+    position: absolute;
+    background: white;
+    border: 1px solid #d3d6db;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.1);
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    box-sizing: border-box;
+  }
+  #captcha-box {
+    width: 350px;
+    height: 70px;
+    cursor: pointer;
+    user-select: none;
+    transition: top 0.3s ease, left 0.3s ease;
+  }
+  #checkbox {
+    width: 24px;
+    height: 24px;
+    border: 1.5px solid #d3d6db;
+    border-radius: 2px;
+    margin-right: 12px;
+    position: relative;
+    flex-shrink: 0;
+  }
+  #checkbox.checked {
+    background: #4285f4;
+    border-color: #4285f4;
+  }
+  #checkbox.checked::after {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 3px;
+    width: 6px;
+    height: 12px;
+    border: solid white;
+    border-width: 0 3px 3px 0;
+    transform: rotate(45deg);
+  }
+  #captcha-text {
+    font-size: 16px;
+    color: #202124;
+    flex-grow: 1;
+    user-select: none;
+  }
+  #recaptcha-icon {
+    width: 40px;
+    height: 40px;
+    margin-left: 12px;
+    flex-shrink: 0;
+  }
+  /* Text below the icon */
+  #recaptcha-label {
+    font-size: 10px;
+    color: #5f6368;
+    text-align: center;
+    margin-top: 2px;
+    font-family: Arial, sans-serif;
+    user-select: none;
+  }
+  /* Container for icon + label */
+  #recaptcha-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  #result-box {
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    font-size: 18px;
+    color: #202124;
+    width: 400px;
+    height: 120px;
+    padding: 20px;
+  }
+  #result-box button {
+    margin-top: 12px;
+    padding: 8px 16px;
+    background: #4285f4;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 14px;
+    align-self: center;
+  }
+  #result-box button:hover {
+    background: #357ae8;
+  }
+</style>
+</head>
+<body>
+
+<div id="captcha-box" role="checkbox" aria-checked="false" tabindex="0" aria-label="I'm not a robot checkbox">
+  <div id="checkbox" aria-hidden="true"></div>
+  <div id="captcha-text">I'm not a robot</div>
+  <div id="recaptcha-container" aria-hidden="true">
+    <svg id="recaptcha-icon" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" fill="none" aria-hidden="true">
+      <path fill="#4285F4" d="M12 17l7-7-7-7v14z"/>
+      <path fill="#34A853" d="M18 31c2 2 4 4 6 6l7-7-13-13-7 7c2 2 4 4 7 7z"/>
+      <path fill="#F4B400" d="M36 31l-7 7c-4-4-8-8-12-12l7-7 12 12z"/>
+      <path fill="#EA4335" d="M32 36l4 4 4-4h-8z"/>
+    </svg>
+    <div id="recaptcha-label">ReCAPTCHA</div>
+  </div>
+</div>
+
+<div id="result-box" style="display:none;">
+  <div id="result-message"></div>
+  <button id="play-again-btn">Play Again</button>
+</div>
+
+<script>
+  const box = document.getElementById('captcha-box');
+  const checkbox = document.getElementById('checkbox');
+  const resultBox = document.getElementById('result-box');
+  const resultMessage = document.getElementById('result-message');
+  const playAgainBtn = document.getElementById('play-again-btn');
+
+  let checked = false;
+  let moving = true;
+  let startTime = Date.now();
+
+  // Parse URL param for redirect
+  function getRedirectUrl() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('redirect');
+  }
+
+  const redirectUrl = getRedirectUrl();
+
+  function toggleCheck() {
+    if (!moving) return;
+    checked = !checked;
+    checkbox.classList.toggle('checked', checked);
+    box.setAttribute('aria-checked', checked);
+    if (checked) {
+      moving = false;
+      showResult();
+    }
+  }
+
+  box.addEventListener('click', toggleCheck);
+
+  box.addEventListener('keydown', (e) => {
+    if ((e.key === ' ' || e.key === 'Enter') && moving) {
+      e.preventDefault();
+      toggleCheck();
+    }
+  });
+
+  function placeBox(left, top) {
+    box.style.left = left + 'px';
+    box.style.top = top + 'px';
+  }
+
+  function centerBox() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    placeBox((w - box.offsetWidth) / 2, (h - box.offsetHeight) / 2);
+  }
+
+  centerBox();
+
+  window.addEventListener('resize', centerBox);
+
+  const SENSOR_RADIUS = 180;
+
+  window.addEventListener('mousemove', (e) => {
+    if (!moving) return;
+
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+
+    const rect = box.getBoundingClientRect();
+    const boxCenterX = rect.left + rect.width / 2;
+    const boxCenterY = rect.top + rect.height / 2;
+
+    const distX = mouseX - boxCenterX;
+    const distY = mouseY - boxCenterY;
+    const distance = Math.sqrt(distX * distX + distY * distY);
+
+    if (distance < SENSOR_RADIUS) {
+      moveBoxAway(mouseX, mouseY);
+    }
+  });
+
+  function moveBoxAway(mouseX, mouseY) {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    const boxWidth = box.offsetWidth;
+    const boxHeight = box.offsetHeight;
+
+    let newLeft, newTop;
+    let attempts = 0;
+    const maxAttempts = 30;
+
+    do {
+      newLeft = Math.random() * (w - boxWidth);
+      newTop = Math.random() * (h - boxHeight);
+
+      const centerX = newLeft + boxWidth / 2;
+      const centerY = newTop + boxHeight / 2;
+
+      const distX = mouseX - centerX;
+      const distY = mouseY - centerY;
+      var dist = Math.sqrt(distX * distX + distY * distY);
+
+      attempts++;
+    } while (dist < SENSOR_RADIUS + 50 && attempts < maxAttempts);
+
+    placeBox(newLeft, newTop);
+  }
+
+  function showResult() {
+    const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
+    box.style.display = 'none';
+    resultMessage.textContent = `Congratulations! You clicked the box after ${elapsedSeconds} seconds.`;
+    resultBox.style.display = 'flex';
+    centerResultBox();
+
+    if (redirectUrl) {
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 3000);
+    }
+  }
+
+  function centerResultBox() {
+    const w = window.innerWidth;
+    const h = window.innerHeight;
+    resultBox.style.left = ((w - resultBox.offsetWidth) / 2) + 'px';
+    resultBox.style.top = ((h - resultBox.offsetHeight) / 2) + 'px';
+  }
+
+  playAgainBtn.addEventListener('click', () => {
+    checked = false;
+    moving = true;
+    checkbox.classList.remove('checked');
+    box.setAttribute('aria-checked', false);
+    resultBox.style.display = 'none';
+    box.style.display = 'flex';
+    startTime = Date.now();
+    centerBox();
+  });
+
+  window.addEventListener('resize', () => {
+    if (moving) {
+      centerBox();
+    } else {
+      centerResultBox();
+    }
+  });
+</script>
+
+</body>
+</html>
