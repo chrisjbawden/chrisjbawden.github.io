@@ -96,6 +96,10 @@
             white-space: normal;
             word-break: break-word;
             text-align: center;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         button.control:hover {
             background-color: #ddd;
@@ -118,6 +122,10 @@
             white-space: normal;
             word-break: break-word;
             text-align: center;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         #startButton:hover {
             background-color: #21a1f1;
@@ -291,19 +299,16 @@
     </header>
 
     <main>
-        <!-- Start button visible initially -->
         <button id="startButton">Start</button>
 
-        <!-- Timer and controls hidden initially -->
         <div id="timer" style="display:none;">Initializing...</div>
 
         <div id="controlPanel" style="display:none;">
-            <button id="pauseButton" class="control" onclick="pauseResumeTimer()">Pause</button>
+            <button id="pauseButton" class="control" onclick="pauseResumeTimer()">⏸️</button>
             <button id="nextButton" class="control" onclick="nextPhase()">Next</button>
             <button id="resetButton" class="control" onclick="resetTimer()">Reset</button>
         </div>
 
-        <!-- Usage example hint -->
         <section id="usageExample">
             <strong>HINT:</strong><br />
             Use URL parameters like <code>?warmup=30s&highIntensity=1m&rest=45s</code> to set intervals as a bookmark or favourite.
@@ -314,7 +319,6 @@
         <a href="https://chrisjbawden.github.io/" target="_blank" rel="noopener noreferrer">View on GitHub</a>
     </footer>
 
-    <!-- Modal -->
     <div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div id="settingsModal">
             <h2 id="modalTitle">Settings</h2>
@@ -348,7 +352,6 @@
         </div>
     </div>
 
-    <!-- Audio element for the beep sound -->
     <audio id="beepSound" src="beep.mp3"></audio>
 
 <script>
@@ -357,7 +360,6 @@
     let isPaused = false;
     let timerRunning = false;
 
-    // Default durations in seconds (set to 60s each)
     const originalDurations = {
         warmup: 60,
         highIntensity: 60,
@@ -370,7 +372,6 @@
         rest: { duration: 0, next: 'highIntensity', color: '#FFFACD' }
     };
 
-    // Parse time string like "30s" or "1m"
     function parseTime(input) {
         if (!input) return 0;
         const num = parseInt(input.slice(0, -1), 10);
@@ -378,21 +379,16 @@
         return unit === 's' ? num : num * 60;
     }
 
-    // Load from URL or localStorage or use defaults
     function loadDurations() {
         const urlParams = new URLSearchParams(window.location.search);
-
-        // Start with defaults 60 seconds
         let warmup = 60;
         let high = 60;
         let rest = 60;
 
-        // Override with URL params if present
         if(urlParams.has('warmup')) warmup = parseTime(urlParams.get('warmup'));
         if(urlParams.has('highIntensity')) high = parseTime(urlParams.get('highIntensity'));
         if(urlParams.has('rest')) rest = parseTime(urlParams.get('rest'));
 
-        // Override with saved settings if exist (localStorage)
         const stored = localStorage.getItem('timerSettings');
         if(stored) {
             try {
@@ -408,7 +404,6 @@
         originalDurations.rest = rest;
     }
 
-    // Setup timer durations and initial state (does NOT start timer)
     function setupTimer() {
         loadDurations();
         resetPhases();
@@ -444,13 +439,14 @@
     function pauseResumeTimer() {
         if(!timerRunning) return;
         isPaused = !isPaused;
-        document.getElementById('pauseButton').textContent = isPaused ? 'Resume' : 'Pause';
+        const pauseBtn = document.getElementById('pauseButton');
+        pauseBtn.textContent = isPaused ? '▶️' : '⏸️';
     }
 
     function nextPhase() {
         playBeep();
         currentPhase = phases[currentPhase].next;
-        phases[currentPhase].duration = originalDurations[currentPhase]; // Reset the duration for the new phase
+        phases[currentPhase].duration = originalDurations[currentPhase];
         updateTimerDisplay();
         updateBackgroundColor();
     }
@@ -464,73 +460,60 @@
         document.body.style.backgroundColor = phases[currentPhase].color;
     }
 
-    // Reset timer - stop interval, show start button, reset phases
     function resetTimer() {
         clearInterval(timerInterval);
         timerInterval = null;
         timerRunning = false;
         isPaused = false;
-        document.getElementById('pauseButton').textContent = 'Pause';
+        document.getElementById('pauseButton').textContent = '⏸️';
 
-        // Hide timer and controls
         timerDisplay.style.display = 'none';
         controlPanel.style.display = 'none';
 
-        // Show start button
         startButton.style.display = 'inline-block';
 
-        // Reset durations and display timer to initial
         setupTimer();
         updateTimerDisplay();
-        updateBackgroundColor();  // Fix background color on reset
+        document.body.style.backgroundColor = '#fff'; // reset to white background
     }
 
-    // Start button handler
     const startButton = document.getElementById('startButton');
     const timerDisplay = document.getElementById('timer');
     const controlPanel = document.getElementById('controlPanel');
 
     startButton.addEventListener('click', () => {
-        // Hide start button
         startButton.style.display = 'none';
-
-        // Show timer and controls
         timerDisplay.style.display = 'block';
         controlPanel.style.display = 'flex';
 
-        // Setup timer and start ticking
         setupTimer();
         isPaused = false;
-        document.getElementById('pauseButton').textContent = 'Pause';
+        document.getElementById('pauseButton').textContent = '⏸️';
 
         if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(timerTick, 1000);
         timerRunning = true;
     });
 
-    // Settings modal handlers
     const modalOverlay = document.getElementById('modalOverlay');
     const settingsButton = document.getElementById('settingsButton');
     const cancelSettings = document.getElementById('cancelSettings');
     const saveSettings = document.getElementById('saveSettings');
     const settingsForm = document.getElementById('settingsForm');
 
-    // Track if timer was paused before opening settings (to restore state)
     let wasPausedBeforeSettings = false;
 
     settingsButton.addEventListener('click', () => {
         openSettingsModal();
-        // Pause timer when opening settings if running
         if(timerRunning && !isPaused){
             wasPausedBeforeSettings = false;
             pauseTimer();
         } else {
-            wasPausedBeforeSettings = true; // already paused or not running
+            wasPausedBeforeSettings = true;
         }
     });
     cancelSettings.addEventListener('click', () => {
         closeSettingsModal();
-        // Resume timer only if it was running & not paused before opening
         if(timerRunning && !wasPausedBeforeSettings){
             resumeTimer();
         }
@@ -538,12 +521,10 @@
     saveSettings.addEventListener('click', () => {
         saveSettingsHandler();
         closeSettingsModal();
-        // Resume timer only if it was running & not paused before opening
         if(timerRunning && !wasPausedBeforeSettings){
             resumeTimer();
         }
     });
-
     settingsForm.addEventListener('submit', (e) => {
         e.preventDefault();
         saveSettingsHandler();
@@ -555,9 +536,7 @@
 
     function openSettingsModal() {
         function toMinSec(totalSeconds) {
-            const m = Math.floor(totalSeconds / 60);
-            const s = totalSeconds % 60;
-            return { m, s };
+            return { m: Math.floor(totalSeconds / 60), s: totalSeconds % 60 };
         }
         let warmup = toMinSec(originalDurations.warmup);
         let high = toMinSec(originalDurations.highIntensity);
@@ -581,8 +560,8 @@
         function getTime(idMin, idSec) {
             let min = parseInt(document.getElementById(idMin).value) || 0;
             let sec = parseInt(document.getElementById(idSec).value) || 0;
-            if (min < 0) min = 0; if (min > 59) min = 59;
-            if (sec < 0) sec = 0; if (sec > 59) sec = 59;
+            min = Math.min(Math.max(min, 0), 59);
+            sec = Math.min(Math.max(sec, 0), 59);
             return min * 60 + sec;
         }
 
@@ -592,31 +571,27 @@
 
         localStorage.setItem('timerSettings', JSON.stringify(originalDurations));
 
-        // Reset phases and update display
         resetPhases();
         currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
         updateTimerDisplay();
         updateBackgroundColor();
 
         isPaused = false;
-        document.getElementById('pauseButton').textContent = 'Pause';
+        document.getElementById('pauseButton').textContent = '⏸️';
     }
 
-    // Pause timer helper
     function pauseTimer() {
         if(timerRunning && !isPaused){
             pauseResumeTimer();
         }
     }
 
-    // Resume timer helper
     function resumeTimer() {
         if(timerRunning && isPaused){
             pauseResumeTimer();
         }
     }
 
-    // Wake lock script (unchanged)
     let wakeLock = null;
 
     async function requestWakeLock() {
