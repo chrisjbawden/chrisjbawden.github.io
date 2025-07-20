@@ -60,6 +60,7 @@
             align-items: center;
             padding: 80px 20px 60px; /* account for fixed header/footer */
             text-align: center;
+            width: 100%;
         }
 
         #timer {
@@ -112,6 +113,20 @@
             background-color: #21a1f1;
         }
 
+        /* Usage Example Section */
+        #usageExample {
+            max-width: 600px;
+            margin: 40px auto 0;
+            padding: 15px 20px;
+            background: #f0f8ff;
+            border: 1px solid #61dafb;
+            border-radius: 8px;
+            color: #282c34;
+            font-family: monospace;
+            font-size: 1rem;
+            user-select: none;
+        }
+
         /* Footer */
         footer {
             height: 50px;
@@ -121,6 +136,7 @@
             line-height: 50px;
             font-size: 0.9rem;
             user-select: none;
+            width: 100%;
         }
         footer a {
             color: #61dafb;
@@ -237,10 +253,16 @@
             <button id="pauseButton" class="control" onclick="pauseResumeTimer()">Pause</button>
             <button class="control" onclick="nextPhase()">Next</button>
         </div>
+
+        <!-- Usage example hint -->
+        <section id="usageExample">
+            <strong>Usage Example:</strong><br />
+            Use URL parameters like <code>?warmup=30s&highIntensity=1m&rest=45s</code> to set intervals.
+        </section>
     </main>
 
     <footer>
-        <a href="https://github.com/yourgithubusername" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        <a href="https://chrisjbawden.github.io" target="_blank" rel="noopener noreferrer">View on GitHub</a>
     </footer>
 
     <!-- Modal -->
@@ -416,7 +438,7 @@
         timerRunning = true;
     });
 
-    // Settings modal handlers (unchanged)
+    // Settings modal handlers
     const modalOverlay = document.getElementById('modalOverlay');
     const settingsButton = document.getElementById('settingsButton');
     const cancelSettings = document.getElementById('cancelSettings');
