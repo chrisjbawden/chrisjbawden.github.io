@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Timer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            height: 80vh; /* Use the full height of the viewport */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #fff; /* Default background color */
+        }
+        #timer {
+            font-size: 25vw; /* Font size is 15% of the viewport's width */
+            margin-top: 20px;
+        }
+        #controlPanel {
+            display: flex;
+            justify-content: center;
+            width: 100%; /* Ensures the control panel takes the full width */
+        }
+        button {
+            padding: 1vw; /* Padding scaled to the viewport width */
+            margin: 5px;
+            font-size: 9vw; /* Font size scaled to the viewport width */
+            cursor: pointer;
+            width: 40%; /* Fixed width for all buttons */
+            min-width: 120px; /* Minimum width to handle very small screens */
+            background-color: #f4f4f4; /* Slight background color for buttons */
+            border: 1px solid #ccc; /* Border to enhance button visibility */
+            border-radius: 5px; /* Rounded corners for aesthetics */
+            min-height: 170px;
+        }
+
+    </style>
+</head>
+<body>
+    <h1 style="font-size: 10vw;">Timer</h1>
+    <div id="timer">Initializing...</div>
+<br>
+    <div id="controlPanel">
+        <button id="pauseButton" onclick="pauseResumeTimer()">Pause</button>
+        <button onclick="nextPhase()">Next</button>
+    </div>
+
+    <!-- Audio element for the beep sound -->
+    <audio id="beepSound" src="beep.mp3"></audio>
+
+<script>
+    let timerInterval;
+    let currentPhase = 'warmup';
+    let isPaused = false;
+
+    const originalDurations = {
+        warmup: 0,
+        highIntensity: 0,
+        rest: 0
+    };
+
+    const phases = {
+        warmup: { duration: 0, next: 'highIntensity', color: '#FFCCCC' }, // Light red background for warmup
+        highIntensity: { duration: 0, next: 'rest', color: '#DFF2BF' },   // Light green background for high intensity
+        rest: { duration: 0, next: 'highIntensity', color: '#FFFACD' }   // Light yellow background for rest
+    };
+
+    function parseTime(input) {
+        const num = parseInt(input.slice(0, -1), 10);
+        const unit = input.slice(-1);
+        return unit === 's' ? num : num * 60;
+    }
+
+    function setupTimer() {
+        const urlParams = new URLSearchParams(window.location.search);
+        originalDurations.warmup = parseTime(urlParams.get('warmup') || '0s');
+        originalDurations.highIntensity = parseTime(urlParams.get('highIntensity') || '0s');
+        originalDurations.rest = parseTime(urlParams.get('rest') || '0s');
+
+        phases.warmup.duration = originalDurations.warmup;
+        phases.highIntensity.duration = originalDurations.highIntensity;
+        phases.rest.duration = originalDurations.rest;
+
+        currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
+        updateTimerDisplay();
+        updateBackgroundColor();
+        timerInterval = setInterval(timerTick, 1000);
+    }
+
+    function timerTick() {
+        if (!isPaused && phases[currentPhase].duration > 0) {
+            phases[currentPhase].duration--;
+            updateTimerDisplay();
+        } else if (!isPaused) {
+            nextPhase();
+        }
+    }
+
+    function updateTimerDisplay() {
+        const minutes = parseInt(phases[currentPhase].duration / 60, 10);
+        const seconds = parseInt(phases[currentPhase].duration % 60, 10);
+        const formattedTime = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+        document.getElementById('timer').textContent = formattedTime;
+    }
+
+    function pauseResumeTimer() {
+        isPaused = !isPaused;
+        document.getElementById('pauseButton').textContent = isPaused ? 'Resume' : 'Pause';
+    }
+
+    function nextPhase() {
+        playBeep();
+        currentPhase = phases[currentPhase].next;
+        phases[currentPhase].duration = originalDurations[currentPhase]; // Reset the duration for the new phase
+        updateTimerDisplay();
+        updateBackgroundColor();
+    }
+
+    function playBeep() {
+        const beepSound = document.getElementById('beepSound');
+        beepSound.play();
+    }
+
+    function updateBackgroundColor() {
+        document.body.style.backgroundColor = phases[currentPhase].color;
+    }
+
+    window.onload = setupTimer;
+</script>
+
+    <script>
+    let wakeLock = null;
+
+    // Function to request a wake lock
+    async function requestWakeLock() {
+        try {
+            wakeLock = await navigator.wakeLock.request('screen');
+            wakeLock.addEventListener('release', () => {
+                console.log('Wake lock was released');
+            });
+            console.log('Wake lock is active');
+        } catch (err) {
+            console.error(`${err.name}, ${err.message}`);
+        }
+    }
+
+    // Request a wake lock when the page is loaded
+    window.addEventListener('load', requestWakeLock);
+
+    // Re-request a wake lock when the page visibility changes
+    document.addEventListener('visibilitychange', () => {
+        if (wakeLock !== null && document.visibilityState === 'visible') {
+            requestWakeLock();
+        }
+    });
+
+    // Release the wake lock when the page is unloaded
+    window.addEventListener('unload', () => {
+        if (wakeLock !== null) {
+            wakeLock.release();
+            wakeLock = null;
+        }
+    });
+</script>
+
+</body>
+</html>
