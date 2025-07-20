@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Simple Interval Timer</title>
+    <title>Timer</title>
     <style>
         /* Reset & base */
         * {
@@ -45,6 +45,7 @@
             cursor: pointer;
             font-weight: 600;
             transition: background-color 0.3s ease, color 0.3s ease;
+            white-space: nowrap;
         }
         #settingsButton:hover {
             background-color: white;
@@ -75,13 +76,13 @@
             justify-content: center;
             gap: 20px;
             width: 100%;
-            max-width: 400px;
+            max-width: 440px;
         }
         button.control {
             flex: 1;
             min-width: 120px;
-            padding: 15px 0;
-            font-size: clamp(18px, 5vw, 36px); /* clamps between 18px and 36px */
+            padding: 15px 10px;
+            font-size: clamp(18px, 5vw, 36px);
             min-height: 100px;
             cursor: pointer;
             background-color: #eee;
@@ -89,6 +90,7 @@
             border-radius: 10px;
             transition: background-color 0.3s ease;
             user-select: none;
+            white-space: nowrap;
         }
         button.control:hover {
             background-color: #ddd;
@@ -108,6 +110,7 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             user-select: none;
+            white-space: nowrap;
         }
         #startButton:hover {
             background-color: #21a1f1;
@@ -125,6 +128,7 @@
             font-family: monospace;
             font-size: 1rem;
             user-select: none;
+            white-space: normal;
         }
 
         /* Footer */
@@ -234,6 +238,36 @@
         #cancelSettings:hover {
             background-color: #ccc;
         }
+
+        /* Responsive: Smaller text on small screens */
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.1rem;
+            }
+            #settingsButton {
+                font-size: 0.8rem;
+                padding: 4px 8px;
+            }
+            footer {
+                font-size: 0.8rem;
+            }
+            button.control {
+                font-size: clamp(14px, 5vw, 28px);
+                min-height: 80px;
+                padding: 12px 8px;
+            }
+            #startButton {
+                font-size: 6vw;
+                min-height: 100px;
+                padding: 16px 32px;
+            }
+            #usageExample {
+                font-size: 0.9rem;
+                padding: 12px 16px;
+                max-width: 100%;
+                margin: 20px auto 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -251,18 +285,19 @@
 
         <div id="controlPanel" style="display:none;">
             <button id="pauseButton" class="control" onclick="pauseResumeTimer()">Pause</button>
-            <button class="control" onclick="nextPhase()">Next</button>
+            <button id="nextButton" class="control" onclick="nextPhase()">Next</button>
+            <button id="resetButton" class="control" onclick="resetTimer()">Reset</button>
         </div>
 
         <!-- Usage example hint -->
         <section id="usageExample">
             <strong>HINT:</strong><br />
-            Use URL parameters like <code>?warmup=30s&highIntensity=1m&rest=45s</code> to set intervals in a bookmark or favourite.
+            Use URL parameters like <code>?warmup=30s&highIntensity=1m&rest=45s</code> to set intervals as a bookmark or favourite.
         </section>
     </main>
 
     <footer>
-        <a href="https://chrisjbawden.github.io" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+        <a href="https://chrisjbawden.github.io/" target="_blank" rel="noopener noreferrer">View on GitHub</a>
     </footer>
 
     <!-- Modal -->
@@ -415,6 +450,27 @@
         document.body.style.backgroundColor = phases[currentPhase].color;
     }
 
+    // Reset timer - stop interval, show start button, reset phases
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        timerRunning = false;
+        isPaused = false;
+        document.getElementById('pauseButton').textContent = 'Pause';
+
+        // Hide timer and controls
+        timerDisplay.style.display = 'none';
+        controlPanel.style.display = 'none';
+
+        // Show start button
+        startButton.style.display = 'inline-block';
+
+        // Reset durations and display timer to initial
+        setupTimer();
+        updateTimerDisplay();
+        updateBackgroundColor();
+    }
+
     // Start button handler
     const startButton = document.getElementById('startButton');
     const timerDisplay = document.getElementById('timer');
@@ -445,9 +501,43 @@
     const saveSettings = document.getElementById('saveSettings');
     const settingsForm = document.getElementById('settingsForm');
 
-    settingsButton.addEventListener('click', openSettingsModal);
-    cancelSettings.addEventListener('click', closeSettingsModal);
-    settingsForm.addEventListener('submit', saveSettingsHandler);
+    // Track if timer was paused before opening settings (to restore state)
+    let wasPausedBeforeSettings = false;
+
+    settingsButton.addEventListener('click', () => {
+        openSettingsModal();
+        // Pause timer when opening settings if running
+        if(timerRunning && !isPaused){
+            wasPausedBeforeSettings = false;
+            pauseTimer();
+        } else {
+            wasPausedBeforeSettings = true; // already paused or not running
+        }
+    });
+    cancelSettings.addEventListener('click', () => {
+        closeSettingsModal();
+        // Resume timer only if it was running & not paused before opening
+        if(timerRunning && !wasPausedBeforeSettings){
+            resumeTimer();
+        }
+    });
+    saveSettings.addEventListener('click', () => {
+        saveSettingsHandler();
+        closeSettingsModal();
+        // Resume timer only if it was running & not paused before opening
+        if(timerRunning && !wasPausedBeforeSettings){
+            resumeTimer();
+        }
+    });
+
+    settingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        saveSettingsHandler();
+        closeSettingsModal();
+        if(timerRunning && !wasPausedBeforeSettings){
+            resumeTimer();
+        }
+    });
 
     function openSettingsModal() {
         function toMinSec(totalSeconds) {
@@ -473,9 +563,7 @@
         modalOverlay.style.display = 'none';
     }
 
-    function saveSettingsHandler(e) {
-        e.preventDefault();
-
+    function saveSettingsHandler() {
         function getTime(idMin, idSec) {
             let min = parseInt(document.getElementById(idMin).value) || 0;
             let sec = parseInt(document.getElementById(idSec).value) || 0;
@@ -498,8 +586,20 @@
 
         isPaused = false;
         document.getElementById('pauseButton').textContent = 'Pause';
+    }
 
-        closeSettingsModal();
+    // Pause timer helper
+    function pauseTimer() {
+        if(timerRunning && !isPaused){
+            pauseResumeTimer();
+        }
+    }
+
+    // Resume timer helper
+    function resumeTimer() {
+        if(timerRunning && isPaused){
+            pauseResumeTimer();
+        }
     }
 
     // Wake lock script (unchanged)
