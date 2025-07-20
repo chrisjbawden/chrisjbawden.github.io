@@ -48,6 +48,9 @@
     "blank": true
   },
     {
-    "blank": true
+    "link": "https://chrisjbawden.github.io/projects/int-timer/timer.html",
+    "label": "Int. Timer",
+    "hover": "Simple interval timer",
+    "icon": "Clock"
   }
 ]
