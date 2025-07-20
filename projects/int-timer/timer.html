@@ -187,6 +187,7 @@
             padding: 25px 30px;
             box-shadow: 0 5px 15px rgb(0 0 0 / 0.3);
             animation: fadeInScale 0.3s ease forwards;
+            text-align: center; /* Center all content inside modal */
         }
         @keyframes fadeInScale {
             from {opacity: 0; transform: scale(0.9);}
@@ -198,22 +199,28 @@
             margin-bottom: 20px;
             font-weight: 700;
             user-select: none;
-        
-            /* Add this: */
-            text-align: center;
+            text-align: center; /* center heading */
         }
 
+        /* Center input groups horizontally */
+        #settingsForm {
+            text-align: center;
+        }
         .inputGroup {
+            display: inline-block; /* shrink wrap */
+            text-align: center;
             margin-bottom: 15px;
-            text-align: left;
+            text-align: center;
         }
         .inputGroup label {
             display: block;
             margin-bottom: 6px;
             font-weight: 600;
+            user-select: none;
         }
         .inputRow {
             display: flex;
+            justify-content: center; /* center inputs horizontally */
             gap: 10px;
         }
         input[type="number"] {
@@ -231,7 +238,7 @@
 
         #modalButtons {
             margin-top: 25px;
-            text-align: right;
+            text-align: center;
         }
         #modalButtons button {
             padding: 8px 18px;
@@ -242,11 +249,12 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             user-select: none;
+            margin: 0 5px;
+            min-width: 90px;
         }
         #saveSettings {
             background-color: #61dafb;
             color: #282c34;
-            margin-left: 10px;
         }
         #saveSettings:hover {
             background-color: #21a1f1;
@@ -470,14 +478,14 @@
         isPaused = false;
         document.getElementById('pauseButton').textContent = '⏸️';
 
-        timerDisplay.style.display = 'none';
-        controlPanel.style.display = 'none';
+        document.getElementById('timer').style.display = 'none';
+        document.getElementById('controlPanel').style.display = 'none';
 
-        startButton.style.display = 'inline-block';
+        document.getElementById('startButton').style.display = 'inline-block';
 
         setupTimer();
         updateTimerDisplay();
-        document.body.style.backgroundColor = '#fff'; // reset to white background
+        document.body.style.backgroundColor = '#fff';
     }
 
     const startButton = document.getElementById('startButton');
