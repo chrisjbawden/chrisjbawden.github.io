@@ -93,6 +93,25 @@
             background-color: #ddd;
         }
 
+        /* Start button */
+        #startButton {
+            padding: 20px 40px;
+            font-size: 5vw;
+            min-width: 200px;
+            min-height: 120px;
+            border-radius: 15px;
+            border: none;
+            background-color: #61dafb;
+            color: #282c34;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+        #startButton:hover {
+            background-color: #21a1f1;
+        }
+
         /* Footer */
         footer {
             height: 50px;
@@ -208,9 +227,13 @@
     </header>
 
     <main>
-        <div id="timer">Initializing...</div>
+        <!-- Start button visible initially -->
+        <button id="startButton">Start</button>
 
-        <div id="controlPanel">
+        <!-- Timer and controls hidden initially -->
+        <div id="timer" style="display:none;">Initializing...</div>
+
+        <div id="controlPanel" style="display:none;">
             <button id="pauseButton" class="control" onclick="pauseResumeTimer()">Pause</button>
             <button class="control" onclick="nextPhase()">Next</button>
         </div>
@@ -261,12 +284,13 @@
     let timerInterval;
     let currentPhase = 'warmup';
     let isPaused = false;
+    let timerRunning = false;
 
-    // Default durations in seconds
+    // Default durations in seconds (set to 60s each)
     const originalDurations = {
-        warmup: 0,
-        highIntensity: 0,
-        rest: 0
+        warmup: 60,
+        highIntensity: 60,
+        rest: 60
     };
 
     const phases = {
@@ -283,23 +307,43 @@
         return unit === 's' ? num : num * 60;
     }
 
-    function setupTimer() {
-        // Try to load from URL params or fallback to defaults
+    // Load from URL or localStorage or use defaults
+    function loadDurations() {
         const urlParams = new URLSearchParams(window.location.search);
-        originalDurations.warmup = parseTime(urlParams.get('warmup') || '0s');
-        originalDurations.highIntensity = parseTime(urlParams.get('highIntensity') || '0s');
-        originalDurations.rest = parseTime(urlParams.get('rest') || '0s');
 
-        // If stored settings in localStorage, override defaults
-        loadStoredSettings();
+        // Start with defaults 60 seconds
+        let warmup = 60;
+        let high = 60;
+        let rest = 60;
 
+        // Override with URL params if present
+        if(urlParams.has('warmup')) warmup = parseTime(urlParams.get('warmup'));
+        if(urlParams.has('highIntensity')) high = parseTime(urlParams.get('highIntensity'));
+        if(urlParams.has('rest')) rest = parseTime(urlParams.get('rest'));
+
+        // Override with saved settings if exist (localStorage)
+        const stored = localStorage.getItem('timerSettings');
+        if(stored) {
+            try {
+                const obj = JSON.parse(stored);
+                if(typeof obj.warmup === 'number') warmup = obj.warmup;
+                if(typeof obj.highIntensity === 'number') high = obj.highIntensity;
+                if(typeof obj.rest === 'number') rest = obj.rest;
+            } catch {}
+        }
+
+        originalDurations.warmup = warmup;
+        originalDurations.highIntensity = high;
+        originalDurations.rest = rest;
+    }
+
+    // Setup timer durations and initial state (does NOT start timer)
+    function setupTimer() {
+        loadDurations();
         resetPhases();
         currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
         updateTimerDisplay();
         updateBackgroundColor();
-
-        if(timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(timerTick, 1000);
     }
 
     function resetPhases() {
@@ -320,13 +364,14 @@
     function updateTimerDisplay() {
         const minutes = Math.floor(phases[currentPhase].duration / 60);
         const seconds = phases[currentPhase].duration % 60;
-        const formattedTime = 
-            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+        const formattedTime =
+            (minutes < 10 ? "0" + minutes : minutes) + ":" +
             (seconds < 10 ? "0" + seconds : seconds);
         document.getElementById('timer').textContent = formattedTime;
     }
 
     function pauseResumeTimer() {
+        if(!timerRunning) return;
         isPaused = !isPaused;
         document.getElementById('pauseButton').textContent = isPaused ? 'Resume' : 'Pause';
     }
@@ -348,7 +393,30 @@
         document.body.style.backgroundColor = phases[currentPhase].color;
     }
 
-    // Settings modal handlers
+    // Start button handler
+    const startButton = document.getElementById('startButton');
+    const timerDisplay = document.getElementById('timer');
+    const controlPanel = document.getElementById('controlPanel');
+
+    startButton.addEventListener('click', () => {
+        // Hide start button
+        startButton.style.display = 'none';
+
+        // Show timer and controls
+        timerDisplay.style.display = 'block';
+        controlPanel.style.display = 'flex';
+
+        // Setup timer and start ticking
+        setupTimer();
+        isPaused = false;
+        document.getElementById('pauseButton').textContent = 'Pause';
+
+        if(timerInterval) clearInterval(timerInterval);
+        timerInterval = setInterval(timerTick, 1000);
+        timerRunning = true;
+    });
+
+    // Settings modal handlers (unchanged)
     const modalOverlay = document.getElementById('modalOverlay');
     const settingsButton = document.getElementById('settingsButton');
     const cancelSettings = document.getElementById('cancelSettings');
@@ -360,11 +428,10 @@
     settingsForm.addEventListener('submit', saveSettingsHandler);
 
     function openSettingsModal() {
-        // Populate inputs with current durations in mm:ss
         function toMinSec(totalSeconds) {
             const m = Math.floor(totalSeconds / 60);
             const s = totalSeconds % 60;
-            return {m, s};
+            return { m, s };
         }
         let warmup = toMinSec(originalDurations.warmup);
         let high = toMinSec(originalDurations.highIntensity);
@@ -387,24 +454,21 @@
     function saveSettingsHandler(e) {
         e.preventDefault();
 
-        // Helper to get input value safely
         function getTime(idMin, idSec) {
             let min = parseInt(document.getElementById(idMin).value) || 0;
             let sec = parseInt(document.getElementById(idSec).value) || 0;
-            if(min < 0) min = 0; if(min > 59) min = 59;
-            if(sec < 0) sec = 0; if(sec > 59) sec = 59;
+            if (min < 0) min = 0; if (min > 59) min = 59;
+            if (sec < 0) sec = 0; if (sec > 59) sec = 59;
             return min * 60 + sec;
         }
 
-        // Update original durations
         originalDurations.warmup = getTime('warmupMinutes', 'warmupSeconds');
         originalDurations.highIntensity = getTime('highIntensityMinutes', 'highIntensitySeconds');
         originalDurations.rest = getTime('restMinutes', 'restSeconds');
 
-        // Save to localStorage so settings persist on reload
         localStorage.setItem('timerSettings', JSON.stringify(originalDurations));
 
-        // Reset phases and restart timer
+        // Reset phases and update display
         resetPhases();
         currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
         updateTimerDisplay();
@@ -416,23 +480,7 @@
         closeSettingsModal();
     }
 
-    // Load settings from localStorage
-    function loadStoredSettings() {
-        const stored = localStorage.getItem('timerSettings');
-        if(stored) {
-            try {
-                const obj = JSON.parse(stored);
-                if(typeof obj.warmup === 'number') originalDurations.warmup = obj.warmup;
-                if(typeof obj.highIntensity === 'number') originalDurations.highIntensity = obj.highIntensity;
-                if(typeof obj.rest === 'number') originalDurations.rest = obj.rest;
-            } catch {}
-        }
-    }
-
-    // Setup timer on page load
-    window.onload = setupTimer;
-
-    // Wake lock script (kept as is)
+    // Wake lock script (unchanged)
     let wakeLock = null;
 
     async function requestWakeLock() {
