@@ -133,6 +133,7 @@
 
         /* Usage Example Section */
         #usageExample {
+            user-select: text; /* allow selecting text */
             max-width: 600px;
             margin: 40px auto 0;
             padding: 15px 20px;
@@ -142,7 +143,6 @@
             color: #282c34;
             font-family: monospace;
             font-size: 1rem;
-            user-select: none;
             white-space: normal;
         }
 
@@ -187,7 +187,7 @@
             padding: 25px 30px;
             box-shadow: 0 5px 15px rgb(0 0 0 / 0.3);
             animation: fadeInScale 0.3s ease forwards;
-            text-align: center; /* Center all content inside modal */
+            text-align: center; /* center all content inside modal */
         }
         @keyframes fadeInScale {
             from {opacity: 0; transform: scale(0.9);}
@@ -202,13 +202,14 @@
             text-align: center; /* center heading */
         }
 
-        /* Center input groups horizontally */
+        /* Center the entire form */
         #settingsForm {
             text-align: center;
         }
+
+        /* Stack input groups vertically */
         .inputGroup {
-            display: inline-block; /* shrink wrap */
-            text-align: center;
+            display: block;
             margin-bottom: 15px;
             text-align: center;
         }
@@ -218,10 +219,11 @@
             font-weight: 600;
             user-select: none;
         }
+        /* Inputs side-by-side, centered horizontally */
         .inputRow {
-            display: flex;
-            justify-content: center; /* center inputs horizontally */
+            display: inline-flex;
             gap: 10px;
+            justify-content: center;
         }
         input[type="number"] {
             width: 60px;
