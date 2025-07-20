@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <title>Timer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
         /* Reset & base */
         * {
@@ -45,7 +46,8 @@
             cursor: pointer;
             font-weight: 600;
             transition: background-color 0.3s ease, color 0.3s ease;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
         }
         #settingsButton:hover {
             background-color: white;
@@ -69,6 +71,7 @@
             max-font-size: 300px;
             margin: 0 0 30px 0;
             user-select: none;
+            word-break: break-word;
         }
 
         #controlPanel {
@@ -81,7 +84,7 @@
         button.control {
             flex: 1;
             min-width: 120px;
-            padding: 15px 10px;
+            padding: 15px 12px;
             font-size: clamp(18px, 5vw, 36px);
             min-height: 100px;
             cursor: pointer;
@@ -90,7 +93,9 @@
             border-radius: 10px;
             transition: background-color 0.3s ease;
             user-select: none;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
+            text-align: center;
         }
         button.control:hover {
             background-color: #ddd;
@@ -110,7 +115,9 @@
             cursor: pointer;
             transition: background-color 0.3s ease;
             user-select: none;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
+            text-align: center;
         }
         #startButton:hover {
             background-color: #21a1f1;
@@ -141,10 +148,12 @@
             font-size: 0.9rem;
             user-select: none;
             width: 100%;
+            padding: 0 10px;
         }
         footer a {
             color: #61dafb;
             text-decoration: none;
+            word-break: break-word;
         }
         footer a:hover {
             text-decoration: underline;
@@ -242,19 +251,24 @@
         /* Responsive: Smaller text on small screens */
         @media (max-width: 480px) {
             header h1 {
-                font-size: 1.1rem;
+                font-size: 1.3rem;
             }
             #settingsButton {
-                font-size: 0.8rem;
-                padding: 4px 8px;
+                font-size: 1rem;
+                padding: 8px 14px;
+                white-space: normal;
+                word-break: break-word;
             }
             footer {
-                font-size: 0.8rem;
+                font-size: 1rem;
+                height: auto;
+                line-height: normal;
+                padding: 10px 20px;
             }
             button.control {
                 font-size: clamp(14px, 5vw, 28px);
                 min-height: 80px;
-                padding: 12px 8px;
+                padding: 12px 10px;
             }
             #startButton {
                 font-size: 6vw;
@@ -468,7 +482,7 @@
         // Reset durations and display timer to initial
         setupTimer();
         updateTimerDisplay();
-        updateBackgroundColor();
+        updateBackgroundColor();  // Fix background color on reset
     }
 
     // Start button handler
