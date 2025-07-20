@@ -1,51 +1,257 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8" />
     <title>Timer</title>
     <style>
+        /* Reset & base */
+        * {
+            box-sizing: border-box;
+        }
         body {
-            font-family: Arial, sans-serif;
-            text-align: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
-            height: 80vh; /* Use the full height of the viewport */
+            background-color: #fff;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            height: 60px;
+            background: #282c34;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+            box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+        }
+        header h1 {
+            font-size: 1.5rem;
+            margin: 0;
+            user-select: none;
+        }
+        #settingsButton {
+            background: transparent;
+            border: 2px solid white;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        #settingsButton:hover {
+            background-color: white;
+            color: #282c34;
+        }
+
+        /* Main content area */
+        main {
+            flex: 1;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #fff; /* Default background color */
+            padding: 80px 20px 60px; /* account for fixed header/footer */
+            text-align: center;
         }
+
         #timer {
-            font-size: 25vw; /* Font size is 15% of the viewport's width */
-            margin-top: 20px;
+            font-size: 20vw;
+            max-font-size: 300px;
+            margin: 0 0 30px 0;
+            user-select: none;
         }
+
         #controlPanel {
             display: flex;
             justify-content: center;
-            width: 100%; /* Ensures the control panel takes the full width */
+            gap: 20px;
+            width: 100%;
+            max-width: 400px;
         }
-        button {
-            padding: 1vw; /* Padding scaled to the viewport width */
-            margin: 5px;
-            font-size: 9vw; /* Font size scaled to the viewport width */
+        button.control {
+            flex: 1;
+            min-width: 120px;
+            padding: 15px 0;
+            font-size: 5vw;
+            min-height: 100px;
             cursor: pointer;
-            width: 40%; /* Fixed width for all buttons */
-            min-width: 120px; /* Minimum width to handle very small screens */
-            background-color: #f4f4f4; /* Slight background color for buttons */
-            border: 1px solid #ccc; /* Border to enhance button visibility */
-            border-radius: 5px; /* Rounded corners for aesthetics */
-            min-height: 170px;
+            background-color: #eee;
+            border: 2px solid #ccc;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+        button.control:hover {
+            background-color: #ddd;
         }
 
+        /* Footer */
+        footer {
+            height: 50px;
+            background-color: #282c34;
+            color: white;
+            text-align: center;
+            line-height: 50px;
+            font-size: 0.9rem;
+            user-select: none;
+        }
+        footer a {
+            color: #61dafb;
+            text-decoration: none;
+        }
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Modal overlay */
+        #modalOverlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+
+        /* Modal content */
+        #settingsModal {
+            background: white;
+            border-radius: 12px;
+            max-width: 400px;
+            width: 90%;
+            padding: 25px 30px;
+            box-shadow: 0 5px 15px rgb(0 0 0 / 0.3);
+            animation: fadeInScale 0.3s ease forwards;
+        }
+        @keyframes fadeInScale {
+            from {opacity: 0; transform: scale(0.9);}
+            to {opacity: 1; transform: scale(1);}
+        }
+
+        #settingsModal h2 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 700;
+            user-select: none;
+        }
+
+        .inputGroup {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .inputGroup label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+        .inputRow {
+            display: flex;
+            gap: 10px;
+        }
+        input[type="number"] {
+            width: 60px;
+            padding: 8px;
+            font-size: 1rem;
+            border: 1.5px solid #ccc;
+            border-radius: 6px;
+            transition: border-color 0.3s ease;
+        }
+        input[type="number"]:focus {
+            border-color: #61dafb;
+            outline: none;
+        }
+
+        #modalButtons {
+            margin-top: 25px;
+            text-align: right;
+        }
+        #modalButtons button {
+            padding: 8px 18px;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            user-select: none;
+        }
+        #saveSettings {
+            background-color: #61dafb;
+            color: #282c34;
+            margin-left: 10px;
+        }
+        #saveSettings:hover {
+            background-color: #21a1f1;
+        }
+        #cancelSettings {
+            background-color: #eee;
+            color: #333;
+        }
+        #cancelSettings:hover {
+            background-color: #ccc;
+        }
     </style>
 </head>
 <body>
-    <h1 style="font-size: 10vw;">Timer</h1>
-    <div id="timer">Initializing...</div>
-<br>
-    <div id="controlPanel">
-        <button id="pauseButton" onclick="pauseResumeTimer()">Pause</button>
-        <button onclick="nextPhase()">Next</button>
+    <header>
+        <h1>Timer</h1>
+        <button id="settingsButton" aria-label="Open Settings">Settings ⚙️</button>
+    </header>
+
+    <main>
+        <div id="timer">Initializing...</div>
+
+        <div id="controlPanel">
+            <button id="pauseButton" class="control" onclick="pauseResumeTimer()">Pause</button>
+            <button class="control" onclick="nextPhase()">Next</button>
+        </div>
+    </main>
+
+    <footer>
+        <a href="https://github.com/yourgithubusername" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+    </footer>
+
+    <!-- Modal -->
+    <div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div id="settingsModal">
+            <h2 id="modalTitle">Settings</h2>
+            <form id="settingsForm" onsubmit="return false;">
+                <div class="inputGroup">
+                    <label for="warmupMinutes">Warmup Interval</label>
+                    <div class="inputRow">
+                        <input type="number" id="warmupMinutes" min="0" max="59" placeholder="Min" /> :
+                        <input type="number" id="warmupSeconds" min="0" max="59" placeholder="Sec" />
+                    </div>
+                </div>
+                <div class="inputGroup">
+                    <label for="highIntensityMinutes">High Intensity Interval</label>
+                    <div class="inputRow">
+                        <input type="number" id="highIntensityMinutes" min="0" max="59" placeholder="Min" /> :
+                        <input type="number" id="highIntensitySeconds" min="0" max="59" placeholder="Sec" />
+                    </div>
+                </div>
+                <div class="inputGroup">
+                    <label for="restMinutes">Rest Interval</label>
+                    <div class="inputRow">
+                        <input type="number" id="restMinutes" min="0" max="59" placeholder="Min" /> :
+                        <input type="number" id="restSeconds" min="0" max="59" placeholder="Sec" />
+                    </div>
+                </div>
+                <div id="modalButtons">
+                    <button id="cancelSettings" type="button">Cancel</button>
+                    <button id="saveSettings" type="submit">Save</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Audio element for the beep sound -->
@@ -56,6 +262,7 @@
     let currentPhase = 'warmup';
     let isPaused = false;
 
+    // Default durations in seconds
     const originalDurations = {
         warmup: 0,
         highIntensity: 0,
@@ -63,31 +270,42 @@
     };
 
     const phases = {
-        warmup: { duration: 0, next: 'highIntensity', color: '#FFCCCC' }, // Light red background for warmup
-        highIntensity: { duration: 0, next: 'rest', color: '#DFF2BF' },   // Light green background for high intensity
-        rest: { duration: 0, next: 'highIntensity', color: '#FFFACD' }   // Light yellow background for rest
+        warmup: { duration: 0, next: 'highIntensity', color: '#FFCCCC' },
+        highIntensity: { duration: 0, next: 'rest', color: '#DFF2BF' },
+        rest: { duration: 0, next: 'highIntensity', color: '#FFFACD' }
     };
 
+    // Parse time string like "30s" or "1m"
     function parseTime(input) {
+        if (!input) return 0;
         const num = parseInt(input.slice(0, -1), 10);
         const unit = input.slice(-1);
         return unit === 's' ? num : num * 60;
     }
 
     function setupTimer() {
+        // Try to load from URL params or fallback to defaults
         const urlParams = new URLSearchParams(window.location.search);
         originalDurations.warmup = parseTime(urlParams.get('warmup') || '0s');
         originalDurations.highIntensity = parseTime(urlParams.get('highIntensity') || '0s');
         originalDurations.rest = parseTime(urlParams.get('rest') || '0s');
 
-        phases.warmup.duration = originalDurations.warmup;
-        phases.highIntensity.duration = originalDurations.highIntensity;
-        phases.rest.duration = originalDurations.rest;
+        // If stored settings in localStorage, override defaults
+        loadStoredSettings();
 
+        resetPhases();
         currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
         updateTimerDisplay();
         updateBackgroundColor();
+
+        if(timerInterval) clearInterval(timerInterval);
         timerInterval = setInterval(timerTick, 1000);
+    }
+
+    function resetPhases() {
+        phases.warmup.duration = originalDurations.warmup;
+        phases.highIntensity.duration = originalDurations.highIntensity;
+        phases.rest.duration = originalDurations.rest;
     }
 
     function timerTick() {
@@ -100,9 +318,11 @@
     }
 
     function updateTimerDisplay() {
-        const minutes = parseInt(phases[currentPhase].duration / 60, 10);
-        const seconds = parseInt(phases[currentPhase].duration % 60, 10);
-        const formattedTime = (minutes < 10 ? "0" + minutes : minutes) + ":" + (seconds < 10 ? "0" + seconds : seconds);
+        const minutes = Math.floor(phases[currentPhase].duration / 60);
+        const seconds = phases[currentPhase].duration % 60;
+        const formattedTime = 
+            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+            (seconds < 10 ? "0" + seconds : seconds);
         document.getElementById('timer').textContent = formattedTime;
     }
 
@@ -128,13 +348,93 @@
         document.body.style.backgroundColor = phases[currentPhase].color;
     }
 
-    window.onload = setupTimer;
-</script>
+    // Settings modal handlers
+    const modalOverlay = document.getElementById('modalOverlay');
+    const settingsButton = document.getElementById('settingsButton');
+    const cancelSettings = document.getElementById('cancelSettings');
+    const saveSettings = document.getElementById('saveSettings');
+    const settingsForm = document.getElementById('settingsForm');
 
-    <script>
+    settingsButton.addEventListener('click', openSettingsModal);
+    cancelSettings.addEventListener('click', closeSettingsModal);
+    settingsForm.addEventListener('submit', saveSettingsHandler);
+
+    function openSettingsModal() {
+        // Populate inputs with current durations in mm:ss
+        function toMinSec(totalSeconds) {
+            const m = Math.floor(totalSeconds / 60);
+            const s = totalSeconds % 60;
+            return {m, s};
+        }
+        let warmup = toMinSec(originalDurations.warmup);
+        let high = toMinSec(originalDurations.highIntensity);
+        let rest = toMinSec(originalDurations.rest);
+
+        document.getElementById('warmupMinutes').value = warmup.m;
+        document.getElementById('warmupSeconds').value = warmup.s;
+        document.getElementById('highIntensityMinutes').value = high.m;
+        document.getElementById('highIntensitySeconds').value = high.s;
+        document.getElementById('restMinutes').value = rest.m;
+        document.getElementById('restSeconds').value = rest.s;
+
+        modalOverlay.style.display = 'flex';
+    }
+
+    function closeSettingsModal() {
+        modalOverlay.style.display = 'none';
+    }
+
+    function saveSettingsHandler(e) {
+        e.preventDefault();
+
+        // Helper to get input value safely
+        function getTime(idMin, idSec) {
+            let min = parseInt(document.getElementById(idMin).value) || 0;
+            let sec = parseInt(document.getElementById(idSec).value) || 0;
+            if(min < 0) min = 0; if(min > 59) min = 59;
+            if(sec < 0) sec = 0; if(sec > 59) sec = 59;
+            return min * 60 + sec;
+        }
+
+        // Update original durations
+        originalDurations.warmup = getTime('warmupMinutes', 'warmupSeconds');
+        originalDurations.highIntensity = getTime('highIntensityMinutes', 'highIntensitySeconds');
+        originalDurations.rest = getTime('restMinutes', 'restSeconds');
+
+        // Save to localStorage so settings persist on reload
+        localStorage.setItem('timerSettings', JSON.stringify(originalDurations));
+
+        // Reset phases and restart timer
+        resetPhases();
+        currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
+        updateTimerDisplay();
+        updateBackgroundColor();
+
+        isPaused = false;
+        document.getElementById('pauseButton').textContent = 'Pause';
+
+        closeSettingsModal();
+    }
+
+    // Load settings from localStorage
+    function loadStoredSettings() {
+        const stored = localStorage.getItem('timerSettings');
+        if(stored) {
+            try {
+                const obj = JSON.parse(stored);
+                if(typeof obj.warmup === 'number') originalDurations.warmup = obj.warmup;
+                if(typeof obj.highIntensity === 'number') originalDurations.highIntensity = obj.highIntensity;
+                if(typeof obj.rest === 'number') originalDurations.rest = obj.rest;
+            } catch {}
+        }
+    }
+
+    // Setup timer on page load
+    window.onload = setupTimer;
+
+    // Wake lock script (kept as is)
     let wakeLock = null;
 
-    // Function to request a wake lock
     async function requestWakeLock() {
         try {
             wakeLock = await navigator.wakeLock.request('screen');
@@ -146,18 +446,12 @@
             console.error(`${err.name}, ${err.message}`);
         }
     }
-
-    // Request a wake lock when the page is loaded
     window.addEventListener('load', requestWakeLock);
-
-    // Re-request a wake lock when the page visibility changes
     document.addEventListener('visibilitychange', () => {
         if (wakeLock !== null && document.visibilityState === 'visible') {
             requestWakeLock();
         }
     });
-
-    // Release the wake lock when the page is unloaded
     window.addEventListener('unload', () => {
         if (wakeLock !== null) {
             wakeLock.release();
@@ -165,6 +459,5 @@
         }
     });
 </script>
-
 </body>
 </html>
