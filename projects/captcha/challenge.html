@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Moving reCAPTCHA with Timer & Redirect</title>
+<title>reCAPTCHA</title>
 <style>
   body, html {
     margin: 0; padding: 0; height: 100vh; overflow: hidden;
@@ -233,7 +233,7 @@
   function showResult() {
     const elapsedSeconds = ((Date.now() - startTime) / 1000).toFixed(2);
     box.style.display = 'none';
-    resultMessage.textContent = `Congratulations! You clicked the box after ${elapsedSeconds} seconds.`;
+    resultMessage.textContent = `Good news, your a human! A human who took ${elapsedSeconds} seconds to click a box.`;
     resultBox.style.display = 'flex';
     centerResultBox();
 
