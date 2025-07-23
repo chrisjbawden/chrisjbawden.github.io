@@ -2,313 +2,120 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <title>Timer</title>
+    <title>Interval Timer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
-        /* Reset & base */
-        * {
-            box-sizing: border-box;
+        /* ----------  Base & Layout ---------- */
+        *{box-sizing:border-box;}
+        body{
+            font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;
+            margin:0;background:#fff;
+            display:flex;flex-direction:column;min-height:100vh;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: #fff;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
+        header{
+            position:fixed;inset:0 0 auto;
+            height:60px;background:#282c34;color:#fff;
+            display:flex;align-items:center;justify-content:space-between;
+            padding:0 20px;z-index:10;box-shadow:0 2px 6px rgb(0 0 0 / .3);
+        }
+        header h1{font-size:1.5rem;margin:0;user-select:none;}
+        #settingsButton{
+            background:transparent;border:2px solid #fff;color:#fff;
+            padding:6px 12px;border-radius:6px;cursor:pointer;
+            font-weight:600;transition:.3s;white-space:normal;word-break:break-word;
+        }
+        #settingsButton:hover{background:#fff;color:#282c34;}
+
+        main{
+            flex:1;display:flex;flex-direction:column;
+            justify-content:center;align-items:center;
+            padding:80px 20px 60px;width:100%;text-align:center;
+        }
+        #timer{
+            font-size:20vw;max-font-size:300px;margin:0 0 30px;user-select:none;
+            word-break:break-word;
+        }
+        #controlPanel{
+            display:flex;justify-content:center;gap:20px;width:100%;max-width:440px;
+        }
+        button.control{
+            flex:1;min-width:120px;min-height:100px;padding:15px 12px;
+            font-size:clamp(18px,5vw,36px);cursor:pointer;
+            background:#eee;border:2px solid #ccc;border-radius:10px;
+            transition:.3s;user-select:none;text-align:center;display:flex;
+            justify-content:center;align-items:center;word-break:break-word;
+        }
+        button.control:hover{background:#ddd;}
+
+        #startButton{
+            padding:20px 40px;font-size:5vw;min-width:200px;min-height:120px;
+            border-radius:15px;border:none;background:#61dafb;color:#282c34;
+            font-weight:700;cursor:pointer;transition:.3s;user-select:none;
+            display:flex;justify-content:center;align-items:center;word-break:break-word;
+        }
+        #startButton:hover{background:#21a1f1;}
+
+        /* ----------  Hint Box ---------- */
+        #usageExample{
+            user-select:text;max-width:600px;margin:40px auto 0;
+            padding:15px 20px;background:#f0f8ff;border:1px solid #61dafb;
+            border-radius:8px;color:#282c34;font-family:monospace;font-size:1rem;
         }
 
-        /* Header */
-        header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 60px;
-            background: #282c34;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 10;
-            box-shadow: 0 2px 6px rgb(0 0 0 / 0.3);
+        /* ----------  Footer ---------- */
+        footer{
+            height:50px;background:#282c34;color:#fff;text-align:center;
+            line-height:50px;font-size:.9rem;user-select:none;width:100%;padding:0 10px;
         }
-        header h1 {
-            font-size: 1.5rem;
-            margin: 0;
-            user-select: none;
-        }
-        #settingsButton {
-            background: transparent;
-            border: 2px solid white;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            white-space: normal;
-            word-break: break-word;
-        }
-        #settingsButton:hover {
-            background-color: white;
-            color: #282c34;
-        }
+        footer a{color:#61dafb;text-decoration:none;word-break:break-word;}
+        footer a:hover{text-decoration:underline;}
 
-        /* Main content area */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 80px 20px 60px; /* account for fixed header/footer */
-            text-align: center;
-            width: 100%;
+        /* ----------  Modal ---------- */
+        #modalOverlay{
+            position:fixed;inset:0;background:rgba(0,0,0,.5);
+            display:none;align-items:center;justify-content:center;z-index:20;
         }
+        #settingsModal{
+            background:#fff;border-radius:12px;max-width:400px;width:90%;
+            padding:25px 30px;box-shadow:0 5px 15px rgb(0 0 0 /.3);
+            animation:fadeInScale .3s forwards;text-align:center;
+        }
+        @keyframes fadeInScale{from{opacity:0;transform:scale(.9);}to{opacity:1;}}
+        #settingsModal h2{margin:0 0 20px;font-weight:700;user-select:none;}
+        .inputGroup{display:block;margin-bottom:15px;text-align:center;}
+        .inputGroup label{display:block;margin-bottom:6px;font-weight:600;user-select:none;}
+        .inputRow{display:inline-flex;gap:10px;justify-content:center;}
+        input[type="number"]{
+            width:60px;padding:8px;font-size:1rem;border:1.5px solid #ccc;border-radius:6px;
+            transition:border-color .3s;
+        }
+        input[type="number"]:focus{border-color:#61dafb;outline:none;}
 
-        #timer {
-            font-size: 20vw;
-            max-font-size: 300px;
-            margin: 0 0 30px 0;
-            user-select: none;
-            word-break: break-word;
+        #modalButtons{text-align:center;margin-top:25px;}
+        #modalButtons button{
+            padding:8px 18px;font-size:1rem;font-weight:600;border:none;border-radius:6px;
+            cursor:pointer;transition:.3s;user-select:none;margin:0 5px;min-width:90px;
         }
+        #saveSettings{background:#61dafb;color:#282c34;}
+        #saveSettings:hover{background:#21a1f1;}
+        #cancelSettings{background:#eee;color:#333;}
+        #cancelSettings:hover{background:#ccc;}
 
-        #controlPanel {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            width: 100%;
-            max-width: 440px;
-        }
-        button.control {
-            flex: 1;
-            min-width: 120px;
-            padding: 15px 12px;
-            font-size: clamp(18px, 5vw, 36px);
-            min-height: 100px;
-            cursor: pointer;
-            background-color: #eee;
-            border: 2px solid #ccc;
-            border-radius: 10px;
-            transition: background-color 0.3s ease;
-            user-select: none;
-            white-space: normal;
-            word-break: break-word;
-            text-align: center;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        button.control:hover {
-            background-color: #ddd;
-        }
-
-        /* Start button */
-        #startButton {
-            padding: 20px 40px;
-            font-size: 5vw;
-            min-width: 200px;
-            min-height: 120px;
-            border-radius: 15px;
-            border: none;
-            background-color: #61dafb;
-            color: #282c34;
-            font-weight: 700;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            user-select: none;
-            white-space: normal;
-            word-break: break-word;
-            text-align: center;
-
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        #startButton:hover {
-            background-color: #21a1f1;
-        }
-
-        /* Usage Example Section */
-        #usageExample {
-            user-select: text; /* allow selecting text */
-            max-width: 600px;
-            margin: 40px auto 0;
-            padding: 15px 20px;
-            background: #f0f8ff;
-            border: 1px solid #61dafb;
-            border-radius: 8px;
-            color: #282c34;
-            font-family: monospace;
-            font-size: 1rem;
-            white-space: normal;
-        }
-
-        /* Footer */
-        footer {
-            height: 50px;
-            background-color: #282c34;
-            color: white;
-            text-align: center;
-            line-height: 50px;
-            font-size: 0.9rem;
-            user-select: none;
-            width: 100%;
-            padding: 0 10px;
-        }
-        footer a {
-            color: #61dafb;
-            text-decoration: none;
-            word-break: break-word;
-        }
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        /* Modal overlay */
-        #modalOverlay {
-            position: fixed;
-            inset: 0;
-            background-color: rgba(0,0,0,0.5);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-        }
-
-        /* Modal content */
-        #settingsModal {
-            background: white;
-            border-radius: 12px;
-            max-width: 400px;
-            width: 90%;
-            padding: 25px 30px;
-            box-shadow: 0 5px 15px rgb(0 0 0 / 0.3);
-            animation: fadeInScale 0.3s ease forwards;
-            text-align: center; /* center all content inside modal */
-        }
-        @keyframes fadeInScale {
-            from {opacity: 0; transform: scale(0.9);}
-            to {opacity: 1; transform: scale(1);}
-        }
-
-        #settingsModal h2 {
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-weight: 700;
-            user-select: none;
-            text-align: center; /* center heading */
-        }
-
-        /* Center the entire form */
-        #settingsForm {
-            text-align: center;
-        }
-
-        /* Stack input groups vertically */
-        .inputGroup {
-            display: block;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        .inputGroup label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            user-select: none;
-        }
-        /* Inputs side-by-side, centered horizontally */
-        .inputRow {
-            display: inline-flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        input[type="number"] {
-            width: 60px;
-            padding: 8px;
-            font-size: 1rem;
-            border: 1.5px solid #ccc;
-            border-radius: 6px;
-            transition: border-color 0.3s ease;
-        }
-        input[type="number"]:focus {
-            border-color: #61dafb;
-            outline: none;
-        }
-
-        #modalButtons {
-            margin-top: 25px;
-            text-align: center;
-        }
-        #modalButtons button {
-            padding: 8px 18px;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-            user-select: none;
-            margin: 0 5px;
-            min-width: 90px;
-        }
-        #saveSettings {
-            background-color: #61dafb;
-            color: #282c34;
-        }
-        #saveSettings:hover {
-            background-color: #21a1f1;
-        }
-        #cancelSettings {
-            background-color: #eee;
-            color: #333;
-        }
-        #cancelSettings:hover {
-            background-color: #ccc;
-        }
-
-        /* Responsive: Smaller text on small screens */
-        @media (max-width: 480px) {
-            header h1 {
-                font-size: 1.3rem;
-            }
-            #settingsButton {
-                font-size: 1rem;
-                padding: 8px 14px;
-                white-space: normal;
-                word-break: break-word;
-            }
-            footer {
-                font-size: 1rem;
-                height: auto;
-                line-height: normal;
-                padding: 10px 20px;
-            }
-            button.control {
-                font-size: clamp(14px, 5vw, 28px);
-                min-height: 80px;
-                padding: 12px 10px;
-            }
-            #startButton {
-                font-size: 6vw;
-                min-height: 100px;
-                padding: 16px 32px;
-            }
-            #usageExample {
-                font-size: 0.9rem;
-                padding: 12px 16px;
-                max-width: 100%;
-                margin: 20px auto 0;
-            }
+        /* ----------  Responsive tweaks ---------- */
+        @media (max-width:480px){
+            header h1{font-size:1.3rem;}
+            #settingsButton{font-size:1rem;padding:8px 14px;}
+            footer{font-size:1rem;height:auto;line-height:normal;padding:10px 20px;}
+            button.control{font-size:clamp(14px,5vw,28px);min-height:80px;padding:12px 10px;}
+            #startButton{font-size:6vw;min-height:100px;padding:16px 32px;}
+            #usageExample{font-size:.9rem;padding:12px 16px;max-width:100%;margin:20px auto 0;}
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Interval Timer</h1>
-        <button id="settingsButton" aria-label="Open Settings">Settings ⚙️</button>
+        <button id="settingsButton" aria-label="Open Settings">Settings ⚙️</button>
     </header>
 
     <main>
@@ -318,20 +125,22 @@
 
         <div id="controlPanel" style="display:none;">
             <button id="pauseButton" class="control" onclick="pauseResumeTimer()">⏸️</button>
-            <button id="nextButton" class="control" onclick="nextPhase()">Next</button>
+            <button id="nextButton"  class="control" onclick="nextPhase()">Next</button>
             <button id="resetButton" class="control" onclick="resetTimer()">Reset</button>
         </div>
 
         <section id="usageExample">
             <strong>HINT:</strong><br />
-            Use URL parameters like <code>?warmup=30s&highIntensity=1m&rest=45s</code> to set intervals as a bookmark or favourite.
+            Use URL parameters like <code>?warmup=30s&amp;highIntensity=1m&amp;rest=45s</code>
+            to set intervals as a bookmark or favourite.
         </section>
     </main>
 
     <footer>
-        <a href="https://chrisjbawden.github.io/" target="_blank" rel="noopener noreferrer">View GitHub</a>
+        <a href="https://chrisjbawden.github.io/" target="_blank" rel="noopener noreferrer">View GitHub</a>
     </footer>
 
+    <!-- ----------  Settings Modal ---------- -->
     <div id="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
         <div id="settingsModal">
             <h2 id="modalTitle">Settings</h2>
@@ -339,27 +148,27 @@
                 <div class="inputGroup">
                     <label for="warmupMinutes">Warmup Interval</label>
                     <div class="inputRow">
-                        <input type="number" id="warmupMinutes" min="0" max="59" placeholder="Min" /> :
-                        <input type="number" id="warmupSeconds" min="0" max="59" placeholder="Sec" />
+                        <input type="number" id="warmupMinutes" min="0" max="59" placeholder="Min"> :
+                        <input type="number" id="warmupSeconds" min="0" max="59" placeholder="Sec">
                     </div>
                 </div>
                 <div class="inputGroup">
-                    <label for="highIntensityMinutes">High Intensity Interval</label>
+                    <label for="highIntensityMinutes">High Intensity Interval</label>
                     <div class="inputRow">
-                        <input type="number" id="highIntensityMinutes" min="0" max="59" placeholder="Min" /> :
-                        <input type="number" id="highIntensitySeconds" min="0" max="59" placeholder="Sec" />
+                        <input type="number" id="highIntensityMinutes" min="0" max="59" placeholder="Min"> :
+                        <input type="number" id="highIntensitySeconds" min="0" max="59" placeholder="Sec">
                     </div>
                 </div>
                 <div class="inputGroup">
                     <label for="restMinutes">Rest Interval</label>
                     <div class="inputRow">
-                        <input type="number" id="restMinutes" min="0" max="59" placeholder="Min" /> :
-                        <input type="number" id="restSeconds" min="0" max="59" placeholder="Sec" />
+                        <input type="number" id="restMinutes" min="0" max="59" placeholder="Min"> :
+                        <input type="number" id="restSeconds" min="0" max="59" placeholder="Sec">
                     </div>
                 </div>
                 <div id="modalButtons">
                     <button id="cancelSettings" type="button">Cancel</button>
-                    <button id="saveSettings" type="submit">Save</button>
+                    <button id="saveSettings"   type="submit">Save</button>
                 </div>
             </form>
         </div>
@@ -368,268 +177,222 @@
     <audio id="beepSound" src="beep.mp3"></audio>
 
 <script>
-    let timerInterval;
-    let currentPhase = 'warmup';
-    let isPaused = false;
-    let timerRunning = false;
+/* ----------  Timer logic ---------- */
+let timerInterval,currentPhase='warmup',isPaused=false,timerRunning=false;
 
-    const originalDurations = {
-        warmup: 60,
-        highIntensity: 60,
-        rest: 60
+const originalDurations={warmup:60,highIntensity:60,rest:60};
+const phases={
+    warmup:{duration:0,next:'highIntensity',color:'#FFCCCC'},
+    highIntensity:{duration:0,next:'rest',color:'#DFF2BF'},
+    rest:{duration:0,next:'highIntensity',color:'#FFFACD'}
+};
+
+function parseTime(str){
+    if(!str) return 0;
+    const n=parseInt(str.slice(0,-1),10);
+    const u=str.slice(-1);
+    return u==='s'?n:n*60;
+}
+
+/* Load from URL → localStorage fallback */
+function loadDurations(){
+    const q=new URLSearchParams(location.search);
+    let w=60,h=60,r=60;
+    if(q.has('warmup'))        w=parseTime(q.get('warmup'));
+    if(q.has('highIntensity')) h=parseTime(q.get('highIntensity'));
+    if(q.has('rest'))          r=parseTime(q.get('rest'));
+
+    const saved=localStorage.getItem('timerSettings');
+    if(saved){
+        try{
+            const o=JSON.parse(saved);
+            if(typeof o.warmup==='number')        w=o.warmup;
+            if(typeof o.highIntensity==='number') h=o.highIntensity;
+            if(typeof o.rest==='number')          r=o.rest;
+        }catch{}
+    }
+    originalDurations.warmup=w;
+    originalDurations.highIntensity=h;
+    originalDurations.rest=r;
+}
+
+/* Initialise phases */
+function resetPhases(){
+    phases.warmup.duration       =originalDurations.warmup;
+    phases.highIntensity.duration=originalDurations.highIntensity;
+    phases.rest.duration         =originalDurations.rest;
+}
+
+/* Set up to first phase */
+function setupTimer(){
+    loadDurations();
+    resetPhases();
+    currentPhase=phases.warmup.duration>0?'warmup':'highIntensity';
+    updateTimerDisplay();
+    updateBackgroundColor();
+}
+
+function timerTick(){
+    if(!isPaused && phases[currentPhase].duration>0){
+        phases[currentPhase].duration--;
+        updateTimerDisplay();
+    }else if(!isPaused){
+        nextPhase();
+    }
+}
+
+function updateTimerDisplay(){
+    const m=Math.floor(phases[currentPhase].duration/60);
+    const s=phases[currentPhase].duration%60;
+    document.getElementById('timer').textContent=
+        `${m<10?'0':''}${m}:${s<10?'0':''}${s}`;
+}
+
+function pauseResumeTimer(){
+    if(!timerRunning) return;
+    isPaused=!isPaused;
+    document.getElementById('pauseButton').textContent=isPaused?'▶️':'⏸️';
+}
+
+function nextPhase(){
+    playBeep();
+    currentPhase=phases[currentPhase].next;
+    phases[currentPhase].duration=originalDurations[currentPhase];
+    updateTimerDisplay();
+    updateBackgroundColor();
+}
+function playBeep(){document.getElementById('beepSound').play();}
+function updateBackgroundColor(){
+    document.body.style.backgroundColor=phases[currentPhase].color;
+}
+
+function resetTimer(){
+    clearInterval(timerInterval);timerInterval=null;timerRunning=false;isPaused=false;
+    document.getElementById('pauseButton').textContent='⏸️';
+    document.getElementById('timer').style.display='none';
+    document.getElementById('controlPanel').style.display='none';
+    document.getElementById('startButton').style.display='inline-block';
+    setupTimer();
+    document.body.style.background='#fff';
+}
+
+/* ----------  Start helper so we can call it programmatically ---------- */
+function startTimer(){
+    const startBtn=document.getElementById('startButton');
+    const timerDiv=document.getElementById('timer');
+    const controls=document.getElementById('controlPanel');
+
+    startBtn.style.display='none';
+    timerDiv.style.display='block';
+    controls.style.display='flex';
+
+    setupTimer();
+    isPaused=false;
+    document.getElementById('pauseButton').textContent='⏸️';
+
+    clearInterval(timerInterval);
+    timerInterval=setInterval(timerTick,1000);
+    timerRunning=true;
+}
+
+/* ----------  UI element references ---------- */
+const startButton   =document.getElementById('startButton');
+const timerDisplay  =document.getElementById('timer');
+const controlPanel  =document.getElementById('controlPanel');
+startButton.addEventListener('click',startTimer);
+
+/* ----------  Settings modal ---------- */
+const modalOverlay   =document.getElementById('modalOverlay');
+const settingsButton =document.getElementById('settingsButton');
+const cancelSettings =document.getElementById('cancelSettings');
+const saveSettings   =document.getElementById('saveSettings');
+const settingsForm   =document.getElementById('settingsForm');
+
+let pausedBeforeModal=false;
+
+settingsButton.addEventListener('click',()=>{
+    openSettingsModal();
+    if(timerRunning && !isPaused){pausedBeforeModal=false;pauseTimer();}
+    else{pausedBeforeModal=true;}
+});
+cancelSettings.addEventListener('click',()=>{
+    closeSettingsModal();
+    if(timerRunning && !pausedBeforeModal){resumeTimer();}
+});
+saveSettings.addEventListener('click',()=>{
+    saveSettingsHandler();closeSettingsModal();
+    if(timerRunning && !pausedBeforeModal){resumeTimer();}
+});
+settingsForm.addEventListener('submit',e=>{
+    e.preventDefault();saveSettingsHandler();closeSettingsModal();
+    if(timerRunning && !pausedBeforeModal){resumeTimer();}
+});
+
+function openSettingsModal(){
+    const toMS=t=>({m:Math.floor(t/60),s:t%60});
+    const {m:wm,s:ws}=toMS(originalDurations.warmup);
+    const {m:hm,s:hs}=toMS(originalDurations.highIntensity);
+    const {m:rm,s:rs}=toMS(originalDurations.rest);
+
+    document.getElementById('warmupMinutes').value        =wm;
+    document.getElementById('warmupSeconds').value        =ws;
+    document.getElementById('highIntensityMinutes').value =hm;
+    document.getElementById('highIntensitySeconds').value =hs;
+    document.getElementById('restMinutes').value          =rm;
+    document.getElementById('restSeconds').value          =rs;
+
+    modalOverlay.style.display='flex';
+}
+function closeSettingsModal(){modalOverlay.style.display='none';}
+
+function saveSettingsHandler(){
+    const getTime=(mID,sID)=>{
+        let m=parseInt(document.getElementById(mID).value)||0;
+        let s=parseInt(document.getElementById(sID).value)||0;
+        m=Math.min(Math.max(m,0),59);s=Math.min(Math.max(s,0),59);
+        return m*60+s;
     };
+    originalDurations.warmup        =getTime('warmupMinutes','warmupSeconds');
+    originalDurations.highIntensity =getTime('highIntensityMinutes','highIntensitySeconds');
+    originalDurations.rest          =getTime('restMinutes','restSeconds');
 
-    const phases = {
-        warmup: { duration: 0, next: 'highIntensity', color: '#FFCCCC' },
-        highIntensity: { duration: 0, next: 'rest', color: '#DFF2BF' },
-        rest: { duration: 0, next: 'highIntensity', color: '#FFFACD' }
-    };
+    localStorage.setItem('timerSettings',JSON.stringify(originalDurations));
+    resetPhases();
+    currentPhase=phases.warmup.duration>0?'warmup':'highIntensity';
+    updateTimerDisplay();
+    updateBackgroundColor();
+    isPaused=false;
+    document.getElementById('pauseButton').textContent='⏸️';
+}
+function pauseTimer(){if(timerRunning&&!isPaused)pauseResumeTimer();}
+function resumeTimer(){if(timerRunning&&isPaused)pauseResumeTimer();}
 
-    function parseTime(input) {
-        if (!input) return 0;
-        const num = parseInt(input.slice(0, -1), 10);
-        const unit = input.slice(-1);
-        return unit === 's' ? num : num * 60;
+/* ----------  Screen Wake Lock (optional) ---------- */
+let wakeLock=null;
+async function requestWakeLock(){
+    try{
+        wakeLock=await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release',()=>console.log('Wake lock released'));
+    }catch(e){console.error(e.name,e.message);}
+}
+window.addEventListener('load',requestWakeLock);
+document.addEventListener('visibilitychange',()=>{
+    if(wakeLock!==null && document.visibilityState==='visible')requestWakeLock();
+});
+window.addEventListener('unload',()=>{
+    if(wakeLock!==null){wakeLock.release();wakeLock=null;}
+});
+
+/* ----------  Auto‑start when URL parameters present ---------- */
+window.addEventListener('DOMContentLoaded',()=>{
+    const params=new URLSearchParams(location.search);
+    const hasParams=['warmup','highIntensity','rest'].some(p=>params.has(p));
+    if(hasParams){
+        /* hide hint & auto‑start */
+        document.getElementById('usageExample').style.display='none';
+        startTimer();
     }
-
-    function loadDurations() {
-        const urlParams = new URLSearchParams(window.location.search);
-        let warmup = 60;
-        let high = 60;
-        let rest = 60;
-
-        if(urlParams.has('warmup')) warmup = parseTime(urlParams.get('warmup'));
-        if(urlParams.has('highIntensity')) high = parseTime(urlParams.get('highIntensity'));
-        if(urlParams.has('rest')) rest = parseTime(urlParams.get('rest'));
-
-        const stored = localStorage.getItem('timerSettings');
-        if(stored) {
-            try {
-                const obj = JSON.parse(stored);
-                if(typeof obj.warmup === 'number') warmup = obj.warmup;
-                if(typeof obj.highIntensity === 'number') high = obj.highIntensity;
-                if(typeof obj.rest === 'number') rest = obj.rest;
-            } catch {}
-        }
-
-        originalDurations.warmup = warmup;
-        originalDurations.highIntensity = high;
-        originalDurations.rest = rest;
-    }
-
-    function setupTimer() {
-        loadDurations();
-        resetPhases();
-        currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
-        updateTimerDisplay();
-        updateBackgroundColor();
-    }
-
-    function resetPhases() {
-        phases.warmup.duration = originalDurations.warmup;
-        phases.highIntensity.duration = originalDurations.highIntensity;
-        phases.rest.duration = originalDurations.rest;
-    }
-
-    function timerTick() {
-        if (!isPaused && phases[currentPhase].duration > 0) {
-            phases[currentPhase].duration--;
-            updateTimerDisplay();
-        } else if (!isPaused) {
-            nextPhase();
-        }
-    }
-
-    function updateTimerDisplay() {
-        const minutes = Math.floor(phases[currentPhase].duration / 60);
-        const seconds = phases[currentPhase].duration % 60;
-        const formattedTime =
-            (minutes < 10 ? "0" + minutes : minutes) + ":" +
-            (seconds < 10 ? "0" + seconds : seconds);
-        document.getElementById('timer').textContent = formattedTime;
-    }
-
-    function pauseResumeTimer() {
-        if(!timerRunning) return;
-        isPaused = !isPaused;
-        const pauseBtn = document.getElementById('pauseButton');
-        pauseBtn.textContent = isPaused ? '▶️' : '⏸️';
-    }
-
-    function nextPhase() {
-        playBeep();
-        currentPhase = phases[currentPhase].next;
-        phases[currentPhase].duration = originalDurations[currentPhase];
-        updateTimerDisplay();
-        updateBackgroundColor();
-    }
-
-    function playBeep() {
-        const beepSound = document.getElementById('beepSound');
-        beepSound.play();
-    }
-
-    function updateBackgroundColor() {
-        document.body.style.backgroundColor = phases[currentPhase].color;
-    }
-
-    function resetTimer() {
-        clearInterval(timerInterval);
-        timerInterval = null;
-        timerRunning = false;
-        isPaused = false;
-        document.getElementById('pauseButton').textContent = '⏸️';
-
-        document.getElementById('timer').style.display = 'none';
-        document.getElementById('controlPanel').style.display = 'none';
-
-        document.getElementById('startButton').style.display = 'inline-block';
-
-        setupTimer();
-        updateTimerDisplay();
-        document.body.style.backgroundColor = '#fff';
-    }
-
-    const startButton = document.getElementById('startButton');
-    const timerDisplay = document.getElementById('timer');
-    const controlPanel = document.getElementById('controlPanel');
-
-    startButton.addEventListener('click', () => {
-        startButton.style.display = 'none';
-        timerDisplay.style.display = 'block';
-        controlPanel.style.display = 'flex';
-
-        setupTimer();
-        isPaused = false;
-        document.getElementById('pauseButton').textContent = '⏸️';
-
-        if(timerInterval) clearInterval(timerInterval);
-        timerInterval = setInterval(timerTick, 1000);
-        timerRunning = true;
-    });
-
-    const modalOverlay = document.getElementById('modalOverlay');
-    const settingsButton = document.getElementById('settingsButton');
-    const cancelSettings = document.getElementById('cancelSettings');
-    const saveSettings = document.getElementById('saveSettings');
-    const settingsForm = document.getElementById('settingsForm');
-
-    let wasPausedBeforeSettings = false;
-
-    settingsButton.addEventListener('click', () => {
-        openSettingsModal();
-        if(timerRunning && !isPaused){
-            wasPausedBeforeSettings = false;
-            pauseTimer();
-        } else {
-            wasPausedBeforeSettings = true;
-        }
-    });
-    cancelSettings.addEventListener('click', () => {
-        closeSettingsModal();
-        if(timerRunning && !wasPausedBeforeSettings){
-            resumeTimer();
-        }
-    });
-    saveSettings.addEventListener('click', () => {
-        saveSettingsHandler();
-        closeSettingsModal();
-        if(timerRunning && !wasPausedBeforeSettings){
-            resumeTimer();
-        }
-    });
-    settingsForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        saveSettingsHandler();
-        closeSettingsModal();
-        if(timerRunning && !wasPausedBeforeSettings){
-            resumeTimer();
-        }
-    });
-
-    function openSettingsModal() {
-        function toMinSec(totalSeconds) {
-            return { m: Math.floor(totalSeconds / 60), s: totalSeconds % 60 };
-        }
-        let warmup = toMinSec(originalDurations.warmup);
-        let high = toMinSec(originalDurations.highIntensity);
-        let rest = toMinSec(originalDurations.rest);
-
-        document.getElementById('warmupMinutes').value = warmup.m;
-        document.getElementById('warmupSeconds').value = warmup.s;
-        document.getElementById('highIntensityMinutes').value = high.m;
-        document.getElementById('highIntensitySeconds').value = high.s;
-        document.getElementById('restMinutes').value = rest.m;
-        document.getElementById('restSeconds').value = rest.s;
-
-        modalOverlay.style.display = 'flex';
-    }
-
-    function closeSettingsModal() {
-        modalOverlay.style.display = 'none';
-    }
-
-    function saveSettingsHandler() {
-        function getTime(idMin, idSec) {
-            let min = parseInt(document.getElementById(idMin).value) || 0;
-            let sec = parseInt(document.getElementById(idSec).value) || 0;
-            min = Math.min(Math.max(min, 0), 59);
-            sec = Math.min(Math.max(sec, 0), 59);
-            return min * 60 + sec;
-        }
-
-        originalDurations.warmup = getTime('warmupMinutes', 'warmupSeconds');
-        originalDurations.highIntensity = getTime('highIntensityMinutes', 'highIntensitySeconds');
-        originalDurations.rest = getTime('restMinutes', 'restSeconds');
-
-        localStorage.setItem('timerSettings', JSON.stringify(originalDurations));
-
-        resetPhases();
-        currentPhase = phases.warmup.duration > 0 ? 'warmup' : 'highIntensity';
-        updateTimerDisplay();
-        updateBackgroundColor();
-
-        isPaused = false;
-        document.getElementById('pauseButton').textContent = '⏸️';
-    }
-
-    function pauseTimer() {
-        if(timerRunning && !isPaused){
-            pauseResumeTimer();
-        }
-    }
-
-    function resumeTimer() {
-        if(timerRunning && isPaused){
-            pauseResumeTimer();
-        }
-    }
-
-    let wakeLock = null;
-
-    async function requestWakeLock() {
-        try {
-            wakeLock = await navigator.wakeLock.request('screen');
-            wakeLock.addEventListener('release', () => {
-                console.log('Wake lock was released');
-            });
-            console.log('Wake lock is active');
-        } catch (err) {
-            console.error(`${err.name}, ${err.message}`);
-        }
-    }
-    window.addEventListener('load', requestWakeLock);
-    document.addEventListener('visibilitychange', () => {
-        if (wakeLock !== null && document.visibilityState === 'visible') {
-            requestWakeLock();
-        }
-    });
-    window.addEventListener('unload', () => {
-        if (wakeLock !== null) {
-            wakeLock.release();
-            wakeLock = null;
-        }
-    });
+});
 </script>
 </body>
 </html>
