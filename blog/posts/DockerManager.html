@@ -1,0 +1,46 @@
+<br>
+<br>
+<h2>Good‑bye heavy Portainer, hello lightweight DockerManager!</h2>
+
+<p>
+I’ve been running <a href="https://cockpit-project.org/" target="_blank">Cockpit</a> for a while now, mostly because its web console lets me wrangle my home‑lab servers from the couch.  Originally I bolted on an <em>iframe</em> app that simply embedded Portainer so I could at least monitor containers without leaving Cockpit. It worked, but Portainer’s footprint always felt a bit over‑the‑top for the couple of clicks I actually needed. Also, I have always wanted to contribute to a big project.
+</p>
+
+<p>
+Over a quiet weekend I decided to write a <strong>native</strong> Cockpit application instead of another embed.  The result is <strong>DockerManager</strong>—a single‑page Cockpit plugin that surfaces just the essentials:
+</p>
+
+<ul>
+  <li>Container list with start / stop / restart actions and port information (with clickable links)</li>
+
+</ul>
+
+<h3>Why it’s faster &amp; lighter</h3>
+
+<p>
+DockerManager talks straight to the local Docker socket using Cockpit’s <code>channel.open</code> API—no extra daemons, no API proxies.  The whole UI is just vanilla JS, PatternFly 4 for styling, and one <code>manifest.json</code> so Cockpit registers it.  
+</p>
+
+<p>
+So bundle size = <strong> small </strong> and launch time = <strong> short</strong>.
+</p>
+
+<p>
+  Anyway, if you want to check it out <a href="https://github.com/chrisjbawden/cockpit-dockermanager" target="_blank">click here</a>
+</p>
+
+
+<h3>Possible improvements?</h3>
+
+<p>
+I’m considering:
+</p>
+<ul>
+  <li>inframe terminal</li>
+</ul>
+
+<br>
+<br>
+<p>
+<i>PS:</i> Still love Portainer for big clusters—this tool is just the leaner fit so i can more easily keep an eye on things. If you want to check out that project - <a href="https://github.com/chrisjbawden/cockpit-portainer" target=_blank">see here</a>.
+</p>
