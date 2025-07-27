@@ -3,116 +3,119 @@
 <head>
   <meta charset="UTF-8" />
   <title>Hidden Choice Chess</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/www/css/chessboard-1.0.0.css" />
+  <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
     body { font-family: sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
     #board { width: 400px; margin: 20px auto; }
     #moveOptions { margin-top: 20px; }
-    button.move-btn { padding: 10px 20px; margin: 5px; font-size: 16px; }
+    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
+    #colorButtons { margin: 20px; }
   </style>
 </head>
 <body>
   <h1>Hidden Choice Chess</h1>
+  <div id="colorButtons">
+    <button onclick="startGame('white')">Play as White</button>
+    <button onclick="startGame('black')">Play as Black</button>
+  </div>
   <div id="board"></div>
   <div id="moveOptions"></div>
 
-  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chessboardjs@1.0.0/www/js/chessboard-1.0.0.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script src="./jquery-3.6.0.min.js"></script>
+  <script src="./chess.min.js"></script>
+  <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    window.onload = function () {
-      const playerColor = prompt("Choose your side (white/black):", "white").toLowerCase();
-      if (playerColor !== "white" && playerColor !== "black") {
-        alert("Invalid choice. Please reload and choose 'white' or 'black'.");
-        return;
-      }
+    let board, game, stockfish, playerColor;
 
-      const game = new Chess();
-      const stockfish = new Worker("stockfish.js");
+    function startGame(color) {
+      document.getElementById('colorButtons').style.display = 'none';
+      playerColor = color;
+      game = new Chess();
+      stockfish = new Worker('stockfish.js');
 
-      const board = Chessboard('board', {
+      board = Chessboard('board', {
         position: 'start',
         draggable: false,
-        pieceTheme: '{piece}.png',
-        orientation: playerColor
+        orientation: playerColor,
+        pieceTheme: '{piece}.png'
       });
 
-      function evaluateMoves(callback) {
-        const moves = game.moves();
-        if (!moves.length) return callback([]);
-
-        const scores = [];
-        let completed = 0;
-
-        function processScore(move, fen) {
-          let handler = function (e) {
-            if (e.data.startsWith('info') && e.data.includes('score cp')) {
-              const m = e.data.match(/score (cp|mate) (-?\d+)/);
-              if (m) scores.push({ move, score: +m[2] });
-              completed++;
-              if (completed === moves.length) {
-                scores.sort((a, b) => b.score - a.score);
-                callback([scores[0]?.move, scores[scores.length - 1]?.move]);
-              }
-              stockfish.removeEventListener('message', handler);
-            }
-          };
-          stockfish.addEventListener('message', handler);
-          stockfish.postMessage("position fen " + fen);
-          stockfish.postMessage("go depth 8");
-        }
-
-        moves.forEach(move => {
-          const g = new Chess(game.fen());
-          g.move(move);
-          processScore(move, g.fen());
-        });
+      if (playerColor === 'white') {
+        showTwoMoves();
+      } else {
+        botMove();
       }
+    }
 
-      function showTwoMoves() {
-        const container = document.getElementById('moveOptions');
-        container.innerHTML = '';
+    function evaluateMoves(callback) {
+      const moves = game.moves();
+      if (!moves.length) return callback([]);
 
-        evaluateMoves(pair => {
-          if (!pair.length) return;
-          pair.sort(() => Math.random() - 0.5).forEach(m => {
-            const btn = document.createElement('button');
-            btn.textContent = m;
-            btn.className = 'move-btn';
-            btn.onclick = () => {
-              game.move(m);
-              board.position(game.fen());
-              container.innerHTML = '';
-              setTimeout(botMove, 300);
-            };
-            container.appendChild(btn);
-          });
-        });
-      }
+      const scores = [];
+      let completed = 0;
 
-      function botMove() {
+      function processScore(move, fen) {
         let handler = function (e) {
-          if (e.data.startsWith('bestmove')) {
-            const move = e.data.split(' ')[1];
-            game.move(move, { sloppy: true });
-            board.position(game.fen());
-            if (!game.game_over()) {
-              showTwoMoves();
+          if (e.data.startsWith('info') && e.data.includes('score cp')) {
+            const m = e.data.match(/score (cp|mate) (-?\d+)/);
+            if (m) scores.push({ move, score: +m[2] });
+            completed++;
+            if (completed === moves.length) {
+              scores.sort((a, b) => b.score - a.score);
+              callback([scores[0]?.move, scores[scores.length - 1]?.move]);
             }
             stockfish.removeEventListener('message', handler);
           }
         };
         stockfish.addEventListener('message', handler);
-        stockfish.postMessage("position fen " + game.fen());
-        stockfish.postMessage("go depth 10");
+        stockfish.postMessage("position fen " + fen);
+        stockfish.postMessage("go depth 8");
       }
 
-      if (playerColor === "white") {
-        showTwoMoves();
-      } else {
-        botMove();
-      }
-    };
+      moves.forEach(move => {
+        const g = new Chess(game.fen());
+        g.move(move);
+        processScore(move, g.fen());
+      });
+    }
+
+    function showTwoMoves() {
+      const container = document.getElementById('moveOptions');
+      container.innerHTML = '';
+
+      evaluateMoves(pair => {
+        if (!pair.length) return;
+        pair.sort(() => Math.random() - 0.5).forEach(m => {
+          const btn = document.createElement('button');
+          btn.textContent = m;
+          btn.className = 'move-btn';
+          btn.onclick = () => {
+            game.move(m);
+            board.position(game.fen());
+            container.innerHTML = '';
+            setTimeout(botMove, 300);
+          };
+          container.appendChild(btn);
+        });
+      });
+    }
+
+    function botMove() {
+      let handler = function (e) {
+        if (e.data.startsWith('bestmove')) {
+          const move = e.data.split(' ')[1];
+          game.move(move, { sloppy: true });
+          board.position(game.fen());
+          if (!game.game_over()) {
+            showTwoMoves();
+          }
+          stockfish.removeEventListener('message', handler);
+        }
+      };
+      stockfish.addEventListener('message', handler);
+      stockfish.postMessage("position fen " + game.fen());
+      stockfish.postMessage("go depth 10");
+    }
   </script>
 </body>
 </html>
