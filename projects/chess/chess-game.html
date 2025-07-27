@@ -1,115 +1,91 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>Hidden Choice Chess</title>
-    <style>
-        body {
-            font-family: sans-serif;
-            background: #f4f4f4;
-            text-align: center;
-            padding: 20px;
-        }
-        #board {
-            width: 400px;
-            margin: 20px auto;
-        }
-        .btn-container {
-            margin-top: 20px;
-        }
-        button.move-btn {
-            padding: 10px 20px;
-            margin: 5px;
-            font-size: 16px;
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/css/chessboard.min.css" />
+  <meta charset="UTF-8" />
+  <title>Hidden Choice Chess</title>
+  <link rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+    #board { width: 400px; margin: 20px auto; }
+    #moveOptions { margin-top: 20px; }
+    button.move-btn { padding: 10px 20px; margin: 5px; font-size: 16px; }
+  </style>
 </head>
 <body>
-    <h1>Hidden Choice Chess</h1>
-    <div id="board"></div>
-    <div class="btn-container" id="moveOptions"></div>
+  <h1>Hidden Choice Chess</h1>
+  <div id="board"></div>
+  <div id="moveOptions"></div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/1.0.0/chess.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard.js/1.0.0/js/chessboard.min.js"></script>
-    <script>
-        const game = new Chess();
-        const board = Chessboard('board', {
-            position: 'start',
-            draggable: false,
-            pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
-        });
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+  <script>
+    const game = new Chess();
+    const board = Chessboard('board', {
+      position: 'start',
+      draggable: false,
+      pieceTheme: 'img/chesspieces/wikipedia/{piece}.png'
+    });
+    const stockfish = new Worker('stockfish.js');
 
-        const stockfish = new Worker('stockfish.js');  // Assuming same directory
-
-        function getBestAndWorstMove(callback) {
-            const moves = game.moves();
-            if (moves.length === 0) return;
-
-            let scores = [];
-
-            let done = 0;
-            for (const move of moves) {
-                const tempGame = new Chess(game.fen());
-                tempGame.move(move);
-                stockfish.postMessage("position fen " + tempGame.fen());
-                stockfish.postMessage("eval");
-                stockfish.postMessage("go depth 10");
-
-                stockfish.onmessage = function (event) {
-                    if (event.data.startsWith('info') && event.data.includes('score')) {
-                        const match = event.data.match(/score (cp|mate) (-?\d+)/);
-                        if (match) {
-                            const score = parseInt(match[2]);
-                            scores.push({ move, score });
-                            done++;
-                            if (done === moves.length) {
-                                scores.sort((a, b) => b.score - a.score);
-                                callback([scores[0].move, scores[scores.length - 1].move]);
-                            }
-                        }
-                    }
-                };
+    function evaluateMoves(callback) {
+      const moves = game.moves();
+      let done = 0, scores = [];
+      if (!moves.length) return callback([]);
+      moves.forEach(move => {
+        const g = new Chess(game.fen());
+        g.move(move);
+        stockfish.postMessage("position fen " + g.fen());
+        stockfish.postMessage("go depth 8");
+        stockfish.onmessage = e => {
+          if (e.data.startsWith('info') && e.data.includes('score cp')) {
+            const m = e.data.match(/score (cp|mate) (-?\\d+)/);
+            if (m) { scores.push({move, score: +m[2]}); }
+            done++;
+            if (done === moves.length) {
+              scores.sort((a,b) => b.score - a.score);
+              callback([scores[0]?.move, scores[scores.length-1]?.move]);
             }
+          }
+        };
+      });
+    }
+
+    function showTwoMoves() {
+      const container = document.getElementById('moveOptions');
+      container.innerHTML = '';
+      evaluateMoves(pair => {
+        if (!pair.length) return;
+        pair.sort(() => Math.random() - 0.5).forEach(m => {
+          const btn = document.createElement('button');
+          btn.textContent = m;
+          btn.className = 'move-btn';
+          btn.onclick = () => {
+            game.move(m);
+            board.position(game.fen());
+            container.innerHTML = '';
+            setTimeout(botMove, 300);
+          };
+          container.appendChild(btn);
+        });
+      });
+    }
+
+    function botMove() {
+      stockfish.postMessage("position fen "+game.fen());
+      stockfish.postMessage("go depth 10");
+      stockfish.onmessage = e => {
+        if (e.data.startsWith('bestmove')) {
+          const move = e.data.split(' ')[1];
+          game.move(move, {sloppy:true});
+          board.position(game.fen());
+          showTwoMoves();
         }
+      };
+    }
 
-        function offerTwoMoves() {
-            const options = document.getElementById("moveOptions");
-            options.innerHTML = "";
-            getBestAndWorstMove((pair) => {
-                const shuffled = pair.sort(() => Math.random() - 0.5);
-                shuffled.forEach(move => {
-                    const btn = document.createElement("button");
-                    btn.textContent = move;
-                    btn.className = "move-btn";
-                    btn.onclick = () => {
-                        game.move(move);
-                        board.position(game.fen());
-                        options.innerHTML = "";
-                        setTimeout(botMove, 500);
-                    };
-                    options.appendChild(btn);
-                });
-            });
-        }
-
-        function botMove() {
-            if (game.game_over()) return;
-            stockfish.postMessage("position fen " + game.fen());
-            stockfish.postMessage("go depth 12");
-
-            stockfish.onmessage = function (event) {
-                if (event.data.startsWith('bestmove')) {
-                    const move = event.data.split(' ')[1];
-                    game.move(move, { sloppy: true });
-                    board.position(game.fen());
-                    offerTwoMoves();
-                }
-            };
-        }
-
-        offerTwoMoves();
-    </script>
+    showTwoMoves();
+  </script>
 </body>
 </html>
