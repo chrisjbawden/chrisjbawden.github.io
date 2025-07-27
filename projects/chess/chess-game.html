@@ -5,11 +5,41 @@
   <title>Hidden Choice Chess</title>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
-    body { font-family: sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
-    #board { width: 400px; margin: 20px auto; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
+    #board { width: 400px; margin: 20px auto; position: relative; }
     #moveOptions { margin-top: 20px; }
-    button { padding: 10px 20px; margin: 5px; font-size: 16px; }
     #colorButtons { margin: 20px; }
+
+    button {
+      padding: 10px 22px;
+      margin: 5px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #0077cc;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    svg.arrow {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    line.arrow-line {
+      stroke: red;
+      stroke-width: 4px;
+      marker-end: url(#arrowhead);
+    }
   </style>
 </head>
 <body>
@@ -18,7 +48,16 @@
     <button onclick="startGame('white')">Play as White</button>
     <button onclick="startGame('black')">Play as Black</button>
   </div>
-  <div id="board" style="display: none;"></div>
+  <div id="board">
+    <svg class="arrow">
+      <defs>
+        <marker id="arrowhead" markerWidth="10" markerHeight="7"
+          refX="0" refY="3.5" orient="auto">
+          <polygon points="0 0, 10 3.5, 0 7" fill="red"/>
+        </marker>
+      </defs>
+    </svg>
+  </div>
   <div id="moveOptions"></div>
 
   <script src="./jquery-3.6.0.min.js"></script>
@@ -26,6 +65,34 @@
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
     let board, game, stockfish, playerColor;
+
+    const squareToCoord = square => {
+      const files = 'abcdefgh';
+      const file = files.indexOf(square[0]);
+      const rank = 8 - parseInt(square[1]);
+      const tileSize = 50; // 400px / 8
+      return {
+        x: file * tileSize + tileSize / 2,
+        y: rank * tileSize + tileSize / 2
+      };
+    };
+
+    function clearArrows() {
+      document.querySelectorAll('.arrow line').forEach(e => e.remove());
+    }
+
+    function drawArrow(from, to) {
+      const svg = document.querySelector('.arrow');
+      const start = squareToCoord(from);
+      const end = squareToCoord(to);
+      const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+      line.setAttribute('x1', start.x);
+      line.setAttribute('y1', start.y);
+      line.setAttribute('x2', end.x);
+      line.setAttribute('y2', end.y);
+      line.classList.add('arrow-line');
+      svg.appendChild(line);
+    }
 
     function startGame(color) {
       document.getElementById('colorButtons').style.display = 'none';
@@ -38,7 +105,7 @@
         position: 'start',
         draggable: false,
         orientation: playerColor,
-        pieceTheme: '{piece}.png' // PNGs live in same directory
+        pieceTheme: '{piece}.png'
       });
 
       if (playerColor === 'white') {
@@ -83,6 +150,7 @@
     function showTwoMoves() {
       const container = document.getElementById('moveOptions');
       container.innerHTML = '';
+      clearArrows();
 
       if (game.game_over()) {
         container.innerHTML = "<strong>Game Over</strong>";
@@ -92,6 +160,9 @@
       evaluateMoves(pair => {
         if (!pair.length) return;
         pair.sort(() => Math.random() - 0.5).forEach(m => {
+          const moveObj = game.move(m, {sloppy: true});
+          game.undo(); // preview only
+
           const btn = document.createElement('button');
           btn.textContent = m;
           btn.className = 'move-btn';
@@ -99,11 +170,16 @@
             game.move(m);
             board.position(game.fen());
             container.innerHTML = '';
+            clearArrows();
             if (!game.game_over()) {
               setTimeout(botMove, 300);
             }
           };
           container.appendChild(btn);
+
+          if (moveObj && moveObj.from && moveObj.to) {
+            drawArrow(moveObj.from, moveObj.to);
+          }
         });
       });
     }
