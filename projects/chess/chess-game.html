@@ -18,7 +18,7 @@
     <button onclick="startGame('white')">Play as White</button>
     <button onclick="startGame('black')">Play as Black</button>
   </div>
-  <div id="board"></div>
+  <div id="board" style="display: none;"></div>
   <div id="moveOptions"></div>
 
   <script src="./jquery-3.6.0.min.js"></script>
@@ -29,6 +29,7 @@
 
     function startGame(color) {
       document.getElementById('colorButtons').style.display = 'none';
+      document.getElementById('board').style.display = 'block';
       playerColor = color;
       game = new Chess();
       stockfish = new Worker('stockfish.js');
@@ -37,13 +38,13 @@
         position: 'start',
         draggable: false,
         orientation: playerColor,
-        pieceTheme: '{piece}.png'
+        pieceTheme: '{piece}.png' // PNGs live in same directory
       });
 
       if (playerColor === 'white') {
         showTwoMoves();
       } else {
-        botMove();
+        setTimeout(botMove, 300);
       }
     }
 
@@ -55,16 +56,16 @@
       let completed = 0;
 
       function processScore(move, fen) {
-        let handler = function (e) {
-          if (e.data.startsWith('info') && e.data.includes('score cp')) {
+        const handler = e => {
+          if (e.data.startsWith('info') && e.data.includes('score')) {
             const m = e.data.match(/score (cp|mate) (-?\d+)/);
-            if (m) scores.push({ move, score: +m[2] });
+            if (m) scores.push({ move, score: parseInt(m[2]) });
             completed++;
             if (completed === moves.length) {
+              stockfish.removeEventListener('message', handler);
               scores.sort((a, b) => b.score - a.score);
               callback([scores[0]?.move, scores[scores.length - 1]?.move]);
             }
-            stockfish.removeEventListener('message', handler);
           }
         };
         stockfish.addEventListener('message', handler);
@@ -83,6 +84,11 @@
       const container = document.getElementById('moveOptions');
       container.innerHTML = '';
 
+      if (game.game_over()) {
+        container.innerHTML = "<strong>Game Over</strong>";
+        return;
+      }
+
       evaluateMoves(pair => {
         if (!pair.length) return;
         pair.sort(() => Math.random() - 0.5).forEach(m => {
@@ -93,7 +99,9 @@
             game.move(m);
             board.position(game.fen());
             container.innerHTML = '';
-            setTimeout(botMove, 300);
+            if (!game.game_over()) {
+              setTimeout(botMove, 300);
+            }
           };
           container.appendChild(btn);
         });
@@ -101,13 +109,15 @@
     }
 
     function botMove() {
-      let handler = function (e) {
+      const handler = e => {
         if (e.data.startsWith('bestmove')) {
           const move = e.data.split(' ')[1];
-          game.move(move, { sloppy: true });
-          board.position(game.fen());
-          if (!game.game_over()) {
-            showTwoMoves();
+          if (move && move !== '(none)') {
+            game.move(move, { sloppy: true });
+            board.position(game.fen());
+            if (!game.game_over()) {
+              showTwoMoves();
+            }
           }
           stockfish.removeEventListener('message', handler);
         }
