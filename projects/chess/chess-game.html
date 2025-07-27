@@ -5,11 +5,23 @@
   <title>Hidden Choice Chess</title>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
-    body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; text-align: center; padding: 20px; }
-    #board { width: 400px; margin: 20px auto; position: relative; }
-    #moveOptions { margin-top: 20px; }
-    #colorButtons { margin: 20px; }
-
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f4f4f4;
+      text-align: center;
+      padding: 20px;
+    }
+    #board {
+      width: 400px;
+      margin: 20px auto;
+      position: relative;
+    }
+    #moveOptions {
+      margin-top: 20px;
+    }
+    #colorButtons {
+      margin: 20px;
+    }
     button {
       padding: 10px 22px;
       margin: 5px;
@@ -21,20 +33,19 @@
       cursor: pointer;
       transition: background-color 0.3s;
     }
-
     button:hover {
       background-color: #005fa3;
     }
-
+    button.previewed {
+      background-color: #ffc107;
+      color: black;
+    }
     svg.arrow {
       position: absolute;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
       pointer-events: none;
     }
-
     line.arrow-line {
       stroke: red;
       stroke-width: 4px;
@@ -48,7 +59,7 @@
     <button onclick="startGame('white')">Play as White</button>
     <button onclick="startGame('black')">Play as Black</button>
   </div>
-  <div id="board">
+  <div id="board" style="display: none;">
     <svg class="arrow">
       <defs>
         <marker id="arrowhead" markerWidth="10" markerHeight="7"
@@ -65,12 +76,14 @@
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
     let board, game, stockfish, playerColor;
+    let selectedMove = null;
+    let selectedBtn = null;
 
     const squareToCoord = square => {
       const files = 'abcdefgh';
       const file = files.indexOf(square[0]);
       const rank = 8 - parseInt(square[1]);
-      const tileSize = 50; // 400px / 8
+      const tileSize = 50;
       return {
         x: file * tileSize + tileSize / 2,
         y: rank * tileSize + tileSize / 2
@@ -117,7 +130,7 @@
 
     function evaluateMoves(callback) {
       const moves = game.moves();
-      if (!moves.length) return callback([]);
+      if (moves.length < 2) return callback([]);
 
       const scores = [];
       let completed = 0;
@@ -131,7 +144,7 @@
             if (completed === moves.length) {
               stockfish.removeEventListener('message', handler);
               scores.sort((a, b) => b.score - a.score);
-              callback([scores[0]?.move, scores[scores.length - 1]?.move]);
+              callback([scores[0].move, scores[scores.length - 1].move]);
             }
           }
         };
@@ -147,39 +160,69 @@
       });
     }
 
+    function showGameOver() {
+      const msg = game.in_checkmate()
+        ? (game.turn() === playerColor[0] ? "You lost!" : "You won!")
+        : "Draw!";
+      const container = document.getElementById('moveOptions');
+      container.innerHTML = `<h2>${msg}</h2><button onclick="location.reload()">Play Again</button>`;
+    }
+
     function showTwoMoves() {
       const container = document.getElementById('moveOptions');
       container.innerHTML = '';
       clearArrows();
+      selectedMove = null;
+      selectedBtn = null;
 
       if (game.game_over()) {
-        container.innerHTML = "<strong>Game Over</strong>";
+        showGameOver();
         return;
       }
 
       evaluateMoves(pair => {
-        if (!pair.length) return;
+        if (!pair || pair.length < 2) return showGameOver();
         pair.sort(() => Math.random() - 0.5).forEach(m => {
           const moveObj = game.move(m, {sloppy: true});
-          game.undo(); // preview only
+          game.undo();
 
+          const pieceNames = {
+            p: "Pawn",
+            n: "Knight",
+            b: "Bishop",
+            r: "Rook",
+            q: "Queen",
+            k: "King"
+          };
+
+          const label = `${pieceNames[moveObj.piece]} from ${moveObj.from} to ${moveObj.to}`;
           const btn = document.createElement('button');
-          btn.textContent = m;
-          btn.className = 'move-btn';
+          btn.textContent = label;
+
           btn.onclick = () => {
-            game.move(m);
-            board.position(game.fen());
-            container.innerHTML = '';
-            clearArrows();
-            if (!game.game_over()) {
-              setTimeout(botMove, 300);
+            if (selectedMove === m) {
+              game.move(m);
+              board.position(game.fen());
+              clearArrows();
+              container.innerHTML = '';
+              selectedMove = null;
+              selectedBtn = null;
+              if (!game.game_over()) {
+                setTimeout(botMove, 300);
+              } else {
+                showGameOver();
+              }
+            } else {
+              clearArrows();
+              document.querySelectorAll('#moveOptions button').forEach(b => b.classList.remove('previewed'));
+              drawArrow(moveObj.from, moveObj.to);
+              selectedMove = m;
+              selectedBtn = btn;
+              btn.classList.add('previewed');
             }
           };
-          container.appendChild(btn);
 
-          if (moveObj && moveObj.from && moveObj.to) {
-            drawArrow(moveObj.from, moveObj.to);
-          }
+          container.appendChild(btn);
         });
       });
     }
@@ -193,6 +236,8 @@
             board.position(game.fen());
             if (!game.game_over()) {
               showTwoMoves();
+            } else {
+              showGameOver();
             }
           }
           stockfish.removeEventListener('message', handler);
