@@ -31,8 +31,8 @@
       margin-top: 20px;
       text-align: center;
     }
-    #colorButtons {
-      margin-bottom: 20px;
+    #colorButtons, #difficultyButtons {
+      margin: 20px;
     }
     button {
       padding: 10px 22px;
@@ -57,8 +57,12 @@
 <body>
   <div id="container">
     <div id="colorButtons">
-      <button onclick="startGame('white')">Play as White</button>
-      <button onclick="startGame('black')">Play as Black</button>
+      <button onclick="setColor('white')">Play as White</button>
+      <button onclick="setColor('black')">Play as Black</button>
+    </div>
+    <div id="difficultyButtons" style="display: none;">
+      <button onclick="startGame('easy')">Easy</button>
+      <button onclick="startGame('medium')">Medium</button>
     </div>
     <div id="board" style="display: none;"></div>
     <div id="moveOptions"></div>
@@ -68,15 +72,23 @@
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish, playerColor;
+    let board, game, stockfish, playerColor, depth;
     let selectedMove = null;
     let selectedBtn = null;
     let previewFen = null;
+    let choiceStats = { total: 0, correct: 0 };
+    let bestMoveThisTurn = null;
 
-    function startGame(color) {
-      document.getElementById('colorButtons').style.display = 'none';
-      document.getElementById('board').style.display = 'block';
+    function setColor(color) {
       playerColor = color;
+      document.getElementById('colorButtons').style.display = 'none';
+      document.getElementById('difficultyButtons').style.display = 'block';
+    }
+
+    function startGame(level) {
+      depth = level === 'easy' ? 4 : 8;
+      document.getElementById('difficultyButtons').style.display = 'none';
+      document.getElementById('board').style.display = 'block';
       game = new Chess();
       stockfish = new Worker('stockfish.js');
 
@@ -110,13 +122,16 @@
             if (completed === moves.length) {
               stockfish.removeEventListener('message', handler);
               scores.sort((a, b) => b.score - a.score);
-              callback([scores[0].move, scores[scores.length - 1].move]);
+              const top = scores[0];
+              const lower25 = scores.slice(Math.floor(scores.length * 0.75));
+              const randomBad = lower25[Math.floor(Math.random() * lower25.length)];
+              callback([top.move, randomBad.move]);
             }
           }
         };
         stockfish.addEventListener('message', handler);
         stockfish.postMessage("position fen " + fen);
-        stockfish.postMessage("go depth 8");
+        stockfish.postMessage("go depth " + depth);
       }
 
       moves.forEach(move => {
@@ -130,8 +145,14 @@
       const msg = game.in_checkmate()
         ? (game.turn() === playerColor[0] ? "You lost!" : "You won!")
         : "Draw!";
+      const correctRate = choiceStats.total > 0
+        ? Math.round((choiceStats.correct / choiceStats.total) * 100)
+        : 0;
       const container = document.getElementById('moveOptions');
-      container.innerHTML = `<h2>${msg}</h2><button onclick="location.reload()">Play Again</button>`;
+      container.innerHTML = `
+        <h2>${msg}</h2>
+        <p>You chose the better move ${correctRate}% of the time (${choiceStats.correct}/${choiceStats.total})</p>
+        <button onclick="location.reload()">Play Again</button>`;
     }
 
     function showTwoMoves() {
@@ -140,6 +161,7 @@
       selectedMove = null;
       selectedBtn = null;
       previewFen = null;
+      bestMoveThisTurn = null;
 
       if (game.game_over()) {
         showGameOver();
@@ -148,18 +170,17 @@
 
       evaluateMoves(pair => {
         if (!pair || pair.length < 2) return showGameOver();
-        pair.sort(() => Math.random() - 0.5).forEach(m => {
+        const shuffled = pair.sort(() => Math.random() - 0.5);
+        bestMoveThisTurn = pair[0]; // always keep track of actual best move
+
+        shuffled.forEach(m => {
           const moveObj = game.move(m, {sloppy: true});
           const fenAfter = game.fen();
           game.undo();
 
           const pieceNames = {
-            p: "Pawn",
-            n: "Knight",
-            b: "Bishop",
-            r: "Rook",
-            q: "Queen",
-            k: "King"
+            p: "Pawn", n: "Knight", b: "Bishop",
+            r: "Rook", q: "Queen", k: "King"
           };
 
           const label = `${pieceNames[moveObj.piece]} from ${moveObj.from} to ${moveObj.to}`;
@@ -171,6 +192,8 @@
               game.move(m);
               board.position(game.fen());
               container.innerHTML = '';
+              if (m === bestMoveThisTurn) choiceStats.correct++;
+              choiceStats.total++;
               selectedMove = null;
               selectedBtn = null;
               if (!game.game_over()) {
@@ -211,7 +234,7 @@
       };
       stockfish.addEventListener('message', handler);
       stockfish.postMessage("position fen " + game.fen());
-      stockfish.postMessage("go depth 10");
+      stockfish.postMessage("go depth " + (depth + 2)); // opponent plays slightly smarter
     }
   </script>
 </body>
