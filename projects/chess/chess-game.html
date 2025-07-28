@@ -1,60 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <title>Scored Chess Game</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css"/>
   <style>
-    html, body {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
-      background: #f4f4f4;
-      font-family: 'Segoe UI', sans-serif;
-      display: flex; align-items: center; justify-content: center;
-      overflow: hidden;
+    html,body {
+      margin:0; padding:0;
+      width:100%; height:100%;
+      font-family:'Segoe UI',sans-serif;
+      background:#f4f4f4;
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden;
     }
     #container {
-      width: 90vw; max-width: 700px;
-      display: flex; flex-direction: column;
-      align-items: center;
+      width:90vw; max-width:700px;
+      display:flex; flex-direction:column;
+      align-items:center;
     }
     #board {
-      width: 100%;
-      touch-action: none; /* prevent scrolling when dragging on mobile */
+      width:100%;
+      display:none;
+      touch-action:none;
     }
     #scoreBoard {
-      margin-top: 12px;
-      font-size: 1rem;
-      text-align: center;
+      margin-top:12px;
+      font-size:1rem;
+      text-align:center;
+      display:none;
     }
-    /* Highlight selected square */
+    #colorButtons {
+      margin-bottom:16px;
+    }
+    #colorButtons button {
+      padding:10px 18px; margin:0 8px;
+      font-size:1rem;
+      border:none; border-radius:6px;
+      background:#0077cc; color:#fff;
+      cursor:pointer; transition:background 0.3s;
+    }
+    #colorButtons button:hover {
+      background:#005fa3;
+    }
     .highlight {
-      background-color: rgba(255, 235, 59, 0.6) !important;
+      background:rgba(255,235,59,0.6) !important;
     }
-    /* Colour/difficulty buttons */
-    #controls button {
-      padding: 10px 18px;
-      margin: 6px;
-      font-size: 1rem;
-      border: none; border-radius: 6px;
-      background: #0077cc; color: #fff;
-      cursor: pointer; transition: background 0.3s;
-    }
-    #controls button:hover { background: #005fa3; }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="controls">
-      <p>Pick colour:</p>
-      <button onclick="chooseColor('white')">White</button>
-      <button onclick="chooseColor('black')">Black</button>
-      <div id="difficulty" style="display:none">
-        <p>Difficulty:</p>
-        <button onclick="chooseDifficulty('easy')">Easy</button>
-        <button onclick="chooseDifficulty('medium')">Medium</button>
-      </div>
+    <div id="colorButtons">
+      <button onclick="startGame('white')">White</button>
+      <button onclick="startGame('black')">Black</button>
     </div>
     <div id="board"></div>
     <div id="scoreBoard">Select a piece to move</div>
@@ -64,18 +62,14 @@
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish, playerColor, difficulty;
+    let board, game, stockfish, playerColor;
     let sourceSquare = null;
 
-    function chooseColor(col) {
-      playerColor = col;
-      document.getElementById('controls').querySelectorAll('button').forEach(b=>b.style.display='none');
-      document.getElementById('difficulty').style.display = 'block';
-    }
-
-    function chooseDifficulty(diff) {
-      difficulty = diff;
-      document.getElementById('controls').style.display = 'none';
+    function startGame(color) {
+      playerColor = color;
+      $('#colorButtons').hide();
+      $('#board').show();
+      $('#scoreBoard').show().text('Select a piece to move');
       initGame();
     }
 
@@ -88,28 +82,26 @@
         orientation: playerColor,
         pieceTheme: '{piece}.png'
       });
-      $('#board').on('click', '.square-55d63', onSquareClick);
-      $('#board').on('click', '.square-3c85d', onSquareClick);
-      $('#scoreBoard').text('Select a piece to move');
-      if (playerColor === 'black') setTimeout(botMove, 300);
+      // handle clicks on any square
+      $('#board').off('click').on('click', '[data-square]', onSquareClick);
+      // if black, let stockfish go first
+      if (playerColor === 'black') {
+        setTimeout(botMove, 300);
+        $('#scoreBoard').text('Stockfish opening...');
+      }
     }
 
     function onSquareClick() {
-      const classes = this.className.split(' ');
-      const sqCls = classes.find(c=>/^square-[a-h][1-8]$/.test(c));
-      if (!sqCls) return;
-      const sq = sqCls.slice(7);
-
-      // First click: select source
+      const sq = $(this).attr('data-square');
+      // first click: select your piece
       if (!sourceSquare) {
         const pc = game.get(sq);
         if (!pc || pc.color !== playerColor[0]) return;
         sourceSquare = sq;
-        clearHighlights();
-        $(this).addClass('highlight');
-        $('#scoreBoard').text('Now click destination square');
+        highlightSquare(sq);
+        $('#scoreBoard').text('Select destination');
       } else {
-        // Second click: destination
+        // second click: attempt move
         const dest = sq;
         const oldFen = game.fen();
         const move = game.move({ from: sourceSquare, to: dest, promotion: 'q' });
@@ -117,18 +109,26 @@
         sourceSquare = null;
         if (!move) {
           board.position(game.fen());
-          $('#scoreBoard').text('Invalid move, try again');
+          $('#scoreBoard').text('Illegal move, pick again');
           return;
         }
         board.position(game.fen());
         scoreUserMove(oldFen, move);
-        if (!game.game_over()) setTimeout(botMove, 500);
-        else showGameOver();
+        if (!game.game_over()) {
+          setTimeout(botMove, 500);
+        } else {
+          showGameOver();
+        }
       }
     }
 
+    function highlightSquare(sq) {
+      clearHighlights();
+      $(`.square-${sq}`).addClass('highlight');
+    }
+
     function clearHighlights() {
-      $('#board .square-55d63, #board .square-3c85d').removeClass('highlight');
+      $('#board [class*="square-"]').removeClass('highlight');
     }
 
     function scoreUserMove(fen, userMove) {
@@ -136,7 +136,7 @@
       const legal = temp.moves({ verbose: true });
       const results = [];
       let done = 0;
-      const depth = (difficulty==='easy'? 4: 6);
+      const depth = 5;
 
       legal.forEach(mv => {
         const g2 = new Chess(fen);
@@ -154,8 +154,8 @@
           }
         };
         stockfish.addEventListener('message', handler);
-        stockfish.postMessage('position fen ' + fen2);
-        stockfish.postMessage('go depth ' + depth);
+        stockfish.postMessage("position fen " + fen2);
+        stockfish.postMessage("go depth " + depth);
       });
     }
 
@@ -167,14 +167,14 @@
         r.move.from === userMove.from && r.move.to === userMove.to
       );
       const raw = found ? found.score : worst;
-      const norm = best === worst
+      const norm = (best === worst)
         ? 0
         : Math.round((raw - worst) / (best - worst) * 100);
       $('#scoreBoard').html(`Your move score: <strong>${norm}</strong>`);
     }
 
     function botMove() {
-      const depth = (difficulty==='easy'? 5: 7);
+      const depth = 5;
       const handler = e => {
         if (e.data.startsWith('bestmove')) {
           const mv = e.data.split(' ')[1];
@@ -183,23 +183,23 @@
             board.position(game.fen());
           }
           stockfish.removeEventListener('message', handler);
-          if (!game.game_over()) {
-            $('#scoreBoard').text('Your turn: select a piece');
-          } else {
+          if (game.game_over()) {
             showGameOver();
+          } else {
+            $('#scoreBoard').text('Your turn: select a piece');
           }
         }
       };
       stockfish.addEventListener('message', handler);
-      stockfish.postMessage('position fen ' + game.fen());
-      stockfish.postMessage('go depth ' + depth);
+      stockfish.postMessage("position fen " + game.fen());
+      stockfish.postMessage("go depth " + depth);
     }
 
     function showGameOver() {
-      const result = game.in_checkmate()
+      const res = game.in_checkmate()
         ? (game.turn() === playerColor[0] ? 'You lost!' : 'You won!')
         : 'Draw!';
-      $('#scoreBoard').html(`<strong>${result}</strong> <button onclick="location.reload()">Restart</button>`);
+      $('#scoreBoard').html(`<strong>${res}</strong><br><button onclick="location.reload()">Restart</button>`);
     }
   </script>
 </body>
