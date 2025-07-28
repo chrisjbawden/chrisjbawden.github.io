@@ -2,260 +2,138 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Hidden Choice Chess</title>
+  <title>Scored Chess Game</title>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
     html, body {
       margin: 0;
-      padding: 0;
       height: 100%;
-      width: 100%;
       background: #f4f4f4;
       font-family: 'Segoe UI', sans-serif;
-      overflow: hidden;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
     }
 
-    #container {
-      width: 90vw;
-      max-width: 700px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
     #board {
-      width: 100%;
-      margin-bottom: 20px;
+      width: 90vw;
+      max-width: 90vmin;
     }
 
-    #moveOptions button {
-      display: block;
-      width: 100%;
-      margin: 8px 0;
-      padding: 12px;
-      font-size: 16px;
-      border: none;
-      border-radius: 6px;
-      background-color: #0077cc;
-      color: white;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-
-    #moveOptions button:hover {
-      background-color: #005fa3;
-    }
-
-    #moveOptions button.previewed {
-      background-color: #ffc107;
-      color: black;
-    }
-
-    #colorButtons, #difficultyButtons {
-      margin-bottom: 20px;
-    }
-
-    #colorButtons button,
-    #difficultyButtons button {
-      padding: 12px 20px;
-      margin: 0 10px;
-      font-size: 16px;
-      border: none;
-      border-radius: 5px;
-      background-color: #444;
-      color: white;
-      cursor: pointer;
-    }
-
-    h2 {
+    #scoreBoard {
+      margin-top: 20px;
+      font-size: 18px;
       text-align: center;
+    }
+
+    #scoreBoard span {
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <div id="container">
-    <div id="colorButtons">
-      <button onclick="selectColor('white')">Play as White</button>
-      <button onclick="selectColor('black')">Play as Black</button>
-    </div>
-    <div id="difficultyButtons" style="display:none;">
-      <button onclick="startGame('easy')">Easy</button>
-      <button onclick="startGame('medium')">Medium</button>
-    </div>
-    <div id="board" style="display:none;"></div>
-    <div id="moveOptions"></div>
-  </div>
+  <div id="board"></div>
+  <div id="scoreBoard">Make a move to receive a score.</div>
 
   <script src="./jquery-3.6.0.min.js"></script>
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish, playerColor, difficulty;
-    let selectedMove = null, selectedBtn = null, previewFen = null;
-    let moveAccuracy = { total: 0, correct: 0 };
+    const boardEl = document.getElementById('board');
+    const scoreEl = document.getElementById('scoreBoard');
 
-    function selectColor(color) {
-      playerColor = color;
-      document.getElementById('colorButtons').style.display = 'none';
-      document.getElementById('difficultyButtons').style.display = 'block';
-    }
+    const game = new Chess();
+    const stockfish = new Worker('stockfish.js');
 
-    function startGame(level) {
-      difficulty = level;
-      document.getElementById('difficultyButtons').style.display = 'none';
-      document.getElementById('board').style.display = 'block';
-      game = new Chess();
-      stockfish = new Worker('stockfish.js');
-      board = Chessboard('board', {
-        position: 'start',
-        draggable: false,
-        orientation: playerColor,
-        pieceTheme: '{piece}.png'
-      });
+    let board = Chessboard('board', {
+      draggable: true,
+      position: 'start',
+      onDrop: onDrop,
+      pieceTheme: '{piece}.png'
+    });
 
-      if (playerColor === 'white') {
-        showMoveOptions();
-      } else {
-        setTimeout(botMove, 300);
-      }
-    }
+    function onDrop(source, target) {
+      const move = game.move({ from: source, to: target, promotion: 'q' });
+      if (move === null) return 'snapback';
 
-    function evaluateMoves(callback) {
-      const moves = game.moves();
-      if (moves.length < 3) return callback([]);
-      const scores = [];
-      let done = 0;
+      board.position(game.fen());
+      scoreUserMove(move);
 
-      moves.forEach(move => {
-        const tempGame = new Chess(game.fen());
-        tempGame.move(move);
-        const fen = tempGame.fen();
-
-        const handler = e => {
-          if (e.data.startsWith('info') && e.data.includes('score')) {
-            const match = e.data.match(/score (cp|mate) (-?\d+)/);
-            if (match) {
-              scores.push({ move, score: parseInt(match[2]) });
-              done++;
-              if (done === moves.length) {
-                stockfish.removeEventListener('message', handler);
-                scores.sort((a, b) => b.score - a.score);
-
-                const best = scores[0].move;
-                const middle = scores[Math.floor(scores.length / 2)].move;
-                const bottom25 = scores.slice(Math.floor(scores.length * 0.75));
-                const bad = bottom25[Math.floor(Math.random() * bottom25.length)].move;
-
-                callback([best, middle, bad]);
-              }
-            }
-          }
-        };
-
-        stockfish.addEventListener('message', handler);
-        stockfish.postMessage("position fen " + fen);
-        stockfish.postMessage("go depth " + (difficulty === 'easy' ? 4 : 8));
-      });
-    }
-
-    function showMoveOptions() {
-      const container = document.getElementById('moveOptions');
-      container.innerHTML = '';
-      selectedMove = null;
-      selectedBtn = null;
-
-      if (game.game_over()) return showGameOver();
-
-      evaluateMoves(moves => {
-        if (!moves.length) return showGameOver();
-
-        const pieceNames = {
-          p: "Pawn", n: "Knight", b: "Bishop",
-          r: "Rook", q: "Queen", k: "King"
-        };
-
-        const shuffled = moves.map(m => ({ m, sort: Math.random() }))
-                              .sort((a, b) => a.sort - b.sort)
-                              .map(o => o.m);
-
-        const bestMove = moves[0];
-
-        shuffled.forEach(m => {
-          const moveObj = game.move(m, { sloppy: true });
-          const fen = game.fen();
-          game.undo();
-
-          const label = `${pieceNames[moveObj.piece]} from ${moveObj.from} to ${moveObj.to}`;
-          const btn = document.createElement('button');
-          btn.textContent = label;
-
-          btn.onclick = () => {
-            if (selectedMove === m) {
-              game.move(m);
-              board.position(game.fen());
-              container.innerHTML = '';
-              if (m === bestMove) moveAccuracy.correct++;
-              moveAccuracy.total++;
-              if (!game.game_over()) {
-                setTimeout(botMove, 300);
-              } else {
-                showGameOver();
-              }
-            } else {
-              selectedMove = m;
-              selectedBtn = btn;
-              board.position(fen);
-              container.querySelectorAll('button').forEach(b => {
-                b.textContent = b.dataset.original;
-                b.classList.remove('previewed');
-              });
-              btn.dataset.original = label;
-              btn.textContent = "Confirm";
-              btn.classList.add('previewed');
-            }
-          };
-
-          container.appendChild(btn);
-        });
-      });
+      setTimeout(botMove, 500);
     }
 
     function botMove() {
-      const handler = e => {
-        if (e.data.startsWith('bestmove')) {
-          const move = e.data.split(' ')[1];
-          if (move && move !== '(none)') {
-            game.move(move, { sloppy: true });
-            board.position(game.fen());
-            if (!game.game_over()) {
-              showMoveOptions();
-            } else {
-              showGameOver();
-            }
+      stockfish.postMessage("position fen " + game.fen());
+      stockfish.postMessage("go depth 5");
+      stockfish.onmessage = function(e) {
+        if (e.data.startsWith("bestmove")) {
+          const move = e.data.split(" ")[1];
+          if (move === "(none)") return;
+
+          game.move(move, { sloppy: true });
+          board.position(game.fen());
+
+          if (game.game_over()) {
+            const msg = game.in_checkmate() ? "You lost!" : "Draw!";
+            scoreEl.innerHTML = `<span>${msg}</span>`;
           }
-          stockfish.removeEventListener('message', handler);
         }
       };
-      stockfish.addEventListener('message', handler);
-      stockfish.postMessage("position fen " + game.fen());
-      stockfish.postMessage("go depth " + (difficulty === 'easy' ? 6 : 10));
     }
 
-    function showGameOver() {
-      const pct = moveAccuracy.total > 0
-        ? Math.round((moveAccuracy.correct / moveAccuracy.total) * 100)
-        : 0;
-      const container = document.getElementById('moveOptions');
-      const result = game.in_checkmate()
-        ? (game.turn() === playerColor[0] ? "You lost!" : "You won!")
-        : "Draw!";
-      container.innerHTML = `
-        <h2>${result}<br>Accuracy: ${pct}%</h2>
-        <button onclick="location.reload()">Play Again</button>
-      `;
+    function scoreUserMove(playerMove) {
+      const allMoves = game.history({ verbose: true });
+      const lastMove = allMoves[allMoves.length - 1];
+
+      const legalMoves = game.moves({ verbose: true });
+      const scoredMoves = [];
+
+      let completed = 0;
+
+      function process(move, fen) {
+        const handler = (e) => {
+          if (e.data.startsWith("info") && e.data.includes("score cp")) {
+            const match = e.data.match(/score (cp|mate) (-?\d+)/);
+            if (match) {
+              scoredMoves.push({
+                move: move,
+                score: parseInt(match[2])
+              });
+              completed++;
+              if (completed === legalMoves.length) {
+                stockfish.removeEventListener('message', handler);
+                evaluatePlayerScore(scoredMoves, lastMove);
+              }
+            }
+          }
+        };
+        stockfish.addEventListener('message', handler);
+        stockfish.postMessage("position fen " + fen);
+        stockfish.postMessage("go depth 5");
+      }
+
+      legalMoves.forEach(m => {
+        const g = new Chess(game.fen());
+        g.move(m);
+        process(m, g.fen());
+      });
+    }
+
+    function evaluatePlayerScore(scoredMoves, playerMove) {
+      scoredMoves.sort((a, b) => b.score - a.score);
+
+      const best = scoredMoves[0].score;
+      const worst = scoredMoves[scoredMoves.length - 1].score;
+
+      const moveScore = scoredMoves.find(m => m.move.from === playerMove.from && m.move.to === playerMove.to)?.score ?? worst;
+
+      let normalised = 0;
+      if (best !== worst) {
+        normalised = Math.round(((moveScore - worst) / (best - worst)) * 100);
+      }
+
+      scoreEl.innerHTML = `Your move score: <span>${normalised}/100</span>`;
     }
   </script>
 </body>
