@@ -2,45 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Hidden Choice Chess</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hidden Choice Chess</title>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
+      width: 100%;
       background: #f4f4f4;
       font-family: 'Segoe UI', sans-serif;
     }
     body {
       display: flex;
-      flex-direction: column;
-      align-items: center;
       justify-content: center;
+      align-items: center;
     }
     #container {
-      width: 90vw;
-      max-width: 700px;
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
+      width: 90vw;
+      height: 90vh;
+      max-width: 700px;
     }
     #board {
       width: 100%;
+      max-height: 90vw;
     }
-    #moveOptions {
-      margin-top: 15px;
-      text-align: center;
-    }
-    #intro {
-      margin-bottom: 20px;
+    #intro, #moveOptions {
+      margin: 10px 0;
       text-align: center;
     }
     button {
-      padding: 12px 24px;
+      padding: 12px 20px;
       margin: 6px;
-      font-size: 18px;
+      font-size: 1rem;
       border: none;
       border-radius: 6px;
       background-color: #0077cc;
@@ -48,6 +47,7 @@
       cursor: pointer;
       transition: background-color 0.3s;
       max-width: 100%;
+      word-break: break-word;
     }
     button:hover {
       background-color: #005fa3;
@@ -115,11 +115,9 @@
             if (completed === moves.length) {
               stockfish.removeEventListener('message', handler);
               scores.sort((a, b) => b.score - a.score);
-
               const top = scores[0].move;
               const low25 = scores[Math.floor(scores.length * 0.75)].move;
               const mid = scores[Math.floor(scores.length / 2)].move;
-
               const unique = [top, mid, low25].filter((v, i, a) => a.indexOf(v) === i);
               callback(unique);
             }
@@ -149,8 +147,8 @@
       const container = document.getElementById('moveOptions');
       container.innerHTML = '';
       selectedMove = null;
-      selectedBtn = null;
       previewFen = null;
+      selectedBtn = null;
 
       if (game.game_over()) {
         showGameOver();
@@ -195,7 +193,7 @@
               previewFen = fenAfter;
               selectedBtn = btn;
               btn.classList.add('previewed');
-              btn.textContent = "Confirm move: " + label;
+              btn.textContent = "Confirm";
             }
           };
 
