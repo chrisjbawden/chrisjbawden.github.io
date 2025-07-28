@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Scored Click‑Move Chess</title>
+  <title>Scored Click-Move Chess</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css"/>
   <style>
@@ -69,7 +69,7 @@
   <script>
     let board, game, playerColor;
 
-    // tracks source square on first click
+    // track first-click square
     let sourceSquare = null;
 
     function startGame(color) {
@@ -77,7 +77,10 @@
       $('#colorButtons').hide();
       $('#board').show();
       $('#scoreBoard').show().text('Select a piece to move');
+      initGame();
+    }
 
+    function initGame() {
       game = new Chess();
       board = Chessboard('board', {
         position: 'start',
@@ -85,12 +88,11 @@
         orientation: playerColor,
         pieceTheme: '{piece}.png'
       });
-
+      // install click handler
       $('#board').off('click').on('click', '[data-square]', onSquareClick);
-
-      // if black, let engine move first
+      // if black, engine opens
       if (playerColor === 'black') {
-        $('#scoreBoard').text('Stockfish opening...');
+        $('#scoreBoard').text('Stockfish thinking...');
         setTimeout(botMove, 300);
       }
     }
@@ -105,21 +107,22 @@
         highlight(sq);
         $('#scoreBoard').text('Select destination');
       } else {
-        // second click: attempt move
+        // second click: attempt to move
         const dest = sq;
         const fenBefore = game.fen();
-        const move = game.move({ from: sourceSquare, to: dest, promotion: 'q' });
+        const mv = game.move({ from: sourceSquare, to: dest, promotion: 'q' });
         clearHighlights();
         sourceSquare = null;
-        if (!move) {
+        if (!mv) {
           board.position(game.fen());
           $('#scoreBoard').text('Illegal move, try again');
           return;
         }
         board.position(game.fen());
-        // check game over immediately
+        // if game over immediately
         if (game.game_over()) return showGameOver();
-        scoreUserMove(fenBefore, move);
+        // score your move
+        scoreUserMove(fenBefore, mv);
       }
     }
 
@@ -133,55 +136,62 @@
     }
 
     function scoreUserMove(fen, userMove) {
+      // use a fresh worker so we don't interfere
       const evalWorker = new Worker('stockfish.js');
       const temp = new Chess(fen);
-      const legal = temp.moves({ verbose:true });
-      const scores = [];
-      let done=0, depth=5;
+      const legal = temp.moves({ verbose: true });
+      const results = [];
+      let done = 0;
+      const depth = 5;
 
       evalWorker.onmessage = e => {
         if (e.data.startsWith('info') && e.data.includes('score cp')) {
           const m = e.data.match(/score cp (-?\\d+)/);
           if (m) {
-            scores.push({ move: legal[done], score:+m[1] });
+            results.push({ move: legal[done], score: +m[1] });
             done++;
-            if (done===legal.length) {
+            if (done === legal.length) {
               evalWorker.terminate();
-              displayScore(scores, userMove);
+              displayScore(results, userMove);
             }
           }
         }
       };
 
-      legal.forEach((mv, i) => {
+      // ask engine to eval each legal continuation
+      legal.forEach(mv => {
         const g2 = new Chess(fen);
         g2.move(mv);
-        evalWorker.postMessage("position fen "+g2.fen());
-        evalWorker.postMessage("go depth "+depth);
+        evalWorker.postMessage('position fen ' + g2.fen());
+        evalWorker.postMessage('go depth ' + depth);
       });
     }
 
     function displayScore(results, userMove) {
-      // match each result to its moves array index
-      // simpler: sort results by score
-      results.sort((a,b)=>b.score-a.score);
-      const best=results[0].score;
-      const worst=results[results.length-1].score;
-      const found=results.find(r=>r.move.from===userMove.from && r.move.to===userMove.to);
-      const raw=found?found.score:worst;
-      const norm=(best===worst)?0:Math.round((raw-worst)/(best-worst)*100);
+      // sort by raw score descending
+      results.sort((a,b)=>b.score - a.score);
+      const best = results[0].score;
+      const worst = results[results.length-1].score;
+      const found = results.find(r => r.move.from===userMove.from && r.move.to===userMove.to);
+      const raw = found ? found.score : worst;
+      const norm = (best===worst)
+        ? 0
+        : Math.round((raw - worst)/(best - worst)*100);
       $('#scoreBoard').html(`Your move score: <strong>${norm}</strong>`);
-      // engine plays next
+      // engine responds
       setTimeout(botMove, 800);
     }
 
     function botMove() {
       const w = new Worker('stockfish.js');
+      const depth = 5;
       w.onmessage = e => {
         if (e.data.startsWith('bestmove')) {
           const mv = e.data.split(' ')[1];
-          if (mv && mv!=='(none)') {
-            game.move({ from: mv.slice(0,2), to: mv.slice(2,2), promotion:'q' });
+          if (mv && mv !== '(none)') {
+            const from = mv.substr(0,2);
+            const to   = mv.substr(2,2);
+            game.move({ from, to, promotion: 'q' });
             board.position(game.fen());
           }
           w.terminate();
@@ -189,16 +199,19 @@
           else $('#scoreBoard').text('Your turn: select a piece');
         }
       };
-      w.postMessage("position fen "+game.fen());
-      w.postMessage("go depth 5");
+      w.postMessage('position fen ' + game.fen());
+      w.postMessage('go depth ' + depth);
     }
 
     function showGameOver() {
-      let text = 'Draw!';
+      let msg = 'Draw!';
       if (game.in_checkmate()) {
-        text = (game.turn()===playerColor[0])?'You lost!':'You won!';
+        msg = (game.turn() === playerColor[0]) ? 'You lost!' : 'You won!';
       }
-      $('#scoreBoard').html(`<strong>${text}</strong><br><button class="restart" onclick="location.reload()">Restart</button>`);
+      $('#scoreBoard').html(
+        `<strong>${msg}</strong><br>` +
+        `<button class="restart" onclick="location.reload()">Restart</button>`
+      );
     }
   </script>
 </body>
