@@ -3,14 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <title>Hidden Choice Chess</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css" />
   <style>
     html, body {
       margin: 0;
       padding: 0;
       height: 100%;
-      font-family: 'Segoe UI', sans-serif;
       background: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
     }
     body {
       display: flex;
@@ -19,32 +20,34 @@
       justify-content: center;
     }
     #container {
-      width: 95vw;
-      max-width: 600px;
+      width: 90vw;
+      max-width: 700px;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 10px;
     }
     #board {
       width: 100%;
     }
-    #moveOptions, #difficultyButtons, #colorButtons {
+    #moveOptions {
       margin-top: 15px;
       text-align: center;
     }
+    #intro {
+      margin-bottom: 20px;
+      text-align: center;
+    }
     button {
-      padding: 12px 18px;
-      margin: 8px;
-      font-size: 16px;
-      width: 90%;
-      max-width: 300px;
+      padding: 12px 24px;
+      margin: 6px;
+      font-size: 18px;
       border: none;
-      border-radius: 5px;
+      border-radius: 6px;
       background-color: #0077cc;
       color: white;
       cursor: pointer;
-      transition: background-color 0.3s ease;
+      transition: background-color 0.3s;
+      max-width: 100%;
     }
     button:hover {
       background-color: #005fa3;
@@ -53,22 +56,16 @@
       background-color: #ffc107;
       color: black;
     }
-    h2 {
-      margin-top: 15px;
-    }
   </style>
 </head>
 <body>
   <div id="container">
-    <div id="colorButtons">
+    <div id="intro">
+      <p>Choose your colour:</p>
       <button onclick="chooseColor('white')">Play as White</button>
       <button onclick="chooseColor('black')">Play as Black</button>
     </div>
-    <div id="difficultyButtons" style="display:none;">
-      <button onclick="startGame('easy')">Easy</button>
-      <button onclick="startGame('medium')">Medium</button>
-    </div>
-    <div id="board" style="display:none;"></div>
+    <div id="board" style="display: none;"></div>
     <div id="moveOptions"></div>
   </div>
 
@@ -76,31 +73,30 @@
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish, playerColor, difficulty;
+    let board, game, stockfish, playerColor;
     let selectedMove = null;
     let previewFen = null;
-    let totalMoves = 0, correctMoves = 0;
+    let selectedBtn = null;
 
     function chooseColor(color) {
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('board').style.display = 'block';
       playerColor = color;
-      document.getElementById('colorButtons').style.display = 'none';
-      document.getElementById('difficultyButtons').style.display = 'block';
-    }
-
-    function startGame(diff) {
-      difficulty = diff;
       game = new Chess();
       stockfish = new Worker('stockfish.js');
+
       board = Chessboard('board', {
         position: 'start',
         draggable: false,
         orientation: playerColor,
         pieceTheme: '{piece}.png'
       });
-      document.getElementById('difficultyButtons').style.display = 'none';
-      document.getElementById('board').style.display = 'block';
-      if (playerColor === 'white') showMoveChoices();
-      else setTimeout(botMove, 300);
+
+      if (playerColor === 'white') {
+        showThreeMoves();
+      } else {
+        setTimeout(botMove, 300);
+      }
     }
 
     function evaluateMoves(callback) {
@@ -109,9 +105,8 @@
 
       const scores = [];
       let completed = 0;
-      let depth = (difficulty === 'easy') ? 5 : 7;
 
-      function process(move, fen) {
+      function processScore(move, fen) {
         const handler = e => {
           if (e.data.startsWith('info') && e.data.includes('score')) {
             const m = e.data.match(/score (cp|mate) (-?\d+)/);
@@ -120,22 +115,25 @@
             if (completed === moves.length) {
               stockfish.removeEventListener('message', handler);
               scores.sort((a, b) => b.score - a.score);
-              const best = scores[0].move;
+
+              const top = scores[0].move;
+              const low25 = scores[Math.floor(scores.length * 0.75)].move;
               const mid = scores[Math.floor(scores.length / 2)].move;
-              const worst = scores[Math.floor(scores.length * 0.75)].move;
-              callback([best, mid, worst]);
+
+              const unique = [top, mid, low25].filter((v, i, a) => a.indexOf(v) === i);
+              callback(unique);
             }
           }
         };
         stockfish.addEventListener('message', handler);
         stockfish.postMessage("position fen " + fen);
-        stockfish.postMessage("go depth " + depth);
+        stockfish.postMessage("go depth 6");
       }
 
       moves.forEach(move => {
         const g = new Chess(game.fen());
         g.move(move);
-        process(move, g.fen());
+        processScore(move, g.fen());
       });
     }
 
@@ -143,64 +141,79 @@
       const msg = game.in_checkmate()
         ? (game.turn() === playerColor[0] ? "You lost!" : "You won!")
         : "Draw!";
-      const percent = totalMoves > 0 ? Math.round((correctMoves / totalMoves) * 100) : 0;
       const container = document.getElementById('moveOptions');
-      container.innerHTML = `
-        <h2>${msg}</h2>
-        <p>Correct picks: ${correctMoves} / ${totalMoves} (${percent}%)</p>
-        <button onclick="location.reload()">Play Again</button>
-      `;
+      container.innerHTML = `<h2>${msg}</h2><button onclick="location.reload()">Play Again</button>`;
     }
 
-    function showMoveChoices() {
+    function showThreeMoves() {
       const container = document.getElementById('moveOptions');
       container.innerHTML = '';
       selectedMove = null;
+      selectedBtn = null;
+      previewFen = null;
 
-      if (game.game_over()) return showGameOver();
+      if (game.game_over()) {
+        showGameOver();
+        return;
+      }
 
-      evaluateMoves(choices => {
-        if (choices.length !== 3) return showGameOver();
-        const [best, mid, worst] = choices;
-        const correct = best;
-        totalMoves++;
+      evaluateMoves(moves => {
+        if (moves.length < 1) return showGameOver();
+        moves.sort(() => Math.random() - 0.5).forEach(m => {
+          const moveObj = game.move(m, { sloppy: true });
+          const fenAfter = game.fen();
+          game.undo();
 
-        const shuffled = [best, mid, worst].sort(() => Math.random() - 0.5);
+          const pieceNames = {
+            p: "Pawn", n: "Knight", b: "Bishop", r: "Rook", q: "Queen", k: "King"
+          };
 
-        shuffled.forEach(move => {
-          const g = new Chess(game.fen());
-          const moveObj = g.move(move, {sloppy: true});
-          const label = `${moveObj.color === 'w' ? "White" : "Black"} ${moveObj.piece.toUpperCase()} from ${moveObj.from} to ${moveObj.to}`;
+          const label = `${pieceNames[moveObj.piece]} from ${moveObj.from} to ${moveObj.to}`;
           const btn = document.createElement('button');
           btn.textContent = label;
 
           btn.onclick = () => {
-            game.move(move);
-            board.position(game.fen());
-            if (move === correct) correctMoves++;
-            container.innerHTML = '';
-            if (!game.game_over()) {
-              setTimeout(botMove, 300);
+            if (selectedMove === m) {
+              game.move(m);
+              board.position(game.fen());
+              container.innerHTML = '';
+              if (!game.game_over()) {
+                setTimeout(botMove, 300);
+              } else {
+                showGameOver();
+              }
+              selectedMove = null;
+              previewFen = null;
+              selectedBtn = null;
             } else {
-              showGameOver();
+              board.position(fenAfter);
+              document.querySelectorAll('#moveOptions button').forEach(b => {
+                b.classList.remove('previewed');
+                b.textContent = b.dataset.originalLabel;
+              });
+              selectedMove = m;
+              previewFen = fenAfter;
+              selectedBtn = btn;
+              btn.classList.add('previewed');
+              btn.textContent = "Confirm move: " + label;
             }
           };
 
+          btn.dataset.originalLabel = label;
           container.appendChild(btn);
         });
       });
     }
 
     function botMove() {
-      const depth = (difficulty === 'easy') ? 6 : 9;
       const handler = e => {
         if (e.data.startsWith('bestmove')) {
           const move = e.data.split(' ')[1];
           if (move && move !== '(none)') {
-            game.move(move, {sloppy: true});
+            game.move(move, { sloppy: true });
             board.position(game.fen());
             if (!game.game_over()) {
-              showMoveChoices();
+              showThreeMoves();
             } else {
               showGameOver();
             }
@@ -210,7 +223,7 @@
       };
       stockfish.addEventListener('message', handler);
       stockfish.postMessage("position fen " + game.fen());
-      stockfish.postMessage("go depth " + depth);
+      stockfish.postMessage("go depth 8");
     }
   </script>
 </body>
