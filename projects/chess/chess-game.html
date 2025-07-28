@@ -6,18 +6,51 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css"/>
   <style>
-    html,body{margin:0;padding:0;height:100%;width:100%;background:#f4f4f4;
-      font-family:'Segoe UI',sans-serif}
-    body{display:flex;align-items:center;justify-content:center}
-    #container{width:90vw;max-width:700px;height:90vh;
-      display:flex;flex-direction:column;align-items:center;justify-content:center}
-    #board{width:100%;max-height:90vw;display:none}
-    #intro,#difficulty,#moveOptions{margin:10px;text-align:center}
-    button{padding:12px 20px;margin:6px;font-size:1rem;
-      border:none;border-radius:6px;background:#0077cc;color:#fff;
-      cursor:pointer;transition:background 0.3s;max-width:100%;word-break:break-word}
-    button:hover{background:#005fa3}
-    button.previewed{background:#ffc107;color:#000}
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      background: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
+    }
+    body {
+      display: flex; align-items: center; justify-content: center;
+    }
+    #container {
+      width: 90vw;
+      max-width: 700px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    #board {
+      width: 100%;
+      display: none;
+    }
+    #intro, #difficulty, #moveOptions {
+      margin: 10px;
+      text-align: center;
+    }
+    button {
+      padding: 12px 20px;
+      margin: 6px;
+      font-size: 1rem;
+      border: none;
+      border-radius: 6px;
+      background: #0077cc;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.3s;
+      max-width: 100%;
+      word-break: break-word;
+    }
+    button:hover {
+      background: #005fa3;
+    }
+    button.previewed {
+      background-color: #ffc107;
+      color: black;
+    }
   </style>
 </head>
 <body>
@@ -40,132 +73,174 @@
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish,
-        playerColor, difficulty,
-        selectedMove, previewFen, selectedBtn,
-        total=0, correct=0;
+    let board, game, stockfish;
+    let playerColor, difficulty;
+    let selectedMove = null, selectedBtn = null, previewFen = null;
+    let total = 0, correct = 0;
 
-    function chooseColor(col){
-      playerColor=col;
-      document.getElementById('intro').style.display='none';
-      document.getElementById('difficulty').style.display='block';
+    function chooseColor(col) {
+      playerColor = col;
+      document.getElementById('intro').style.display = 'none';
+      document.getElementById('difficulty').style.display = 'block';
     }
 
-    function chooseDifficulty(diff){
-      difficulty=diff;
-      document.getElementById('difficulty').style.display='none';
+    function chooseDifficulty(diff) {
+      difficulty = diff;
+      document.getElementById('difficulty').style.display = 'none';
       startGame();
     }
 
-    function startGame(){
-      game=new Chess();
-      stockfish=new Worker('stockfish.js');
-      document.getElementById('board').style.display='block';
-      board=Chessboard('board',{
-        position:'start',draggable:false,
-        orientation:playerColor,pieceTheme:'{piece}.png'
+    function startGame() {
+      game = new Chess();
+      stockfish = new Worker('stockfish.js');
+      document.getElementById('board').style.display = 'block';
+      board = Chessboard('board', {
+        position: 'start',
+        draggable: false,
+        orientation: playerColor,
+        pieceTheme: '{piece}.png'
       });
-      if(playerColor==='white') showChoices();
-      else setTimeout(botMove,300);
+
+      if (playerColor === 'white') {
+        showChoices();
+      } else {
+        setTimeout(botMove, 300);
+      }
     }
 
-    function evalMoves(cb){
-      const moves=game.moves();
-      if(moves.length<3) return cb([]);
-      let scores=[],done=0,depth=(difficulty==='easy'?4:6);
-      moves.forEach(m=>{
-        const g=new Chess(game.fen());g.move(m);
-        const fen=g.fen();
-        const handler=e=>{
-          if(e.data.startsWith('info')&&e.data.includes('score')){
-            const mm=e.data.match(/score (cp|mate) (-?\\d+)/);
-            if(mm) scores.push({move:m,score:+mm[2]});
-            done++;
-            if(done===moves.length){
-              stockfish.removeEventListener('message',handler);
-              scores.sort((a,b)=>b.score-a.score);
-              const best=scores[0].move,
-                    mid=scores[Math.floor(scores.length/2)].move,
-                    low25=scores[Math.floor(scores.length*0.75)].move;
-              // dedupe if overlap
-              const opts=[best,mid,low25].filter((v,i,a)=>a.indexOf(v)===i);
-              cb(opts);
+    function evalMoves(callback) {
+      const moves = game.moves();
+      if (moves.length < 3) return callback([]);
+      const scores = [];
+      let done = 0;
+      const depth = (difficulty === 'easy') ? 4 : 6;
+
+      function handleScore(move, fen) {
+        const handler = (e) => {
+          if (e.data.startsWith('info') && e.data.includes('score')) {
+            const match = e.data.match(/score (cp|mate) (-?\d+)/);
+            if (match) {
+              scores.push({ move, score: parseInt(match[2]) });
+              done++;
+              if (done === moves.length) {
+                stockfish.removeEventListener('message', handler);
+                scores.sort((a, b) => b.score - a.score);
+                const best = scores[0].move;
+                const mid = scores[Math.floor(scores.length / 2)].move;
+                const low25 = scores[Math.floor(scores.length * 0.75)].move;
+                const unique = [best, mid, low25].filter((v, i, a) => a.indexOf(v) === i);
+                callback(unique);
+              }
             }
           }
         };
-        stockfish.addEventListener('message',handler);
-        stockfish.postMessage('position fen '+fen);
-        stockfish.postMessage('go depth '+depth);
+        stockfish.addEventListener('message', handler);
+        stockfish.postMessage("position fen " + fen);
+        stockfish.postMessage("go depth " + depth);
+      }
+
+      moves.forEach(move => {
+        const g = new Chess(game.fen());
+        g.move(move);
+        handleScore(move, g.fen());
       });
     }
 
-    function showGameOver(){
-      const msg= game.in_checkmate()
-        ? (game.turn()===playerColor[0]?'You lost!':'You won!')
-        : 'Draw!';
-      const pct= total?Math.round(correct/total*100):0;
-      document.getElementById('moveOptions').innerHTML=`
+    function showGameOver() {
+      const msg = game.in_checkmate()
+        ? (game.turn() === playerColor[0] ? "You lost!" : "You won!")
+        : "Draw!";
+      const percent = total ? Math.round((correct / total) * 100) : 0;
+      document.getElementById('moveOptions').innerHTML = `
         <h2>${msg}</h2>
-        <p>Chosen best: ${correct}/${total} (${pct}%)</p>
+        <p>You chose the best move ${correct}/${total} times (${percent}%)</p>
         <button onclick="location.reload()">Play Again</button>`;
     }
 
-    function showChoices(){
-      const ctn=document.getElementById('moveOptions');
-      ctn.innerHTML=''; selectedMove=previewFen=selectedBtn=null;
-      if(game.game_over()) return showGameOver();
-      evalMoves(opts=>{
-        if(opts.length<1) return showGameOver();
+    function showChoices() {
+      const container = document.getElementById('moveOptions');
+      container.innerHTML = '';
+      selectedMove = null;
+      selectedBtn = null;
+      previewFen = null;
+
+      if (game.game_over()) {
+        showGameOver();
+        return;
+      }
+
+      evalMoves(moves => {
+        if (!moves || moves.length < 1) return showGameOver();
         total++;
-        const best=opts[0];
-        const arr=opts.sort(()=>Math.random()-.5);
-        arr.forEach(m=>{
-          const g=new Chess(game.fen());
-          const mv=g.move(m,{sloppy:true}), fen=g.fen();g.undo();
-          const name={p:'Pawn',n:'Knight',b:'Bishop',r:'Rook',q:'Queen',k:'King'}[mv.piece];
-          const label=`${name} from ${mv.from} to ${mv.to}`;
-          const btn=document.createElement('button');
-          btn.textContent=label; btn.dataset.orig=label;
-          btn.onclick=()=>{
-            if(selectedMove===m){
-              game.move(m); board.position(game.fen());
-              ctn.innerHTML='';
-              if(m===best) correct++;
-              if(!game.game_over()) setTimeout(botMove,300);
-              else showGameOver();
+        const best = moves[0];
+        moves.sort(() => Math.random() - 0.5);
+
+        moves.forEach(m => {
+          const g = new Chess(game.fen());
+          const moveObj = g.move(m, { sloppy: true });
+          const fenAfter = g.fen();
+          g.undo();
+
+          const pieceNames = {
+            p: "Pawn", n: "Knight", b: "Bishop",
+            r: "Rook", q: "Queen", k: "King"
+          };
+
+          const label = `${pieceNames[moveObj.piece]} from ${moveObj.from} to ${moveObj.to}`;
+          const btn = document.createElement('button');
+          btn.textContent = label;
+          btn.dataset.label = label;
+
+          btn.onclick = () => {
+            if (selectedMove === m) {
+              game.move(m);
+              board.position(game.fen());
+              container.innerHTML = '';
+              if (m === best) correct++;
+              if (!game.game_over()) {
+                setTimeout(botMove, 300);
+              } else {
+                showGameOver();
+              }
             } else {
-              board.position(fen);
-              ctn.querySelectorAll('button').forEach(b=>{
+              board.position(fenAfter);
+              container.querySelectorAll('button').forEach(b => {
                 b.classList.remove('previewed');
-                b.textContent=b.dataset.orig;
+                b.textContent = b.dataset.label;
               });
-              selectedMove=m; previewFen=fen;
+              selectedMove = m;
+              previewFen = fenAfter;
+              selectedBtn = btn;
               btn.classList.add('previewed');
-              btn.textContent='Confirm';
+              btn.textContent = "Confirm";
             }
           };
-          ctn.appendChild(btn);
+
+          container.appendChild(btn);
         });
       });
     }
 
-    function botMove(){
-      const d=(difficulty==='easy'?5:7);
-      const handler=e=>{
-        if(e.data.startsWith('bestmove')){
-          const mv=e.data.split(' ')[1];
-          if(mv&&mv!=='(none)'){
-            game.move(mv,{sloppy:true});
+    function botMove() {
+      const depth = (difficulty === 'easy') ? 5 : 7;
+      const handler = e => {
+        if (e.data.startsWith('bestmove')) {
+          const move = e.data.split(' ')[1];
+          if (move && move !== '(none)') {
+            game.move(move, { sloppy: true });
             board.position(game.fen());
-            if(!game.game_over()) showChoices();
-            else showGameOver();
+            if (!game.game_over()) {
+              showChoices();
+            } else {
+              showGameOver();
+            }
           }
-          stockfish.removeEventListener('message',handler);
+          stockfish.removeEventListener('message', handler);
         }
       };
-      stockfish.addEventListener('message',handler);
-      stockfish.postMessage('position fen '+game.fen());
-      stockfish.postMessage('go depth '+d);
+      stockfish.addEventListener('message', handler);
+      stockfish.postMessage("position fen " + game.fen());
+      stockfish.postMessage("go depth " + depth);
     }
   </script>
 </body>
