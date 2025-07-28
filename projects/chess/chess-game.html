@@ -2,15 +2,15 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
-  <title>Scored Chess Game</title>
+  <title>Scored Click‑Move Chess</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <link rel="stylesheet" href="./chessboard-1.0.0.min.css"/>
   <style>
     html,body {
       margin:0; padding:0;
       width:100%; height:100%;
-      font-family:'Segoe UI',sans-serif;
       background:#f4f4f4;
+      font-family:'Segoe UI',sans-serif;
       display:flex; align-items:center; justify-content:center;
       overflow:hidden;
     }
@@ -20,8 +20,7 @@
       align-items:center;
     }
     #board {
-      width:100%;
-      display:none;
+      width:100%; display:none;
       touch-action:none;
     }
     #scoreBoard {
@@ -44,7 +43,13 @@
       background:#005fa3;
     }
     .highlight {
-      background:rgba(255,235,59,0.6) !important;
+      background:rgba(255,235,59,0.6)!important;
+    }
+    button.restart {
+      margin-top:12px;
+      padding:8px 16px;
+      font-size:0.9rem;
+      background:#444; color:#fff;
     }
   </style>
 </head>
@@ -62,7 +67,9 @@
   <script src="./chess.min.js"></script>
   <script src="./chessboard-1.0.0.min.js"></script>
   <script>
-    let board, game, stockfish, playerColor;
+    let board, game, playerColor;
+
+    // tracks source square on first click
     let sourceSquare = null;
 
     function startGame(color) {
@@ -70,59 +77,53 @@
       $('#colorButtons').hide();
       $('#board').show();
       $('#scoreBoard').show().text('Select a piece to move');
-      initGame();
-    }
 
-    function initGame() {
       game = new Chess();
-      stockfish = new Worker('stockfish.js');
       board = Chessboard('board', {
         position: 'start',
         draggable: false,
         orientation: playerColor,
         pieceTheme: '{piece}.png'
       });
-      // handle clicks on any square
+
       $('#board').off('click').on('click', '[data-square]', onSquareClick);
-      // if black, let stockfish go first
+
+      // if black, let engine move first
       if (playerColor === 'black') {
-        setTimeout(botMove, 300);
         $('#scoreBoard').text('Stockfish opening...');
+        setTimeout(botMove, 300);
       }
     }
 
     function onSquareClick() {
       const sq = $(this).attr('data-square');
-      // first click: select your piece
+      // first click: select piece
       if (!sourceSquare) {
         const pc = game.get(sq);
         if (!pc || pc.color !== playerColor[0]) return;
         sourceSquare = sq;
-        highlightSquare(sq);
+        highlight(sq);
         $('#scoreBoard').text('Select destination');
       } else {
         // second click: attempt move
         const dest = sq;
-        const oldFen = game.fen();
+        const fenBefore = game.fen();
         const move = game.move({ from: sourceSquare, to: dest, promotion: 'q' });
         clearHighlights();
         sourceSquare = null;
         if (!move) {
           board.position(game.fen());
-          $('#scoreBoard').text('Illegal move, pick again');
+          $('#scoreBoard').text('Illegal move, try again');
           return;
         }
         board.position(game.fen());
-        scoreUserMove(oldFen, move);
-        if (!game.game_over()) {
-          setTimeout(botMove, 500);
-        } else {
-          showGameOver();
-        }
+        // check game over immediately
+        if (game.game_over()) return showGameOver();
+        scoreUserMove(fenBefore, move);
       }
     }
 
-    function highlightSquare(sq) {
+    function highlight(sq) {
       clearHighlights();
       $(`.square-${sq}`).addClass('highlight');
     }
@@ -132,74 +133,72 @@
     }
 
     function scoreUserMove(fen, userMove) {
+      const evalWorker = new Worker('stockfish.js');
       const temp = new Chess(fen);
-      const legal = temp.moves({ verbose: true });
-      const results = [];
-      let done = 0;
-      const depth = 5;
+      const legal = temp.moves({ verbose:true });
+      const scores = [];
+      let done=0, depth=5;
 
-      legal.forEach(mv => {
-        const g2 = new Chess(fen);
-        g2.move(mv);
-        const fen2 = g2.fen();
-        const handler = e => {
-          if (e.data.startsWith('info') && e.data.includes('score cp')) {
-            const mm = e.data.match(/score cp (-?\\d+)/);
-            if (mm) results.push({ move: mv, score: +mm[1] });
+      evalWorker.onmessage = e => {
+        if (e.data.startsWith('info') && e.data.includes('score cp')) {
+          const m = e.data.match(/score cp (-?\\d+)/);
+          if (m) {
+            scores.push({ move: legal[done], score:+m[1] });
             done++;
-            if (done === legal.length) {
-              stockfish.removeEventListener('message', handler);
-              displayScore(results, userMove);
+            if (done===legal.length) {
+              evalWorker.terminate();
+              displayScore(scores, userMove);
             }
           }
-        };
-        stockfish.addEventListener('message', handler);
-        stockfish.postMessage("position fen " + fen2);
-        stockfish.postMessage("go depth " + depth);
+        }
+      };
+
+      legal.forEach((mv, i) => {
+        const g2 = new Chess(fen);
+        g2.move(mv);
+        evalWorker.postMessage("position fen "+g2.fen());
+        evalWorker.postMessage("go depth "+depth);
       });
     }
 
     function displayScore(results, userMove) {
-      results.sort((a,b)=>b.score - a.score);
-      const best = results[0].score;
-      const worst = results[results.length-1].score;
-      const found = results.find(r =>
-        r.move.from === userMove.from && r.move.to === userMove.to
-      );
-      const raw = found ? found.score : worst;
-      const norm = (best === worst)
-        ? 0
-        : Math.round((raw - worst) / (best - worst) * 100);
+      // match each result to its moves array index
+      // simpler: sort results by score
+      results.sort((a,b)=>b.score-a.score);
+      const best=results[0].score;
+      const worst=results[results.length-1].score;
+      const found=results.find(r=>r.move.from===userMove.from && r.move.to===userMove.to);
+      const raw=found?found.score:worst;
+      const norm=(best===worst)?0:Math.round((raw-worst)/(best-worst)*100);
       $('#scoreBoard').html(`Your move score: <strong>${norm}</strong>`);
+      // engine plays next
+      setTimeout(botMove, 800);
     }
 
     function botMove() {
-      const depth = 5;
-      const handler = e => {
+      const w = new Worker('stockfish.js');
+      w.onmessage = e => {
         if (e.data.startsWith('bestmove')) {
           const mv = e.data.split(' ')[1];
-          if (mv && mv !== '(none)') {
-            game.move({ from: mv.substr(0,2), to: mv.substr(2,2), promotion: 'q' });
+          if (mv && mv!=='(none)') {
+            game.move({ from: mv.slice(0,2), to: mv.slice(2,2), promotion:'q' });
             board.position(game.fen());
           }
-          stockfish.removeEventListener('message', handler);
-          if (game.game_over()) {
-            showGameOver();
-          } else {
-            $('#scoreBoard').text('Your turn: select a piece');
-          }
+          w.terminate();
+          if (game.game_over()) showGameOver();
+          else $('#scoreBoard').text('Your turn: select a piece');
         }
       };
-      stockfish.addEventListener('message', handler);
-      stockfish.postMessage("position fen " + game.fen());
-      stockfish.postMessage("go depth " + depth);
+      w.postMessage("position fen "+game.fen());
+      w.postMessage("go depth 5");
     }
 
     function showGameOver() {
-      const res = game.in_checkmate()
-        ? (game.turn() === playerColor[0] ? 'You lost!' : 'You won!')
-        : 'Draw!';
-      $('#scoreBoard').html(`<strong>${res}</strong><br><button onclick="location.reload()">Restart</button>`);
+      let text = 'Draw!';
+      if (game.in_checkmate()) {
+        text = (game.turn()===playerColor[0])?'You lost!':'You won!';
+      }
+      $('#scoreBoard').html(`<strong>${text}</strong><br><button class="restart" onclick="location.reload()">Restart</button>`);
     }
   </script>
 </body>
