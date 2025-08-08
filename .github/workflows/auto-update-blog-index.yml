@@ -1,16 +1,42 @@
-- name: Generate index.json
-  run: |
-    cd blog/posts
-    echo "[" > index.json
-    first=1
-    for f in *.html; do
-      # Extract date (first 10 chars) if filename starts with YYYY-MM-DD
-      DATE=$(echo "$f" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}')
-      if [ -n "$DATE" ]; then
-        [ $first -ne 1 ] && echo "," >> index.json
-        first=0
-        echo "  { \"file\": \"$f\", \"date\": \"$DATE\" }" >> index.json
-      fi
-    done
-    echo "" >> index.json
-    echo "]" >> index.json
+name: Auto-Update Blog Post Index
+
+on:
+  push:
+    paths:
+      - 'blog/posts/*.html'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Generate index.json
+        run: |
+          cd blog/posts
+          echo "[" > index.json
+          first=1
+          for f in *.html; do
+            # Extract date (first 10 chars) if filename starts with YYYY-MM-DD
+            DATE=$(echo "$f" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}')
+            if [ -n "$DATE" ]; then
+              [ $first -ne 1 ] && echo "," >> index.json
+              first=0
+              echo "  { \"file\": \"$f\", \"date\": \"$DATE\" }" >> index.json
+            fi
+          done
+          echo "" >> index.json
+          echo "]" >> index.json
+
+      - name: Commit index.json
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add blog/posts/index.json
+          git commit -m "Update post index" || echo "No changes"
+
+          # Pull remote changes to avoid push rejection
+          git pull --rebase
+
+          git push
