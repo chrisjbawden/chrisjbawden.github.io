@@ -44,6 +44,23 @@ body {
   font-weight: 600;
 }
 
+.year-heading {
+  text-align: center;
+  font-size: 1.5em;
+  margin: 2em 0 1em 0;
+  position: relative;
+}
+
+
+.year-separator {
+  width: 2px;
+  height: 2em;
+  background: #aaa;
+  margin: 0 auto;
+  display: block;
+}
+
+
 /* --- PDF/Badge Grid Layout --- */
 #pdf-container {
   padding-bottom: 100px;
