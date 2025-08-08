@@ -15,8 +15,16 @@ jobs:
       - name: Generate index.json
         run: |
           cd blog/posts
+
+          echo "Generating index.json..."
+
           echo "[" > index.json
+
           shopt -s nullglob
+
+          echo "HTML files found:"
+          ls -l *.html || echo "None found"
+
           first=1
           for f in *.html; do
             # Extract date (first 10 chars) if filename starts with YYYY-MM-DD
@@ -27,8 +35,14 @@ jobs:
               echo "  { \"file\": \"$f\", \"date\": \"$DATE\" }" >> index.json
             fi
           done
+
           echo "" >> index.json
           echo "]" >> index.json
+
+          echo "Generated index.json contents:"
+          cat index.json
+
+        continue-on-error: true
 
       - name: Commit index.json
         run: |
