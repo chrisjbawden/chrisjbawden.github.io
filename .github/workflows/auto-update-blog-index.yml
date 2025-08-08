@@ -15,31 +15,22 @@ jobs:
       - name: Generate index.json
         run: |
           cd blog/posts
-
-          echo "Generating index.json..."
-
-          echo "[" > index.json
-
           shopt -s nullglob
-
-          echo "HTML files found:"
-          ls -l *.html || echo "None found"
-
-          first=1
+          entries=()
           for f in *.html; do
-            # Extract date (first 10 chars) if filename starts with YYYY-MM-DD
             DATE=$(echo "$f" | grep -oE '^[0-9]{4}-[0-9]{2}-[0-9]{2}')
             if [ -n "$DATE" ]; then
-              [ $first -ne 1 ] && echo "," >> index.json
-              first=0
-              echo "  { \"file\": \"$f\", \"date\": \"$DATE\" }" >> index.json
+              entries+=("{ \"file\": \"$f\", \"date\": \"$DATE\" }")
             fi
           done
 
-          echo "" >> index.json
+          echo "[" > index.json
+          if [ ${#entries[@]} -gt 0 ]; then
+            (IFS=,; echo "  ${entries[*]}") >> index.json
+          fi
           echo "]" >> index.json
 
-          echo "Generated index.json contents:"
+          echo "index.json contents:"
           cat index.json
 
         continue-on-error: true
