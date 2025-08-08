@@ -16,10 +16,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Render by year, most recent year first
+    let isFirstYear = true;
     for (const year of Object.keys(postsByYear).sort((a, b) => b.localeCompare(a))) {
+      // Add vertical separator except before first year
+      if (!isFirstYear) {
+        const separator = document.createElement("div");
+        separator.className = "year-separator";
+        container.appendChild(separator);
+      }
+      isFirstYear = false;
+
       // Year heading
       const yearHeading = document.createElement("h2");
       yearHeading.textContent = year;
+      yearHeading.className = "year-heading";
       container.appendChild(yearHeading);
 
       // Posts for that year
