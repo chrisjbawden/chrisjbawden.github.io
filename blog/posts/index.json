@@ -9,6 +9,8 @@
 ,
   { "file": "2022-10-15-ZIP-Bomb.html", "date": "2022-10-15" }
 ,
+  { "file": "2022-11-02-Browser-based-hash-tool.html", "date": "2022-11-02" }
+,
   { "file": "2025-04-27-CS50-Project.html", "date": "2025-04-27" }
 ,
   { "file": "2025-06-20-Wildcard-DNS-services.html", "date": "2025-06-20" }
@@ -18,3 +20,5 @@
   { "file": "2025-07-27-Multi-tab-loader-easier-access.html", "date": "2025-07-27" }
 ,
   { "file": "2025-07-30-DockerManager.html", "date": "2025-07-30" }
+
+]
