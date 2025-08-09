@@ -58,11 +58,16 @@
           return i === -1 ? "" : name.slice(i).toLowerCase();
         };
 
+        // Encode each path segment but keep "/" separators
+        const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
+
         const listDir = async (path) => {
-          const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(BRANCH)}`;
+          const encPath = encodePath(path);
+          const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encPath}?ref=${encodeURIComponent(BRANCH)}`;
           const res = await fetch(url);
           if (!res.ok) {
             // Directory missing or rate limited; fail soft with empty list
+            console.warn(`listDir: ${path} -> ${res.status}`);
             return [];
           }
           const items = await res.json();
@@ -207,11 +212,12 @@
           // If nothing found, show a gentle message
           if (!files.length) {
             const note = document.createElement('p');
-            note.textContent = "No items found yet. Add files to /portfolio/Certificates, /portfolio/Badges, or /portfolio/Tertiary.";
+            note.textContent = "No items found yet. Add files to /portfolio/certificates, /portfolio/badges, or /portfolio/tertiary.";
             pdfContainer.appendChild(note);
           }
         })();
       </script>
+
     </section>
 
     <footer>
