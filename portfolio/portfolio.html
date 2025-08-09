@@ -5,17 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chris Bawden - Portfolio</title>
   <link rel="stylesheet" href="/stylesheets/styles.css">
-  
+
   <!-- PDF.js Library -->
   <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-
-
 </head>
 <body>
   <div class="wrapper">
     <div id="sidebar-placeholder"></div>
 
     <script>
+      // Load sidebar and hide link to current page
       fetch('/sidebar.html')
         .then(res => res.text())
         .then(html => {
@@ -37,111 +36,183 @@
       <div id="pdf-container"></div>
 
       <script>
+        // ===== CONFIG =====
+        const OWNER  = "chrisjbawden";
+        const REPO   = "chrisjbawden.github.io";
+        const BRANCH = "main"; // change if your default branch differs
+
+        const CERT_DIR = "portfolio/Certificates";
+        const BADGE_DIR = "portfolio/Badges";
+        const TERT_DIR  = "portfolio/Tertiary";
+
+        const PDF_EXT = new Set([".pdf"]);
+        const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+
+        // PDF.js worker
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
-        fetch('/portfolio/content.json')
-          .then(response => response.json())
-          .then(pdfFiles => {
-            const pdfContainer = document.getElementById('pdf-container');
-            const categories = {};
-            pdfFiles.forEach(file => {
-              if (!categories[file.category]) {
-                categories[file.category] = [];
-              }
-              categories[file.category].push(file);
-            });
+        // Helpers
+        const getExt = (name) => {
+          const i = name.lastIndexOf(".");
+          return i === -1 ? "" : name.slice(i).toLowerCase();
+        };
 
-            function generateThumbnail(pdfFile, container) {
-              const isBadge = pdfFile.category === "Badges";
-              const isPdf = pdfFile.path.endsWith(".pdf");
+        const listDir = async (path) => {
+          const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encodeURIComponent(path)}?ref=${encodeURIComponent(BRANCH)}`;
+          const res = await fetch(url);
+          if (!res.ok) {
+            // Directory missing or rate limited; fail soft with empty list
+            return [];
+          }
+          const items = await res.json();
+          return items
+            .filter(x => x.type === "file")
+            .map(x => ({
+              name: x.name,
+              path: `/${path}/${x.name}`,
+              _ext: getExt(x.name)
+            }));
+        };
 
-              if (isBadge) {
-                const div = document.createElement('div');
-                div.classList.add('thumbnail');
+        const generateThumbnail = (file, container) => {
+          const isBadge = file.category === "Badges";
+          const isPdf = PDF_EXT.has(file._ext);
 
-                const img = document.createElement('img');
-                img.src = pdfFile.path;
-                img.alt = pdfFile.name;
-                img.style.width = '150px';
-                img.style.height = '150px';
+          if (isBadge && IMG_EXT.has(file._ext)) {
+            const div = document.createElement('div');
+            div.classList.add('thumbnail');
 
-                div.appendChild(img);
-                container.appendChild(div);
-              } else if (isPdf) {
-                const loadingTask = pdfjsLib.getDocument(pdfFile.path);
-                loadingTask.promise.then(function(pdf) {
-                  pdf.getPage(1).then(function(page) {
-                    const scale = 0.3;
-                    const viewport = page.getViewport({ scale });
+            const img = document.createElement('img');
+            img.src = file.path;
+            img.alt = file.name;
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.loading = 'lazy';
 
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
+            const text = document.createElement('span');
+            text.innerText = file.name.replace(/\.[^.]+$/, "");
+            div.appendChild(text);
+            div.appendChild(img);
+            container.appendChild(div);
+            return;
+          }
 
-                    const renderContext = { canvasContext: context, viewport };
-                    page.render(renderContext).promise.then(function() {
-                      const div = document.createElement('div');
-                      div.classList.add('thumbnail');
+          if (isPdf) {
+            const loadingTask = pdfjsLib.getDocument(file.path);
+            loadingTask.promise.then(function(pdf) {
+              pdf.getPage(1).then(function(page) {
+                const scale = 0.3;
+                const viewport = page.getViewport({ scale });
 
-                      const link = document.createElement('a');
-                      link.href = pdfFile.path;
-                      link.target = '_blank';
-                      link.appendChild(canvas);
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
 
-                      const text = document.createElement('span');
-                      text.innerText = pdfFile.name;
-                      div.appendChild(text);
-                      div.appendChild(link);
-                      container.appendChild(div);
-                    });
-                  });
+                const renderContext = { canvasContext: context, viewport };
+                page.render(renderContext).promise.then(function() {
+                  const div = document.createElement('div');
+                  div.classList.add('thumbnail');
+
+                  const link = document.createElement('a');
+                  link.href = file.path;
+                  link.target = '_blank';
+                  link.appendChild(canvas);
+
+                  const text = document.createElement('span');
+                  text.innerText = file.name.replace(/\.[^.]+$/, "");
+
+                  div.appendChild(text);
+                  div.appendChild(link);
+                  container.appendChild(div);
                 });
-              } else {
-                const div = document.createElement('div');
-                div.classList.add('thumbnail');
-
-                const img = document.createElement('img');
-                img.src = 'https://via.placeholder.com/100x150?text=Link';
-                img.alt = 'Link Thumbnail';
-                img.style.width = '150px';
-                img.style.height = '150px';
-
-                const link = document.createElement('a');
-                link.href = pdfFile.path;
-                link.target = '_blank';
-                link.innerText = pdfFile.name;
-
-                div.appendChild(img);
-                div.appendChild(link);
-                container.appendChild(div);
-              }
-            }
-
-            for (const [category, files] of Object.entries(categories)) {
-              const categoryDiv = document.createElement('div');
-              categoryDiv.classList.add('category');
-
-              const title = document.createElement('h3');
-              title.classList.add('category-title'); // <--- Centring class added here
-              title.innerText = category;
-              categoryDiv.appendChild(title);
-
-              const container = document.createElement('div');
-              container.classList.add('thumbnail-container');
-              categoryDiv.appendChild(container);
-
-              files.forEach(pdfFile => {
-                generateThumbnail(pdfFile, container);
               });
+            }).catch(() => {
+              // Fallback link if PDF rendering fails
+              const div = document.createElement('div');
+              div.classList.add('thumbnail');
+              const a = document.createElement('a');
+              a.href = file.path;
+              a.target = '_blank';
+              a.innerText = file.name.replace(/\.[^.]+$/, "") + " (PDF)";
+              div.appendChild(a);
+              container.appendChild(div);
+            });
+            return;
+          }
 
-              pdfContainer.appendChild(categoryDiv);
-            }
-          });
+          // Fallback for unknown types
+          const div = document.createElement('div');
+          div.classList.add('thumbnail');
+
+          const img = document.createElement('img');
+          img.src = 'https://via.placeholder.com/100x150?text=File';
+          img.alt = 'File Thumbnail';
+          img.style.width = '150px';
+          img.style.height = '150px';
+
+          const link = document.createElement('a');
+          link.href = file.path;
+          link.target = '_blank';
+          link.innerText = file.name.replace(/\.[^.]+$/, "");
+
+          div.appendChild(img);
+          div.appendChild(link);
+          container.appendChild(div);
+        };
+
+        (async () => {
+          const pdfContainer = document.getElementById('pdf-container');
+
+          // Fetch directories in parallel
+          const [certs, badges, tertiary] = await Promise.all([
+            listDir(CERT_DIR),
+            listDir(BADGE_DIR),
+            listDir(TERT_DIR)
+          ]);
+
+          const files = [
+            ...certs.map(f => ({ ...f, category: "Certificates" })),
+            ...badges.map(f => ({ ...f, category: "Badges" })),
+            ...tertiary.map(f => ({ ...f, category: "Tertiary" }))
+          ];
+
+          // Group by category
+          const categories = {};
+          for (const f of files) {
+            if (!categories[f.category]) categories[f.category] = [];
+            categories[f.category].push(f);
+          }
+
+          // Render each category section
+          for (const [category, group] of Object.entries(categories)) {
+            const categoryDiv = document.createElement('div');
+            categoryDiv.classList.add('category');
+
+            const title = document.createElement('h3');
+            title.classList.add('category-title'); // assume centred in your CSS
+            title.innerText = category;
+            categoryDiv.appendChild(title);
+
+            const container = document.createElement('div');
+            container.classList.add('thumbnail-container');
+            categoryDiv.appendChild(container);
+
+            group.forEach(file => generateThumbnail(file, container));
+
+            pdfContainer.appendChild(categoryDiv);
+          }
+
+          // If nothing found, show a gentle message
+          if (!files.length) {
+            const note = document.createElement('p');
+            note.textContent = "No items found yet. Add files to /portfolio/Certificates, /portfolio/Badges, or /portfolio/Tertiary.";
+            pdfContainer.appendChild(note);
+          }
+        })();
       </script>
     </section>
-
 
     <footer>
       <p><span>Projects maintained by </span>
@@ -154,9 +225,7 @@
       </p>
       <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
     </footer>
-
-   </div>
-
+  </div>
 
   <script src="/javascripts/scale.fix.js"></script>
 </body>
