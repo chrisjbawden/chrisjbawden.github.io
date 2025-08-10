@@ -7,74 +7,44 @@
 
 </head>
 <body>
-    <style>
+  <style>
+    /* Scoped, minimal, and iframe/CSP friendly */
     .cs50-embed { text-align: center; }
+    /* Hide the real checkbox */
+    .cs50-toggle { position: absolute; left: -9999px; }
+    /* Play button */
     .cs50-play {
       display: inline-flex; align-items: center; justify-content: center;
-      width: 96px; height: 96px; border: 0; border-radius: 50%;
-      background: rgba(0,0,0,0.75); cursor: pointer;
+      width: 96px; height: 96px; border-radius: 50%; cursor: pointer;
+      background: rgba(0,0,0,0.85); margin: 16px auto;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.25);
     }
     .cs50-play svg { width: 44px; height: 44px; }
-    /* Hide the video until the button is clicked */
-    .cs50-video { display: none; width: 100%; height: auto; max-width: 800px; }
+    /* Video hidden by default */
+    .cs50-video { display: none; width: 100%; height: auto; max-width: 900px; }
+    /* When checkbox checked: hide button, show video */
+    .cs50-toggle:checked ~ .cs50-play { display: none; }
+    .cs50-toggle:checked ~ .cs50-video { display: block; }
   </style>
-<p>Sorry, just going to use this space for my CS50 Project submission.</p>
   <div class="cs50-embed">
-    
+    <p>Sorry, just going to use this space for my CS50 Project submission.</p>
 
-    <!-- Play button -->
-    <button class="cs50-play" id="cs50Play" aria-label="Play video">
+    <!-- CSS-only toggle -->
+    <input type="checkbox" id="cs50Toggle" class="cs50-toggle" aria-hidden="true">
+
+    <!-- Centred play button (label toggles the checkbox) -->
+    <label for="cs50Toggle" class="cs50-play" aria-label="Show video">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <polygon points="8,5 19,12 8,19" fill="#ffffff"></polygon>
       </svg>
-    </button>
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      console.log('[CS50] DOMContentLoaded fired.');
+    </label>
 
-      const wrappers = document.querySelectorAll('[data-cs50]');
-      if (!wrappers.length) {
-        console.log('[CS50] No wrappers found. Is this HTML being injected after scripts run?');
-        return;
-      }
-
-      wrappers.forEach((wrap, idx) => {
-        const btn = wrap.querySelector('.cs50-play');
-        const vid = wrap.querySelector('.cs50-video');
-
-        if (!btn || !vid) {
-          console.log(`[CS50] Missing elements in wrapper ${idx}. btn: ${!!btn}, vid: ${!!vid}`);
-          return;
-        }
-
-        console.log(`[CS50] Wiring wrapper ${idx}`);
-
-        btn.addEventListener('click', async () => {
-          console.log(`[CS50] Play button clicked (wrapper ${idx})`);
-          btn.style.display = 'none';
-          vid.style.display = 'block';
-          try {
-            await vid.play();
-            console.log('[CS50] Video play() succeeded');
-          } catch (err) {
-            console.log('[CS50] Video play() blocked or failed:', err);
-          }
-        });
-
-        vid.addEventListener('error', (e) => {
-          console.log('[CS50] Video error event:', e);
-          vid.style.display = 'block';
-        });
-      });
-    });
-  </script>
-    <!-- Video (hidden by default) -->
-    <video class="cs50-video" id="cs50Video" controls
+    <!-- Responsive video (revealed when checkbox is checked) -->
+    <video class="cs50-video" controls playsinline preload="metadata"
            poster="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/OOjs_UI_icon_video.svg/512px-OOjs_UI_icon_video.svg.png">
-      <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
+      <source src="https://raw.githubusercontent.com/chrisjbawden/chrisjbawden.github.io/master/media/video.mp4" type="video/mp4">
       Your browser does not support the video tag.
     </video>
-  </div>
 
 
 
