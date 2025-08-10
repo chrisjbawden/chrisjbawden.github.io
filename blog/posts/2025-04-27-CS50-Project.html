@@ -71,37 +71,39 @@
   <!-- Centered Play Button -->
   <div class="play-btn" id="playButton"></div>
 
-  <!-- Lightbox -->
+  <!-- Lightbox (starts empty, video is injected only on click) -->
   <div class="lightbox" id="lightbox">
     <span class="close-btn" id="closeBtn">&times;</span>
-    <video id="projectVideo" controls>
-      <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
-      Your browser does not support the video tag.
-    </video>
+    <div id="videoContainer"></div>
   </div>
 
   <script>
     const playButton = document.getElementById('playButton');
     const lightbox = document.getElementById('lightbox');
     const closeBtn = document.getElementById('closeBtn');
-    const video = document.getElementById('projectVideo');
+    const videoContainer = document.getElementById('videoContainer');
 
     playButton.addEventListener('click', () => {
+      // Inject video element only when play button is clicked
+      videoContainer.innerHTML = `
+        <video id="projectVideo" controls autoplay>
+          <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
+      `;
       lightbox.classList.add('active');
-      video.currentTime = 0;
-      video.play();
     });
 
     closeBtn.addEventListener('click', () => {
       lightbox.classList.remove('active');
-      video.pause();
+      videoContainer.innerHTML = ''; // Remove video to stop playback
     });
 
     // Close on outside click
     lightbox.addEventListener('click', (e) => {
       if (e.target === lightbox) {
         lightbox.classList.remove('active');
-        video.pause();
+        videoContainer.innerHTML = ''; // Remove video to stop playback
       }
     });
   </script>
