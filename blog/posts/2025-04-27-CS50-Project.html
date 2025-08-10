@@ -38,33 +38,45 @@
   </div>
 
   <script>
-  (function () {
-    const btn = document.getElementById('cs50Play');
-    const vid = document.getElementById('cs50Video');
+    document.addEventListener('DOMContentLoaded', () => {
+      console.log('[CS50] DOMContentLoaded fired.');
 
-    function showVideo() {
-      console.log("showVideo() called — unhiding and trying to play video");
-      vid.style.display = 'block'; // force visible
-      const p = vid.play();
-      if (p && typeof p.catch === 'function') {
-        p.catch(() => {
-          console.log('Autoplay blocked by browser; user will need to press play.');
-        });
+      const wrappers = document.querySelectorAll('[data-cs50]');
+      if (!wrappers.length) {
+        console.log('[CS50] No wrappers found. Is this HTML being injected after scripts run?');
+        return;
       }
-    }
 
-    btn.addEventListener('click', () => {
-      console.log("Play button clicked");
-      btn.style.display = 'none';
-      showVideo();
-    });
+      wrappers.forEach((wrap, idx) => {
+        const btn = wrap.querySelector('.cs50-play');
+        const vid = wrap.querySelector('.cs50-video');
 
-    vid.addEventListener('error', () => {
-      console.log('Video failed to load or play. Check the src URL and CORS.');
-      vid.style.display = 'block';
+        if (!btn || !vid) {
+          console.log(`[CS50] Missing elements in wrapper ${idx}. btn: ${!!btn}, vid: ${!!vid}`);
+          return;
+        }
+
+        console.log(`[CS50] Wiring wrapper ${idx}`);
+
+        btn.addEventListener('click', async () => {
+          console.log(`[CS50] Play button clicked (wrapper ${idx})`);
+          btn.style.display = 'none';
+          vid.style.display = 'block';
+          try {
+            await vid.play();
+            console.log('[CS50] Video play() succeeded');
+          } catch (err) {
+            console.log('[CS50] Video play() blocked or failed:', err);
+          }
+        });
+
+        vid.addEventListener('error', (e) => {
+          console.log('[CS50] Video error event:', e);
+          vid.style.display = 'block';
+        });
+      });
     });
-  })();
-</script>
+  </script>
 
 </body>
 </html>
