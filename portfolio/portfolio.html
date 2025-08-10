@@ -13,24 +13,7 @@
   <div class="wrapper">
     <div id="sidebar-placeholder"></div>
 
-    <script>
-      // Load sidebar and hide link to current page
-      fetch('/sidebar.html')
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById('sidebar-placeholder');
-          container.innerHTML = html;
-
-          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
-          const links = container.querySelectorAll('#main-menu a');
-          links.forEach(link => {
-            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
-            if (href === currentPath) {
-              link.style.display = 'none';
-            }
-          });
-        });
-    </script>
+        </script>
 
     <section style="padding-top:10%;">
       <div id="pdf-container"></div>
@@ -39,7 +22,8 @@
         // ===== CONFIG =====
         const OWNER  = "chrisjbawden";
         const REPO   = "chrisjbawden.github.io";
-        const BRANCH = "master"; // change if your default branch differs
+        // Try common default branches in order
+        const BRANCHES = ["main", "master"];
 
         const CERT_DIR = "portfolio/certificates";
         const BADGE_DIR = "portfolio/badges";
@@ -61,23 +45,41 @@
         // Encode each path segment but keep "/" separators
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
+        // Show a small inline notice if a directory is missing
+        const showMissingDirNote = (path, status) => {
+          const pdfContainer = document.getElementById('pdf-container');
+          const note = document.createElement('p');
+          note.textContent = `Couldn’t load “/${path}” (HTTP ${status}). Check the folder name/branch exists in the repo.`;
+          pdfContainer.appendChild(note);
+        };
+
+        // List files from GitHub API and return both rawUrl (direct from repo) and site path
         const listDir = async (path) => {
           const encPath = encodePath(path);
-          const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encPath}?ref=${encodeURIComponent(BRANCH)}`;
-          const res = await fetch(url);
-          if (!res.ok) {
-            // Directory missing or rate limited; fail soft with empty list
-            console.warn(`listDir: ${path} -> ${res.status}`);
-            return [];
+
+          for (const branch of BRANCHES) {
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encPath}?ref=${encodeURIComponent(branch)}`;
+            console.debug("GitHub API URL:", url);
+
+            const res = await fetch(url);
+            if (res.ok) {
+              const items = await res.json();
+              return items
+                .filter(x => x.type === "file")
+                .map(x => ({
+                  name: x.name,
+                  sitePath: `/${path}/${x.name}`, // published site path (not used now, but kept in case)
+                  rawUrl: x.download_url,         // direct file from repo (no Pages rebuild needed)
+                  _ext: getExt(x.name)
+                }));
+            } else {
+              console.warn(`listDir: ${path} on branch "${branch}" -> ${res.status}`);
+              if (branch === BRANCHES[BRANCHES.length - 1]) {
+                showMissingDirNote(path, res.status);
+              }
+            }
           }
-          const items = await res.json();
-          return items
-            .filter(x => x.type === "file")
-            .map(x => ({
-              name: x.name,
-              path: `/${path}/${x.name}`,
-              _ext: getExt(x.name)
-            }));
+          return [];
         };
 
         const generateThumbnail = (file, container) => {
@@ -85,26 +87,25 @@
           const isPdf = PDF_EXT.has(file._ext);
 
           if (isBadge && IMG_EXT.has(file._ext)) {
+            // Badges: show image only (no filename)
             const div = document.createElement('div');
             div.classList.add('thumbnail');
 
             const img = document.createElement('img');
-            img.src = file.path;
+            img.src = file.rawUrl;   // load directly from repo
             img.alt = file.name;
             img.style.width = '150px';
             img.style.height = '150px';
             img.loading = 'lazy';
 
-            const text = document.createElement('span');
-            text.innerText = file.name.replace(/\.[^.]+$/, "");
-            div.appendChild(text);
             div.appendChild(img);
             container.appendChild(div);
             return;
           }
 
           if (isPdf) {
-            const loadingTask = pdfjsLib.getDocument(file.path);
+            // Render first page thumbnail via PDF.js using raw URL (direct from repo)
+            const loadingTask = pdfjsLib.getDocument(file.rawUrl);
             loadingTask.promise.then(function(pdf) {
               pdf.getPage(1).then(function(page) {
                 const scale = 0.3;
@@ -121,8 +122,9 @@
                   div.classList.add('thumbnail');
 
                   const link = document.createElement('a');
-                  link.href = file.path;
+                  link.href = file.rawUrl;   // open raw PDF directly
                   link.target = '_blank';
+                  link.rel = 'noopener';
                   link.appendChild(canvas);
 
                   const text = document.createElement('span');
@@ -138,8 +140,9 @@
               const div = document.createElement('div');
               div.classList.add('thumbnail');
               const a = document.createElement('a');
-              a.href = file.path;
+              a.href = file.rawUrl;
               a.target = '_blank';
+              a.rel = 'noopener';
               a.innerText = file.name.replace(/\.[^.]+$/, "") + " (PDF)";
               div.appendChild(a);
               container.appendChild(div);
@@ -147,7 +150,7 @@
             return;
           }
 
-          // Fallback for unknown types
+          // Fallback for unknown types — link to raw file
           const div = document.createElement('div');
           div.classList.add('thumbnail');
 
@@ -158,8 +161,9 @@
           img.style.height = '150px';
 
           const link = document.createElement('a');
-          link.href = file.path;
+          link.href = file.rawUrl;
           link.target = '_blank';
+          link.rel = 'noopener';
           link.innerText = file.name.replace(/\.[^.]+$/, "");
 
           div.appendChild(img);
@@ -170,7 +174,7 @@
         (async () => {
           const pdfContainer = document.getElementById('pdf-container');
 
-          // Fetch directories in parallel
+          // Fetch directories in parallel (from repo API)
           const [certs, badges, tertiary] = await Promise.all([
             listDir(CERT_DIR),
             listDir(BADGE_DIR),
@@ -217,6 +221,7 @@
           }
         })();
       </script>
+
 
     </section>
 
