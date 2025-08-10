@@ -38,14 +38,34 @@
   </div>
 
   <script>
-    const btn = document.getElementById('cs50Play');
-    const vid = document.getElementById('cs50Video');
+    (function () {
+      const btn = document.getElementById('cs50Play');
+      const vid = document.getElementById('cs50Video');
 
-    btn.addEventListener('click', async () => {
-      btn.style.display = 'none';      // hide the button
-      vid.style.display = 'block';     // show the video
-      try { await vid.play(); } catch(_) {}
-    });
+      function showVideo() {
+        // Force visible even if site CSS tries to hide it
+        vid.style.display = 'block';
+        // Try to play (may be blocked if not user-initiated)
+        const p = vid.play();
+        if (p && typeof p.catch === 'function') {
+          p.catch(() => {
+            // Autoplay blocked – controls are visible; user can press play
+            console.log('Autoplay blocked by browser; showing controls.');
+          });
+        }
+      }
+
+      btn.addEventListener('click', () => {
+        btn.style.display = 'none';
+        showVideo();
+      });
+
+      // Extra safety: if the source fails, unhide anyway so user sees the error UI
+      vid.addEventListener('error', () => {
+        vid.style.display = 'block';
+        console.error('Video failed to load. Check the src URL or CORS.');
+      });
+    })();
   </script>
 
 </body>
