@@ -8,9 +8,47 @@
     <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    <style>
+      /* Search bar */
+      .blog-search-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 12px 16px 0 16px;
+      }
+      #post-search {
+        width: min(920px, 96%);
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+
+      /* Year heading + separator */
+      .year-heading {
+        text-align: center;
+        margin: 28px 0 10px 0;
+      }
+      .year-separator {
+        width: 2px;
+        height: 40px;
+        background: #cfcfcf;
+        margin: 12px auto 6px auto; /* centred vertical line */
+      }
+
+      /* Post blocks */
+      details.post {
+        margin: 6px 0;
+      }
+      details.post > summary {
+        cursor: pointer;
+        list-style: none; /* nicer triangles handled by UA; you can restyle if desired */
+      }
+      details.post > summary::-webkit-details-marker { display: none; } /* optional: hide default marker */
+    </style>
+
     <script>
+    // Open parent <details> for deep links like #my-post
     (function() {
-      // Opens parent <details> for a hash target so deep links work
       function openDetailsForHashTarget() {
         if (!window.location.hash) return;
         const targetId = window.location.hash.slice(1);
@@ -69,8 +107,13 @@
           });
       </script>
 
+      <!-- Search -->
+      <div class="blog-search-wrap">
+        <input id="post-search" type="search" placeholder="Search posts…">
+      </div>
+
       <section id="blog-posts" style="padding-left:20px;">
-        <!-- Blog posts will be dynamically loaded here -->
+        <!-- Blog posts load here -->
       </section>
 
       <script>
@@ -78,16 +121,14 @@
         const OWNER    = "chrisjbawden";
         const REPO     = "chrisjbawden.github.io";
         const BRANCHES = ["main", "master"];   // try main then master
-        const POSTS_DIR = "blog/posts";        // repo path to your HTML posts
+        const POSTS_DIR = "blog/posts";        // repo path to HTML posts
 
         // ===== Helpers =====
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
-        // Compute the raw base URL for a repo directory on a given branch
         const rawBaseFor = (branch, dir) =>
           `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(branch)}/${dir.replace(/\/+$/,'')}/`;
 
-        // List .html files in POSTS_DIR from the repo (no Pages involved)
         async function listPostFiles() {
           const enc = encodePath(POSTS_DIR);
           for (const branch of BRANCHES) {
@@ -100,16 +141,15 @@
                 .filter(x => x.type === "file" && /\.html?$/i.test(x.name) && x.name.toLowerCase() !== "index.html")
                 .map(x => ({
                   name: x.name,
-                  rawUrl: x.download_url,      // direct file content URL
+                  rawUrl: x.download_url,
                   branch,
-                  dirRawBase: rawBaseFor(branch, POSTS_DIR) // for rewriting relative links
+                  dirRawBase: rawBaseFor(branch, POSTS_DIR)
                 }));
             }
           }
           return [];
         }
 
-        // Extract date from filename prefix "YYYY-MM-DD-..." if present
         function parseDateFromFilename(name) {
           const m = name.match(/^(\d{4})-(\d{2})-(\d{2})[-_]/);
           if (!m) return null;
@@ -120,56 +160,47 @@
           return { iso, year: y, ts };
         }
 
-        // Rewrite relative src/href inside the HTML to the raw repo base, so images/CSS in posts work
         function rewriteRelativeUrls(html, base) {
-          // Use a DOMParser to safely walk nodes
           const doc = new DOMParser().parseFromString(html, "text/html");
-
           const fixUrl = (u) => {
             if (!u) return u;
-            // Already absolute?
             if (/^[a-z]+:\/\//i.test(u) || u.startsWith("data:") || u.startsWith("mailto:") || u.startsWith("#")) return u;
-            // Root-relative on your site: leave as-is
-            if (u.startsWith("/")) return u;
-            // Otherwise, make absolute to raw repo dir
+            if (u.startsWith("/")) return u; // keep site-root links
             return base + u.replace(/^\.\/+/, "");
           };
-
           doc.querySelectorAll("[src]").forEach(el => el.setAttribute("src", fixUrl(el.getAttribute("src"))));
           doc.querySelectorAll("link[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
           doc.querySelectorAll("a[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
-
-          // Return serialised inner HTML of <body> to avoid duplicating <html>/<head>
           return doc.body ? doc.body.innerHTML : html;
         }
 
-        // Fetch a post HTML and extract a title (prefer <h1>, then <title>)
         async function fetchPostMeta(file) {
           try {
             const res = await fetch(file.rawUrl);
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const htmlText = await res.text();
 
-            // Parse for title
             const doc = new DOMParser().parseFromString(htmlText, "text/html");
             let title =
               (doc.querySelector("h1") && doc.querySelector("h1").textContent.trim()) ||
               (doc.querySelector("title") && doc.querySelector("title").textContent.trim()) ||
               file.name.replace(/\.html?$/i, "");
 
-            // Rewrite relative links to raw repo base so assets work
             const cleaned = rewriteRelativeUrls(htmlText, file.dirRawBase);
-
             const date = parseDateFromFilename(file.name);
-            return { ...file, title, date, html: cleaned };
+
+            // Plain text (for searching)
+            const textContent = (doc.body ? doc.body.textContent : "")
+              .replace(/\s+/g, " ").trim();
+
+            return { ...file, title, date, html: cleaned, text: textContent };
           } catch (e) {
             console.warn("Failed to fetch post:", file.name, e);
             const date = parseDateFromFilename(file.name);
-            return { ...file, title: file.name.replace(/\.html?$/i, ""), date, html: `<p>Failed to load post content.</p>` };
+            return { ...file, title: file.name.replace(/\.html?$/i, ""), date, html: `<p>Failed to load post content.</p>`, text: "" };
           }
         }
 
-        // Render posts grouped by year, newest first
         function renderPosts(posts) {
           const container = document.getElementById("blog-posts");
           container.innerHTML = "";
@@ -190,13 +221,22 @@
           }
 
           const years = Object.keys(groups).sort((a,b) => b.localeCompare(a));
-          for (const year of years) {
+
+          years.forEach((year, idx) => {
+            // Vertical separator above each year except the first
+            if (idx > 0) {
+              const sep = document.createElement("div");
+              sep.className = "year-separator";
+              container.appendChild(sep);
+            }
+
+            // Year heading
             const h = document.createElement("h3");
+            h.className = "year-heading";
             h.textContent = year;
-            h.style.textAlign = "center";
             container.appendChild(h);
 
-            // Sort by date desc then name
+            // Sort posts in this year: newest first (date), then name
             const sorted = groups[year].sort((a,b) => {
               const at = a.date?.ts ?? 0, bt = b.date?.ts ?? 0;
               if (bt !== at) return bt - at;
@@ -206,15 +246,19 @@
             for (const post of sorted) {
               const details = document.createElement("details");
               details.className = "post";
+              details.dataset.title = post.title.toLowerCase();
+              details.dataset.text = (post.text || "").toLowerCase();
+              details.dataset.year = year;
 
               const summary = document.createElement("summary");
-              summary.textContent = post.title + (post.date?.iso ? ` — ${post.date.iso}` : "");
+              // Title only — NO date in the label
+              summary.textContent = post.title;
               details.appendChild(summary);
 
               const inner = document.createElement("div");
               inner.className = "post-content";
 
-              // Stable id from filename for deep links
+              // Stable id for deep links
               const anchorId = post.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
               const anchor = document.createElement("a");
               anchor.id = anchorId;
@@ -224,21 +268,54 @@
               inner.appendChild(anchor);
 
               inner.insertAdjacentHTML("beforeend", post.html);
-
               details.appendChild(inner);
               container.appendChild(details);
             }
-          }
+          });
+        }
+
+        // Live search: filter posts, hide empty years & separators
+        function setupSearch() {
+          const input = document.getElementById("post-search");
+          const container = document.getElementById("blog-posts");
+
+          const applyFilter = () => {
+            const q = input.value.trim().toLowerCase();
+            const posts = Array.from(container.querySelectorAll("details.post"));
+            const yearHeadings = Array.from(container.querySelectorAll(".year-heading"));
+            const separators = Array.from(container.querySelectorAll(".year-separator"));
+
+            // Show/hide posts
+            posts.forEach(p => {
+              const hay = p.dataset.title + " " + p.dataset.text;
+              p.style.display = hay.includes(q) ? "" : "none";
+            });
+
+            // Hide year headings that have no visible posts beneath them
+            yearHeadings.forEach(h => {
+              const year = h.textContent.trim();
+              const hasVisible = posts.some(p => p.dataset.year === year && p.style.display !== "none");
+              h.style.display = hasVisible ? "" : "none";
+            });
+
+            // Hide separators that sit above a hidden year heading
+            separators.forEach(sep => {
+              const next = sep.nextElementSibling; // should be the year heading
+              const show = next && next.classList.contains("year-heading") && next.style.display !== "none";
+              sep.style.display = show ? "" : "none";
+            });
+          };
+
+          input.addEventListener("input", applyFilter);
         }
 
         (async () => {
-          // 1) List files from repo
           const files = await listPostFiles();
-          // 2) Fetch each post & parse meta
           const metas = await Promise.all(files.map(fetchPostMeta));
-          // 3) Render
           renderPosts(metas);
-          // 4) Re-run hash opener once content exists
+          setupSearch();
+
+          // Re-run hash opener once content exists
           if (window.location.hash) window.dispatchEvent(new Event("hashchange"));
         })();
       </script>
