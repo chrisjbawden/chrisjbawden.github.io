@@ -6,17 +6,93 @@
   <title>Chris Bawden - Portfolio</title>
   <link rel="stylesheet" href="/stylesheets/styles.css">
 
-  <!-- PDF.js Library -->
+  <!-- PDF.js (core) for thumbnail rendering -->
   <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+
+  <!-- Minimal lightbox styles -->
+  <style>
+    .lightbox {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-content {
+      position: relative;
+      width: min(95vw, 1200px);
+      height: min(90vh, 900px);
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .lightbox iframe, .lightbox img {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #222;
+      object-fit: contain;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 28px;
+      line-height: 1;
+      background: #000;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* Optional: make thumbnails look tidy if your CSS doesn’t already */
+    .thumbnail { display: inline-flex; flex-direction: column; align-items: center; margin: 10px; }
+    .thumbnail span { margin: 6px 0; text-align: center; display: block; }
+    .thumbnail-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .category-title { text-align: center; }
+  </style>
 </head>
 <body>
   <div class="wrapper">
     <div id="sidebar-placeholder"></div>
 
-        </script>
+    <script>
+      // Load sidebar and hide link to current page
+      fetch('/sidebar.html')
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById('sidebar-placeholder');
+          container.innerHTML = html;
+
+          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+          const links = container.querySelectorAll('#main-menu a');
+          links.forEach(link => {
+            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+            if (href === currentPath) {
+              link.style.display = 'none';
+            }
+          });
+        });
+    </script>
 
     <section style="padding-top:10%;">
       <div id="pdf-container"></div>
+
+      <!-- Lightbox modal -->
+      <div id="lightbox" class="lightbox" aria-hidden="true">
+        <div class="lightbox-content">
+          <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close">×</button>
+          <!-- We’ll toggle between iframe and img depending on file type -->
+          <iframe id="lightbox-frame" style="display:none;"></iframe>
+          <img id="lightbox-image" alt="" style="display:none;">
+        </div>
+      </div>
 
       <script>
         // ===== CONFIG =====
@@ -25,6 +101,7 @@
         // Try common default branches in order
         const BRANCHES = ["main", "master"];
 
+        // Your folders (lowercase)
         const CERT_DIR = "portfolio/certificates";
         const BADGE_DIR = "portfolio/badges";
         const TERT_DIR  = "portfolio/tertiary";
@@ -32,7 +109,7 @@
         const PDF_EXT = new Set([".pdf"]);
         const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 
-        // PDF.js worker
+        // PDF.js worker for thumbnail rendering
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
@@ -45,7 +122,7 @@
         // Encode each path segment but keep "/" separators
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
-        // Show a small inline notice if a directory is missing
+        // Small inline notice if a directory is missing
         const showMissingDirNote = (path, status) => {
           const pdfContainer = document.getElementById('pdf-container');
           const note = document.createElement('p');
@@ -53,7 +130,7 @@
           pdfContainer.appendChild(note);
         };
 
-        // List files from GitHub API and return both rawUrl (direct from repo) and site path
+        // List files from GitHub API and return rawUrl for direct access
         const listDir = async (path) => {
           const encPath = encodePath(path);
 
@@ -68,8 +145,7 @@
                 .filter(x => x.type === "file")
                 .map(x => ({
                   name: x.name,
-                  sitePath: `/${path}/${x.name}`, // published site path (not used now, but kept in case)
-                  rawUrl: x.download_url,         // direct file from repo (no Pages rebuild needed)
+                  rawUrl: x.download_url,  // direct file from repo
                   _ext: getExt(x.name)
                 }));
             } else {
@@ -82,12 +158,56 @@
           return [];
         };
 
+        // ------- Lightbox logic -------
+        const lightbox = document.getElementById('lightbox');
+        const lbClose = document.getElementById('lightbox-close');
+        const lbFrame = document.getElementById('lightbox-frame');
+        const lbImage = document.getElementById('lightbox-image');
+
+        const openLightboxPDF = (pdfUrl) => {
+          // Use PDF.js hosted viewer to avoid cross-origin hiccups
+          const viewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(pdfUrl);
+          lbImage.style.display = "none";
+          lbFrame.style.display = "block";
+          lbFrame.src = viewer;
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+        };
+
+        const openLightboxImage = (imgUrl, altText = "") => {
+          lbFrame.style.display = "none";
+          lbImage.style.display = "block";
+          lbImage.src = imgUrl;
+          lbImage.alt = altText;
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeLightbox = () => {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          lbFrame.src = "about:blank";
+          lbImage.src = "";
+          lbImage.alt = "";
+        };
+
+        lbClose.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+          // Close when clicking backdrop (but not when clicking inside content)
+          if (e.target === lightbox) closeLightbox();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+        });
+
+        // ------- Rendering -------
         const generateThumbnail = (file, container) => {
           const isBadge = file.category === "Badges";
           const isPdf = PDF_EXT.has(file._ext);
+          const isImage = IMG_EXT.has(file._ext);
 
-          if (isBadge && IMG_EXT.has(file._ext)) {
-            // Badges: show image only (no filename)
+          if (isBadge && isImage) {
+            // Badges: show image only (no filename, not clickable)
             const div = document.createElement('div');
             div.classList.add('thumbnail');
 
@@ -103,8 +223,10 @@
             return;
           }
 
+          // Certificates / Tertiary:
+          // - PDFs: thumbnail from first page; clicking opens lightbox (PDF viewer)
+          // - Images: show image thumbnail; clicking opens lightbox image
           if (isPdf) {
-            // Render first page thumbnail via PDF.js using raw URL (direct from repo)
             const loadingTask = pdfjsLib.getDocument(file.rawUrl);
             loadingTask.promise.then(function(pdf) {
               pdf.getPage(1).then(function(page) {
@@ -121,17 +243,16 @@
                   const div = document.createElement('div');
                   div.classList.add('thumbnail');
 
-                  const link = document.createElement('a');
-                  link.href = file.rawUrl;   // open raw PDF directly
-                  link.target = '_blank';
-                  link.rel = 'noopener';
-                  link.appendChild(canvas);
+                  const thumb = document.createElement('a');
+                  thumb.href = "javascript:void(0)";
+                  thumb.addEventListener('click', () => openLightboxPDF(file.rawUrl));
+                  thumb.appendChild(canvas);
 
                   const text = document.createElement('span');
                   text.innerText = file.name.replace(/\.[^.]+$/, "");
 
                   div.appendChild(text);
-                  div.appendChild(link);
+                  div.appendChild(thumb);
                   container.appendChild(div);
                 });
               });
@@ -139,26 +260,44 @@
               // Fallback link if PDF rendering fails
               const div = document.createElement('div');
               div.classList.add('thumbnail');
+
               const a = document.createElement('a');
-              a.href = file.rawUrl;
-              a.target = '_blank';
-              a.rel = 'noopener';
-              a.innerText = file.name.replace(/\.[^.]+$/, "") + " (PDF)";
+              a.href = "javascript:void(0)";
+              a.innerText = file.name.replace(/\.[^.]+$/, "") + " (Open)";
+              a.addEventListener('click', () => openLightboxPDF(file.rawUrl));
+
               div.appendChild(a);
               container.appendChild(div);
             });
             return;
           }
 
-          // Fallback for unknown types — link to raw file
+          if (isImage) {
+            const div = document.createElement('div');
+            div.classList.add('thumbnail');
+
+            // Small thumbnail
+            const img = document.createElement('img');
+            img.src = file.rawUrl;
+            img.alt = file.name.replace(/\.[^.]+$/, "");
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.loading = 'lazy';
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', () => openLightboxImage(file.rawUrl, img.alt));
+
+            const text = document.createElement('span');
+            text.innerText = file.name.replace(/\.[^.]+$/, "");
+
+            div.appendChild(text);
+            div.appendChild(img);
+            container.appendChild(div);
+            return;
+          }
+
+          // Unknown types: simple link that opens in new tab
           const div = document.createElement('div');
           div.classList.add('thumbnail');
-
-          const img = document.createElement('img');
-          img.src = 'https://via.placeholder.com/100x150?text=File';
-          img.alt = 'File Thumbnail';
-          img.style.width = '150px';
-          img.style.height = '150px';
 
           const link = document.createElement('a');
           link.href = file.rawUrl;
@@ -166,7 +305,6 @@
           link.rel = 'noopener';
           link.innerText = file.name.replace(/\.[^.]+$/, "");
 
-          div.appendChild(img);
           div.appendChild(link);
           container.appendChild(div);
         };
@@ -174,34 +312,31 @@
         (async () => {
           const pdfContainer = document.getElementById('pdf-container');
 
-          // Fetch directories in parallel (from repo API)
-          const [certs, badges, tertiary] = await Promise.all([
-            listDir(CERT_DIR),
+          // Pull directly from repo (no Pages rebuild needed)
+          const [tertiary, badges, certs] = await Promise.all([
+            listDir(TERT_DIR),   // <-- Tertiary first
             listDir(BADGE_DIR),
-            listDir(TERT_DIR)
+            listDir(CERT_DIR)
           ]);
 
           const files = [
-            ...certs.map(f => ({ ...f, category: "Certificates" })),
+            ...tertiary.map(f => ({ ...f, category: "Tertiary" })),
             ...badges.map(f => ({ ...f, category: "Badges" })),
-            ...tertiary.map(f => ({ ...f, category: "Tertiary" }))
+            ...certs.map(f => ({ ...f, category: "Certificates" }))
           ];
 
-          // Group by category
-          const categories = {};
-          for (const f of files) {
-            if (!categories[f.category]) categories[f.category] = [];
-            categories[f.category].push(f);
-          }
+          // Group in our explicit desired order
+          const orderedCategories = ["Tertiary", "Badges", "Certificates"];
+          for (const cat of orderedCategories) {
+            const group = files.filter(f => f.category === cat);
+            if (!group.length) continue;
 
-          // Render each category section
-          for (const [category, group] of Object.entries(categories)) {
             const categoryDiv = document.createElement('div');
             categoryDiv.classList.add('category');
 
             const title = document.createElement('h3');
-            title.classList.add('category-title'); // assume centred in your CSS
-            title.innerText = category;
+            title.classList.add('category-title');
+            title.innerText = cat;
             categoryDiv.appendChild(title);
 
             const container = document.createElement('div');
@@ -216,13 +351,11 @@
           // If nothing found, show a gentle message
           if (!files.length) {
             const note = document.createElement('p');
-            note.textContent = "No items found yet. Add files to /portfolio/certificates, /portfolio/badges, or /portfolio/tertiary.";
+            note.textContent = "No items found yet. Add files to /portfolio/tertiary, /portfolio/badges, or /portfolio/certificates.";
             pdfContainer.appendChild(note);
           }
         })();
       </script>
-
-
     </section>
 
     <footer>
