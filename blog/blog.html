@@ -9,21 +9,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <style>
-      /* Search bar */
+      /* Search bar lives inside the content section so it won't overlap the sidebar */
       .blog-search-wrap {
         display: flex;
         justify-content: center;
         padding: 12px 16px 0 16px;
       }
       #post-search {
-        width: min(920px, 96%);
+        width: 100%;
+        max-width: 880px;     /* keep it neat */
         padding: 10px 12px;
         border: 1px solid #ccc;
         border-radius: 6px;
         font-size: 16px;
       }
 
-      /* Year heading + separator */
+      /* Year heading + centred vertical separator */
       .year-heading {
         text-align: center;
         margin: 28px 0 10px 0;
@@ -32,18 +33,13 @@
         width: 2px;
         height: 40px;
         background: #cfcfcf;
-        margin: 12px auto 6px auto; /* centred vertical line */
+        margin: 12px auto 6px auto;
       }
 
       /* Post blocks */
-      details.post {
-        margin: 6px 0;
-      }
-      details.post > summary {
-        cursor: pointer;
-        list-style: none; /* nicer triangles handled by UA; you can restyle if desired */
-      }
-      details.post > summary::-webkit-details-marker { display: none; } /* optional: hide default marker */
+      details.post { margin: 6px 0; }
+      details.post > summary { cursor: pointer; list-style: none; }
+      details.post > summary::-webkit-details-marker { display: none; }
     </style>
 
     <script>
@@ -54,33 +50,26 @@
         const targetId = window.location.hash.slice(1);
         const target = document.getElementById(targetId);
         if (target) {
-          let parent = target.parentElement;
-          let opened = false;
+          let parent = target.parentElement, opened = false;
           while (parent) {
             if (parent.tagName && parent.tagName.toLowerCase() === "details") {
-              parent.open = true;
-              opened = true;
+              parent.open = true; opened = true;
             }
             parent = parent.parentElement;
           }
-          if (opened) {
-            setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
-          }
+          if (opened) setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
         }
       }
-
       document.addEventListener("DOMContentLoaded", function() {
         let tries = 0;
         function tryOpen() {
-          openDetailsForHashTarget();
-          tries++;
+          openDetailsForHashTarget(); tries++;
           if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
             setTimeout(tryOpen, 200);
           }
         }
         tryOpen();
       });
-
       window.addEventListener("hashchange", openDetailsForHashTarget);
     })();
     </script>
@@ -96,8 +85,6 @@
           .then(html => {
             const container = document.getElementById('sidebar-placeholder');
             container.innerHTML = html;
-
-            // Hide the link to the current page
             const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
             const links = container.querySelectorAll('#main-menu a');
             links.forEach(link => {
@@ -107,13 +94,12 @@
           });
       </script>
 
-      <!-- Search -->
-      <div class="blog-search-wrap">
-        <input id="post-search" type="search" placeholder="Search posts…">
-      </div>
-
       <section id="blog-posts" style="padding-left:20px;">
-        <!-- Blog posts load here -->
+        <!-- Search inside the content column so it doesn't cross the sidebar -->
+        <div class="blog-search-wrap">
+          <input id="post-search" type="search" placeholder="Search posts…">
+        </div>
+        <!-- Blog posts will be dynamically loaded below -->
       </section>
 
       <script>
@@ -129,6 +115,7 @@
         const rawBaseFor = (branch, dir) =>
           `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(branch)}/${dir.replace(/\/+$/,'')}/`;
 
+        // List .html files in POSTS_DIR from the repo (no Pages involved)
         async function listPostFiles() {
           const enc = encodePath(POSTS_DIR);
           for (const branch of BRANCHES) {
@@ -150,8 +137,9 @@
           return [];
         }
 
+        // Parse date from filename prefix "YYYY-MM-DD-..." (for sorting only)
         function parseDateFromFilename(name) {
-          const m = name.match(/^(\d{4})-(\d{2})-(\d{2})[-_]/);
+          const m = name.match(/^(\d{4})-(\d{2})-(\d{2})[-_ ]/);
           if (!m) return null;
           const [ , y, mo, d ] = m;
           const iso = `${y}-${mo}-${d}`;
@@ -160,6 +148,12 @@
           return { iso, year: y, ts };
         }
 
+        // Strip a leading date pattern from a string title
+        function stripLeadingDate(s) {
+          return s.replace(/^\s*\d{4}-\d{2}-\d{2}[-_ ]*\s*/,'');
+        }
+
+        // Rewrite relative src/href inside the HTML to the raw repo base, so images/CSS in posts work
         function rewriteRelativeUrls(html, base) {
           const doc = new DOMParser().parseFromString(html, "text/html");
           const fixUrl = (u) => {
@@ -186,6 +180,9 @@
               (doc.querySelector("title") && doc.querySelector("title").textContent.trim()) ||
               file.name.replace(/\.html?$/i, "");
 
+            // Remove any leading date from the title we display
+            title = stripLeadingDate(title);
+
             const cleaned = rewriteRelativeUrls(htmlText, file.dirRawBase);
             const date = parseDateFromFilename(file.name);
 
@@ -197,13 +194,17 @@
           } catch (e) {
             console.warn("Failed to fetch post:", file.name, e);
             const date = parseDateFromFilename(file.name);
-            return { ...file, title: file.name.replace(/\.html?$/i, ""), date, html: `<p>Failed to load post content.</p>`, text: "" };
+            return { ...file, title: stripLeadingDate(file.name.replace(/\.html?$/i, "")), date, html: `<p>Failed to load post content.</p>`, text: "" };
           }
         }
 
         function renderPosts(posts) {
           const container = document.getElementById("blog-posts");
+
+          // Clear existing (keep the search bar div)
+          const searchWrap = container.querySelector(".blog-search-wrap");
           container.innerHTML = "";
+          if (searchWrap) container.appendChild(searchWrap);
 
           if (!posts.length) {
             const p = document.createElement("p");
@@ -247,12 +248,11 @@
               const details = document.createElement("details");
               details.className = "post";
               details.dataset.title = post.title.toLowerCase();
-              details.dataset.text = (post.text || "").toLowerCase();
-              details.dataset.year = year;
+              details.dataset.text  = (post.text || "").toLowerCase();
+              details.dataset.year  = year;
 
               const summary = document.createElement("summary");
-              // Title only — NO date in the label
-              summary.textContent = post.title;
+              summary.textContent = post.title; // title only — no date
               details.appendChild(summary);
 
               const inner = document.createElement("div");
@@ -283,24 +283,21 @@
             const q = input.value.trim().toLowerCase();
             const posts = Array.from(container.querySelectorAll("details.post"));
             const yearHeadings = Array.from(container.querySelectorAll(".year-heading"));
-            const separators = Array.from(container.querySelectorAll(".year-separator"));
+            const separators   = Array.from(container.querySelectorAll(".year-separator"));
 
-            // Show/hide posts
             posts.forEach(p => {
               const hay = p.dataset.title + " " + p.dataset.text;
               p.style.display = hay.includes(q) ? "" : "none";
             });
 
-            // Hide year headings that have no visible posts beneath them
             yearHeadings.forEach(h => {
               const year = h.textContent.trim();
               const hasVisible = posts.some(p => p.dataset.year === year && p.style.display !== "none");
               h.style.display = hasVisible ? "" : "none";
             });
 
-            // Hide separators that sit above a hidden year heading
             separators.forEach(sep => {
-              const next = sep.nextElementSibling; // should be the year heading
+              const next = sep.nextElementSibling; // year heading
               const show = next && next.classList.contains("year-heading") && next.style.display !== "none";
               sep.style.display = show ? "" : "none";
             });
