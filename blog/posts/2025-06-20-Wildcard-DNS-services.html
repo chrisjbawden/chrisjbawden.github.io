@@ -1,13 +1,19 @@
 <br>
 <br>
+<title> Handy wildcard DNS services</title>
 <p>
-This is probably more for myself, just a reminder about wildcard DNS services for IP to Domain solutions. 
+This is mostly a note to myself, but it might help others too — a quick reminder about wildcard DNS services that map an IP address directly into a domain name.
 </p>
 <p>
-  For anyone not familar, these services allow you to use the IP of the device as the domain. Their DNS services just resolve the domain to the IP as to allow you the use the advantages of a FQD - ie if you are using a reverse proxy. 
+For example, an IP like <code>1.1.1.1</code> can automatically be turned into a domain such as <code>1.1.1.1.nip.io</code>. The DNS for these services simply resolves that domain back to the same IP, giving you the benefits of a fully qualified domain name (FQDN) — which can be especially handy when setting up a reverse proxy.
 </p>
 <p>
-  - <A href="https://traefik.me/" target="_blank">https://traefik.me/</a>
+However, while this is a great trick for quick setups and testing, there’s an important caveat: getting a Let’s Encrypt SSL certificate for these domains can be difficult. These free DNS-to-IP services are heavily used, and Let’s Encrypt rate limits often kick in due to the high volume of certificate requests from other users.
+</p>
+<p>
+Some popular services:
   <br>
-  - <a href="https://nip.io" target="_blank">https://nip.io</a> >>> now <a href="https://slip.io" target="_blank">sslip.io</a>
+  - <a href="https://traefik.me/" target="_blank">https://traefik.me/</a>
+  <br>
+  - <a href="https://nip.io" target="_blank">https://nip.io</a> (now <a href="https://sslip.io" target="_blank">sslip.io</a>)
 </p>
