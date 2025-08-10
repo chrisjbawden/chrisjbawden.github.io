@@ -326,7 +326,7 @@
           ];
 
           // Group in our explicit desired order
-          const orderedCategories = ["Tertiary", "Badges", "Certificates"];
+          const orderedCategories = ["Tertiary", "Certificates", "Badges"];
           for (const cat of orderedCategories) {
             const group = files.filter(f => f.category === cat);
             if (!group.length) continue;
