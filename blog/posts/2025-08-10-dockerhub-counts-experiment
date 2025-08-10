@@ -1,0 +1,69 @@
+<!doctype html> <html lang="en"> <head> <meta charset="utf-8"> <title>Why Docker Hub download counts can be misleading</title> <meta name="viewport" content="width=device-width, initial-scale=1"> <meta name="description" content="A security-focused look at why Docker Hub download numbers shouldn’t be treated as proof of quality or legitimacy."> <link rel="stylesheet" href="/stylesheets/styles.css"> <link rel="stylesheet" href="/stylesheets/pygment_trac.css"> </head> <body> <div class="container"> <header> <h1>Why Docker Hub download counts can be misleading</h1> <p><em>Angle: cyber security &amp; due diligence</em></p> </header>
+
+
+  <main>
+    <h2>TL;DR</h2>
+    <p>
+      Download numbers on image hubs (e.g. Docker Hub) are easy to game and should not be used as a proxy for
+      <strong>functionality</strong> or <strong>legitimacy</strong>. Treat them as a rough popularity signal at best,
+      never as evidence that an image is safe, trustworthy, or maintained.
+    </p>
+
+    <h2>What I tested</h2>
+    <p>
+      As a security experiment, I tested whether automated traffic could artificially increase a container image’s
+      download tally. By repeatedly querying an image’s metadata and simulating client activity within platform limits,
+      I was able to make the public “pulls” figure climb without any real users actually running the image.
+    </p>
+
+    <p>
+      This isn’t unique to one platform—any metric that increments on easily triggered events (for example,
+      unauthenticated or low-friction API interactions) can be inflated. The specifics vary by registry and will change
+      over time as providers tighten abuse controls, but the broader lesson stands: <strong>vanity counters are weak security signals</strong>.
+    </p>
+
+    <h2>Why this matters</h2>
+    <ul>
+      <li><strong>Security theatre:</strong> Big numbers can create a false sense of safety. Malicious or low-quality images can look “popular”.</li>
+      <li><strong>Herd bias:</strong> Humans tend to assume that if many others chose something, it must be right. Attackers exploit this.</li>
+      <li><strong>Due-diligence gaps:</strong> Teams under time pressure may shortcut reviews if an image appears widely used.</li>
+      <li><strong>Supply-chain risk:</strong> Trusting a misleading metric can pull vulnerable, outdated or tampered artefacts into your build path.</li>
+    </ul>
+
+    <h2>Better signals to assess images</h2>
+    <p>Instead of leaning on download counts, prioritise:</p>
+    <ul>
+      <li><strong>Provenance:</strong> Is the image from an official or verified publisher? Is the namespace legitimate?</li>
+      <li><strong>Transparency:</strong> Public <code>Dockerfile</code>, build recipe, and clearly documented base images.</li>
+      <li><strong>Freshness &amp; maintenance:</strong> Recent releases, tagged versions, changelogs, and timely CVE responses.</li>
+      <li><strong>Image attestations &amp; signatures:</strong> Use standard tools to verify that the image you pull is what the publisher built.</li>
+      <li><strong>SBOM &amp; vulnerability scans:</strong> Prefer images that ship an SBOM and pass baseline scanning in your own pipeline.</li>
+      <li><strong>Reproducibility:</strong> Where feasible, build from source in your CI and compare digests against what you plan to run.</li>
+      <li><strong>Least privilege:</strong> Check for non-root execution, minimal base layers, and sensible defaults.</li>
+      <li><strong>Community signals with context:</strong> Issues, PRs, maintainer responsiveness—qualitative signals beat raw counters.</li>
+    </ul>
+
+    <h2>Practical takeaways for teams</h2>
+    <ol>
+      <li>Treat download counts as <em>marketing</em>, not security evidence.</li>
+      <li>Adopt a lightweight image admission policy (signatures, allow-lists, minimum metadata, CVE thresholds).</li>
+      <li>Automate registry-side checks in CI (digest pinning, SBOM import, scan gates).</li>
+      <li>Periodically review base images and lock to known-good digests.</li>
+    </ol>
+
+    <h2>Responsible behaviour</h2>
+    <p>
+      This post is about awareness, not exploitation. Avoid automating fake traffic against public services.
+      If you discover a counting weakness, follow a responsible disclosure process with the provider.
+    </p>
+
+    <hr>
+
+    <p><em>Final thought:</em> in security, popularity is not proof. Do the boring checks—they’re what actually keep you safe.</p>
+  </main>
+
+  <footer>
+    <p>Posted by Chris • Security notes • <span aria-label="Australia">🇦🇺</span></p>
+  </footer>
+</div>
+</body> </html>
