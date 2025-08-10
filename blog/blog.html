@@ -8,99 +8,252 @@
     <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-
-
-
-    <script src="/blog/loader.js"></script>
-
-<script>
-(function() {
-  function openDetailsForHashTarget() {
-    if (!window.location.hash) return;
-    const targetId = window.location.hash.slice(1);
-    const target = document.getElementById(targetId);
-    if (target) {
-      // Open all parent <details> elements
-      let parent = target.parentElement;
-      let opened = false;
-      while (parent) {
-        if (parent.tagName && parent.tagName.toLowerCase() === "details") {
-          parent.open = true;
-          opened = true;
+    <script>
+    (function() {
+      // Opens parent <details> for a hash target so deep links work
+      function openDetailsForHashTarget() {
+        if (!window.location.hash) return;
+        const targetId = window.location.hash.slice(1);
+        const target = document.getElementById(targetId);
+        if (target) {
+          let parent = target.parentElement;
+          let opened = false;
+          while (parent) {
+            if (parent.tagName && parent.tagName.toLowerCase() === "details") {
+              parent.open = true;
+              opened = true;
+            }
+            parent = parent.parentElement;
+          }
+          if (opened) {
+            setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
+          }
         }
-        parent = parent.parentElement;
       }
-      // Only scroll if a details was opened (prevents double-scroll glitch)
-      if (opened) {
-        setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
-      }
-    }
-  }
 
-  // Run on DOMContentLoaded (may miss if content loads later)
-  document.addEventListener("DOMContentLoaded", function() {
-    // Try multiple times for dynamic content (like blog posts loaded after page load)
-    let tries = 0;
-    function tryOpen() {
-      openDetailsForHashTarget();
-      tries++;
-      if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
-        setTimeout(tryOpen, 200); // Keep retrying for up to 4 seconds
-      }
-    }
-    tryOpen();
-  });
+      document.addEventListener("DOMContentLoaded", function() {
+        let tries = 0;
+        function tryOpen() {
+          openDetailsForHashTarget();
+          tries++;
+          if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
+            setTimeout(tryOpen, 200);
+          }
+        }
+        tryOpen();
+      });
 
-  // Also run when the hash changes (e.g., user clicks an in-page link)
-  window.addEventListener("hashchange", openDetailsForHashTarget);
-})();
-</script>
-
+      window.addEventListener("hashchange", openDetailsForHashTarget);
+    })();
+    </script>
   </head>
 
   <body>
-
     <div class="wrapper">
 
-    <div id="sidebar-placeholder"></div>
+      <div id="sidebar-placeholder"></div>
+      <script>
+        fetch('/sidebar.html')
+          .then(res => res.text())
+          .then(html => {
+            const container = document.getElementById('sidebar-placeholder');
+            container.innerHTML = html;
 
-    <script>
-      fetch('/sidebar.html')
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById('sidebar-placeholder');
-          container.innerHTML = html;
-
-          // Hide the link to the current page
-          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
-          const links = container.querySelectorAll('#main-menu a');
-          links.forEach(link => {
-            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
-            if (href === currentPath) {
-              link.style.display = 'none'; // Hides the link
-            }
+            // Hide the link to the current page
+            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+            const links = container.querySelectorAll('#main-menu a');
+            links.forEach(link => {
+              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+              if (href === currentPath) link.style.display = 'none';
+            });
           });
-        });
-    </script>
+      </script>
 
-    <section id="blog-posts" style="padding-left: 20px;">
-      <!-- Blog posts will be dynamically loaded here -->
-    </section>
+      <section id="blog-posts" style="padding-left:20px;">
+        <!-- Blog posts will be dynamically loaded here -->
+      </section>
 
-    <footer>
-      <p><span>Projects maintained by </span>
-        <script>
-          var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
-          var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);
-          document.write(m);
-        </script>
-        <noscript>You must enable JavaScript to see this text.</noscript>
-      </p>
-      <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
-    </footer>
+      <script>
+        // ===== CONFIG =====
+        const OWNER    = "chrisjbawden";
+        const REPO     = "chrisjbawden.github.io";
+        const BRANCHES = ["main", "master"];   // try main then master
+        const POSTS_DIR = "blog/posts";        // repo path to your HTML posts
+
+        // ===== Helpers =====
+        const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
+
+        // Compute the raw base URL for a repo directory on a given branch
+        const rawBaseFor = (branch, dir) =>
+          `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(branch)}/${dir.replace(/\/+$/,'')}/`;
+
+        // List .html files in POSTS_DIR from the repo (no Pages involved)
+        async function listPostFiles() {
+          const enc = encodePath(POSTS_DIR);
+          for (const branch of BRANCHES) {
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${enc}?ref=${encodeURIComponent(branch)}`;
+            console.debug("List posts URL:", url);
+            const res = await fetch(url);
+            if (res.ok) {
+              const items = await res.json();
+              return items
+                .filter(x => x.type === "file" && /\.html?$/i.test(x.name) && x.name.toLowerCase() !== "index.html")
+                .map(x => ({
+                  name: x.name,
+                  rawUrl: x.download_url,      // direct file content URL
+                  branch,
+                  dirRawBase: rawBaseFor(branch, POSTS_DIR) // for rewriting relative links
+                }));
+            }
+          }
+          return [];
+        }
+
+        // Extract date from filename prefix "YYYY-MM-DD-..." if present
+        function parseDateFromFilename(name) {
+          const m = name.match(/^(\d{4})-(\d{2})-(\d{2})[-_]/);
+          if (!m) return null;
+          const [ , y, mo, d ] = m;
+          const iso = `${y}-${mo}-${d}`;
+          const ts = Date.parse(iso);
+          if (isNaN(ts)) return null;
+          return { iso, year: y, ts };
+        }
+
+        // Rewrite relative src/href inside the HTML to the raw repo base, so images/CSS in posts work
+        function rewriteRelativeUrls(html, base) {
+          // Use a DOMParser to safely walk nodes
+          const doc = new DOMParser().parseFromString(html, "text/html");
+
+          const fixUrl = (u) => {
+            if (!u) return u;
+            // Already absolute?
+            if (/^[a-z]+:\/\//i.test(u) || u.startsWith("data:") || u.startsWith("mailto:") || u.startsWith("#")) return u;
+            // Root-relative on your site: leave as-is
+            if (u.startsWith("/")) return u;
+            // Otherwise, make absolute to raw repo dir
+            return base + u.replace(/^\.\/+/, "");
+          };
+
+          doc.querySelectorAll("[src]").forEach(el => el.setAttribute("src", fixUrl(el.getAttribute("src"))));
+          doc.querySelectorAll("link[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
+          doc.querySelectorAll("a[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
+
+          // Return serialised inner HTML of <body> to avoid duplicating <html>/<head>
+          return doc.body ? doc.body.innerHTML : html;
+        }
+
+        // Fetch a post HTML and extract a title (prefer <h1>, then <title>)
+        async function fetchPostMeta(file) {
+          try {
+            const res = await fetch(file.rawUrl);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const htmlText = await res.text();
+
+            // Parse for title
+            const doc = new DOMParser().parseFromString(htmlText, "text/html");
+            let title =
+              (doc.querySelector("h1") && doc.querySelector("h1").textContent.trim()) ||
+              (doc.querySelector("title") && doc.querySelector("title").textContent.trim()) ||
+              file.name.replace(/\.html?$/i, "");
+
+            // Rewrite relative links to raw repo base so assets work
+            const cleaned = rewriteRelativeUrls(htmlText, file.dirRawBase);
+
+            const date = parseDateFromFilename(file.name);
+            return { ...file, title, date, html: cleaned };
+          } catch (e) {
+            console.warn("Failed to fetch post:", file.name, e);
+            const date = parseDateFromFilename(file.name);
+            return { ...file, title: file.name.replace(/\.html?$/i, ""), date, html: `<p>Failed to load post content.</p>` };
+          }
+        }
+
+        // Render posts grouped by year, newest first
+        function renderPosts(posts) {
+          const container = document.getElementById("blog-posts");
+          container.innerHTML = "";
+
+          if (!posts.length) {
+            const p = document.createElement("p");
+            p.textContent = "No posts found yet. Add .html files under /blog/posts in the repo.";
+            container.appendChild(p);
+            return;
+          }
+
+          // Group by year
+          const groups = {};
+          for (const p of posts) {
+            const y = (p.date && p.date.year) || "Unsorted";
+            if (!groups[y]) groups[y] = [];
+            groups[y].push(p);
+          }
+
+          const years = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+          for (const year of years) {
+            const h = document.createElement("h3");
+            h.textContent = year;
+            h.style.textAlign = "center";
+            container.appendChild(h);
+
+            // Sort by date desc then name
+            const sorted = groups[year].sort((a,b) => {
+              const at = a.date?.ts ?? 0, bt = b.date?.ts ?? 0;
+              if (bt !== at) return bt - at;
+              return b.name.localeCompare(a.name);
+            });
+
+            for (const post of sorted) {
+              const details = document.createElement("details");
+              details.className = "post";
+
+              const summary = document.createElement("summary");
+              summary.textContent = post.title + (post.date?.iso ? ` — ${post.date.iso}` : "");
+              details.appendChild(summary);
+
+              const inner = document.createElement("div");
+              inner.className = "post-content";
+
+              // Stable id from filename for deep links
+              const anchorId = post.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+              const anchor = document.createElement("a");
+              anchor.id = anchorId;
+              anchor.style.display = "block";
+              anchor.style.position = "relative";
+              anchor.style.top = "-60px";
+              inner.appendChild(anchor);
+
+              inner.insertAdjacentHTML("beforeend", post.html);
+
+              details.appendChild(inner);
+              container.appendChild(details);
+            }
+          }
+        }
+
+        (async () => {
+          // 1) List files from repo
+          const files = await listPostFiles();
+          // 2) Fetch each post & parse meta
+          const metas = await Promise.all(files.map(fetchPostMeta));
+          // 3) Render
+          renderPosts(metas);
+          // 4) Re-run hash opener once content exists
+          if (window.location.hash) window.dispatchEvent(new Event("hashchange"));
+        })();
+      </script>
+
+      <footer>
+        <p><span>Projects maintained by </span>
+          <script>
+            var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+            var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);
+            document.write(m);
+          </script>
+          <noscript>You must enable JavaScript to see this text.</noscript>
+        </p>
+        <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+      </footer>
     </div>
 
     <script src="/javascripts/scale.fix.js"></script>
