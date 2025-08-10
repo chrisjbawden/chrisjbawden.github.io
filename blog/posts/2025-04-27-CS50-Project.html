@@ -2,123 +2,49 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>CS50 Project Video Loader</title>
+  <title>CS50 Project Video</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <style>
-    /* Scope everything to avoid clashes with site CSS */
-    .cs50-body {
-      background: #f7f9fa;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
+    /* Scoped to the wrapper so it won't fight your site CSS */
+    .cs50-embed { text-align: center; }
+    .cs50-play {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 96px; height: 96px; border: 0; border-radius: 50%;
+      background: rgba(0,0,0,0.75); cursor: pointer;
     }
-    .cs50-note {
-      text-align: center;
-      margin-top: 24px;
-      color: #333;
-    }
-    .cs50-center {
-      flex: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 48px 16px 80px;
-    }
-    .cs50-play-btn {
-      width: 120px;
-      height: 120px;
-      border: none;
-      border-radius: 60px;
-      background: rgba(0,0,0,0.7);
-      display: grid;
-      place-items: center;
-      cursor: pointer;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.25);
-      transition: transform 0.15s ease, background 0.2s ease;
-    }
-    .cs50-play-btn:hover { background: rgba(0,0,0,0.85); transform: translateY(-1px); }
-    .cs50-play-btn:active { transform: translateY(0); }
-
-    /* Lightbox */
-    .cs50-lightbox {
-      position: fixed;
-      z-index: 9999;
-      inset: 0;
-      background: rgba(0,0,0,0.85);
-      display: none;              /* default, but we also set inline style to win any cascade */
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .cs50-lightbox.cs50-active { display: flex !important; } /* force visible when active */
-    .cs50-video {
-      max-width: 90vw;
-      max-height: 80vh;
-      border-radius: 10px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-      background: #000;
-    }
-    .cs50-close {
-      position: absolute;
-      top: 16px;
-      right: 20px;
-      font-size: 32px;
-      line-height: 1;
-      color: #fff;
-      cursor: pointer;
-      user-select: none;
-    }
+    .cs50-play svg { width: 44px; height: 44px; }
+    .cs50-video { display: none; width: 100%; height: auto; }
   </style>
 </head>
-<body class="cs50-body">
+<body>
 
-  <p class="cs50-note">Sorry, just going to use this space for my CS50 Project submission.</p>
+  <div class="cs50-embed">
+    <p>Sorry, just going to use this space for my CS50 Project submission.</p>
 
-  <div class="cs50-center">
-    <!-- Big centred play button (SVG icon for reliability) -->
-    <button class="cs50-play-btn" id="cs50PlayBtn" aria-label="Play video">
-      <svg width="48" height="48" viewBox="0 0 24 24" aria-hidden="true">
+    <!-- Centred play button -->
+    <button class="cs50-play" id="cs50Play" aria-label="Play video">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
         <polygon points="8,5 19,12 8,19" fill="#ffffff"></polygon>
       </svg>
     </button>
-  </div>
 
-  <!-- Lightbox (starts hidden; inline style guards against external CSS overrides) -->
-  <div class="cs50-lightbox" id="cs50Lightbox" style="display:none;">
-    <span class="cs50-close" id="cs50Close" aria-label="Close">&times;</span>
-    <div id="cs50VideoContainer"></div>
+    <!-- Responsive video (hidden until play is pressed) -->
+    <video class="cs50-video" id="cs50Video" controls
+           poster="https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/OOjs_UI_icon_video.svg/512px-OOjs_UI_icon_video.svg.png">
+      <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
   </div>
 
   <script>
-    const playBtn = document.getElementById('cs50PlayBtn');
-    const lightbox = document.getElementById('cs50Lightbox');
-    const closeBtn = document.getElementById('cs50Close');
-    const container = document.getElementById('cs50VideoContainer');
+    const btn = document.getElementById('cs50Play');
+    const vid = document.getElementById('cs50Video');
 
-    function openLightbox() {
-      // Inject the video only when needed so it’s never visible beforehand
-      container.innerHTML = `
-        <video class="cs50-video" id="cs50Video" controls autoplay>
-          <source src="https://github.com/chrisjbawden/chrisjbawden.github.io/raw/refs/heads/master/media/video.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-      `;
-      lightbox.classList.add('cs50-active');
-      lightbox.style.display = 'flex'; // inline style beats any external CSS
-    }
-
-    function closeLightbox() {
-      lightbox.classList.remove('cs50-active');
-      lightbox.style.display = 'none';
-      container.innerHTML = ''; // remove to stop playback immediately
-    }
-
-    playBtn.addEventListener('click', openLightbox);
-    closeBtn.addEventListener('click', closeLightbox);
-    lightbox.addEventListener('click', (e) => { if (e.target === lightbox) closeLightbox(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+    btn.addEventListener('click', async () => {
+      btn.style.display = 'none';
+      vid.style.display = 'block';
+      try { await vid.play(); } catch (_) { /* some browsers block autoplay; user can press play */ }
+    });
   </script>
 
 </body>
