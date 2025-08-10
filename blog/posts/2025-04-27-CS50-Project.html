@@ -38,35 +38,33 @@
   </div>
 
   <script>
-    (function () {
-      const btn = document.getElementById('cs50Play');
-      const vid = document.getElementById('cs50Video');
+  (function () {
+    const btn = document.getElementById('cs50Play');
+    const vid = document.getElementById('cs50Video');
 
-      function showVideo() {
-        // Force visible even if site CSS tries to hide it
-        vid.style.display = 'block';
-        // Try to play (may be blocked if not user-initiated)
-        const p = vid.play();
-        if (p && typeof p.catch === 'function') {
-          p.catch(() => {
-            // Autoplay blocked – controls are visible; user can press play
-            console.log('Autoplay blocked by browser; showing controls.');
-          });
-        }
+    function showVideo() {
+      console.log("showVideo() called — unhiding and trying to play video");
+      vid.style.display = 'block'; // force visible
+      const p = vid.play();
+      if (p && typeof p.catch === 'function') {
+        p.catch(() => {
+          console.log('Autoplay blocked by browser; user will need to press play.');
+        });
       }
+    }
 
-      btn.addEventListener('click', () => {
-        btn.style.display = 'none';
-        showVideo();
-      });
+    btn.addEventListener('click', () => {
+      console.log("Play button clicked");
+      btn.style.display = 'none';
+      showVideo();
+    });
 
-      // Extra safety: if the source fails, unhide anyway so user sees the error UI
-      vid.addEventListener('error', () => {
-        vid.style.display = 'block';
-        console.error('Video failed to load. Check the src URL or CORS.');
-      });
-    })();
-  </script>
+    vid.addEventListener('error', () => {
+      console.log('Video failed to load or play. Check the src URL and CORS.');
+      vid.style.display = 'block';
+    });
+  })();
+</script>
 
 </body>
 </html>
