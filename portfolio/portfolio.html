@@ -9,6 +9,7 @@
   <!-- PDF.js (core) for thumbnail rendering -->
   <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
 
+  <!-- Lightbox styles + notice gate -->
   <style>
     /* ---------------- Lightbox ---------------- */
     .lightbox {
@@ -51,13 +52,15 @@
       z-index: 1;
     }
 
-    /* Optional: make thumbnails look tidy if your CSS doesn’t already */
+    /* ---------------- Thumbnails ---------------- */
     .thumbnail { display: inline-flex; flex-direction: column; align-items: center; margin: 10px; }
     .thumbnail span { margin: 6px 0; text-align: center; display: block; }
     .thumbnail-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .category-title { text-align: center; }
 
     /* ---------------- Notice Gate (LIGHT, blocks right pane only) ---------------- */
+    :root { --sidebar-w: 260px; }
+
     #notice-gate {
       position: fixed;
       inset: 0;
@@ -71,7 +74,7 @@
     #notice-gate .right-pane-blocker {
       position: absolute;
       top: 0; bottom: 0;
-      left: 260px;            /* adjust if your sidebar width differs */
+      left: var(--sidebar-w);
       right: 0;
 
       background: rgba(255,255,255,0.82);
@@ -84,11 +87,6 @@
       padding: 24px;
 
       pointer-events: auto;   /* clickable only on right pane */
-    }
-
-    @media (max-width: 900px) {
-      /* On small screens, sidebar may collapse; blocker covers screen */
-      #notice-gate .right-pane-blocker { left: 0; }
     }
 
     .notice-card {
@@ -153,6 +151,25 @@
               link.style.display = 'none';
             }
           });
+
+          // --- KEY FIX: measure the real sidebar width and set --sidebar-w dynamically ---
+          const setGateLeftToSidebarWidth = () => {
+            // Try common sidebar containers inside sidebar.html
+            const sidebarEl =
+              container.querySelector('#sidebar') ||
+              container.querySelector('aside') ||
+              container.firstElementChild ||
+              container;
+
+            const rect = sidebarEl.getBoundingClientRect();
+            const w = Math.max(0, Math.round(rect.width));
+
+            // Fallback to 260px only if measurement fails
+            document.documentElement.style.setProperty('--sidebar-w', (w ? `${w}px` : '260px'));
+          };
+
+          setGateLeftToSidebarWidth();
+          window.addEventListener('resize', setGateLeftToSidebarWidth);
         });
     </script>
 
@@ -191,6 +208,7 @@
         // ===== CONFIG =====
         const OWNER  = "chrisjbawden";
         const REPO   = "chrisjbawden.github.io";
+        // Try common default branches in order
         const BRANCHES = ["main", "master"];
 
         // Your folders (lowercase)
@@ -238,7 +256,7 @@
                 .filter(x => x.type === "file")
                 .map(x => ({
                   name: x.name,
-                  rawUrl: x.download_url,
+                  rawUrl: x.download_url,  // direct file from repo
                   _ext: getExt(x.name)
                 }));
             } else {
@@ -258,6 +276,7 @@
         const lbImage = document.getElementById('lightbox-image');
 
         const openLightboxPDF = (pdfUrl) => {
+          // Use PDF.js hosted viewer to avoid cross-origin hiccups
           const viewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(pdfUrl);
           lbImage.style.display = "none";
           lbFrame.style.display = "block";
@@ -285,13 +304,14 @@
 
         lbClose.addEventListener('click', closeLightbox);
         lightbox.addEventListener('click', (e) => {
+          // Close when clicking backdrop (but not when clicking inside content)
           if (e.target === lightbox) closeLightbox();
         });
         document.addEventListener('keydown', (e) => {
           if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
         });
 
-        // ------- Rendering (preserved from your original) -------
+        // ------- Rendering (preserved) -------
         const generateThumbnail = (file, container) => {
           const isBadge = file.category === "Badges";
           const isPdf = PDF_EXT.has(file._ext);
@@ -315,8 +335,6 @@
           }
 
           // Resume / Certificates / Tertiary:
-          // - PDFs: thumbnail from first page; clicking opens lightbox (PDF viewer)
-          // - Images: show image thumbnail; clicking opens lightbox image
           if (isPdf) {
             const loadingTask = pdfjsLib.getDocument(file.rawUrl);
             loadingTask.promise.then(function(pdf) {
@@ -406,7 +424,6 @@
         const openGate = () => {
           gate.classList.add('open');
           gate.setAttribute('aria-hidden', 'false');
-          // Keep sidebar usable; only right pane is blocked
           agreeBtn.focus();
         };
 
@@ -425,22 +442,20 @@
 
           const pdfContainer = document.getElementById('pdf-container');
 
-          // Pull directly from repo (no Pages rebuild needed)
           const [resume, tertiary, badges, certs] = await Promise.all([
-            listDir(RESUME_DIR), // NEW (top)
+            listDir(RESUME_DIR),
             listDir(TERT_DIR),
             listDir(BADGE_DIR),
             listDir(CERT_DIR)
           ]);
 
           const files = [
-            ...resume.map(f => ({ ...f, category: "Resume" })),      // NEW
+            ...resume.map(f => ({ ...f, category: "Resume" })),
             ...tertiary.map(f => ({ ...f, category: "Tertiary" })),
             ...badges.map(f => ({ ...f, category: "Badges" })),
             ...certs.map(f => ({ ...f, category: "Certificates" }))
           ];
 
-          // Group in our explicit desired order
           const orderedCategories = ["Resume", "Tertiary", "Certificates", "Badges"];
           for (const cat of orderedCategories) {
             const group = files.filter(f => f.category === cat);
@@ -462,7 +477,6 @@
             pdfContainer.appendChild(categoryDiv);
           }
 
-          // If nothing found, show a gentle message
           if (!files.length) {
             const note = document.createElement('p');
             note.textContent = "No items found yet. Add files to /portfolio/resume, /portfolio/tertiary, /portfolio/badges, or /portfolio/certificates.";
