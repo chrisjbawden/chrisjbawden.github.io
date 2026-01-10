@@ -9,7 +9,6 @@
   <!-- PDF.js (core) for thumbnail rendering -->
   <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
 
-  <!-- Lightbox styles + notice gate -->
   <style>
     /* ---------------- Lightbox ---------------- */
     .lightbox {
@@ -58,39 +57,32 @@
     .thumbnail-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
     .category-title { text-align: center; }
 
-    /* ---------------- Notice Gate (LIGHT, blocks right pane only) ---------------- */
-    :root { --sidebar-w: 260px; }
+    /* ---------------- Content pane + Notice gate ----------------
+       The key fix: gate overlays ONLY the right content pane (not the whole page).
+    */
+    #content-pane {
+      position: relative;
+      min-height: 60vh; /* enough height for the gate to feel centred */
+    }
 
     #notice-gate {
-      position: fixed;
-      inset: 0;
-      z-index: 9000;          /* below lightbox */
-      display: none;
-      background: transparent;
-      pointer-events: none;   /* allow sidebar clicks */
-    }
-    #notice-gate.open { display: block; }
-
-    #notice-gate .right-pane-blocker {
       position: absolute;
-      top: 0; bottom: 0;
-      left: var(--sidebar-w);
-      right: 0;
-
+      inset: 0;
+      z-index: 50;          /* above content-pane thumbnails, below lightbox */
+      display: none;
       background: rgba(255,255,255,0.82);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-left: 1px solid rgba(0,0,0,0.08);
-
+      border-radius: 12px;
+    }
+    #notice-gate.open {
       display: grid;
       place-items: center;
       padding: 24px;
-
-      pointer-events: auto;   /* clickable only on right pane */
     }
 
     .notice-card {
-      width: min(720px, 92vw);
+      width: min(720px, 92%);
       background: rgba(255,255,255,0.75);
       border: 1px solid rgba(0,0,0,0.10);
       border-radius: 16px;
@@ -110,6 +102,7 @@
       font-size: 14px;
       letter-spacing: 0.2px;
     }
+
     .btn-modern {
       appearance: none;
       border: 0;
@@ -151,49 +144,32 @@
               link.style.display = 'none';
             }
           });
-
-          // --- KEY FIX: measure the real sidebar width and set --sidebar-w dynamically ---
-          const setGateLeftToSidebarWidth = () => {
-            // Try common sidebar containers inside sidebar.html
-            const sidebarEl =
-              container.querySelector('#sidebar') ||
-              container.querySelector('aside') ||
-              container.firstElementChild ||
-              container;
-
-            const rect = sidebarEl.getBoundingClientRect();
-            const w = Math.max(0, Math.round(rect.width));
-
-            // Fallback to 260px only if measurement fails
-            document.documentElement.style.setProperty('--sidebar-w', (w ? `${w}px` : '260px'));
-          };
-
-          setGateLeftToSidebarWidth();
-          window.addEventListener('resize', setGateLeftToSidebarWidth);
         });
     </script>
 
-    <!-- Notice Gate: blocks right pane only; left menu remains clickable -->
-    <div id="notice-gate" class="open" aria-hidden="false">
-      <div class="right-pane-blocker" role="dialog" aria-modal="true" aria-labelledby="notice-title">
-        <div class="notice-card">
-          <p class="notice-quote" id="notice-title">
-            “Wisdom is not a product of schooling but of the lifelong attempt to acquire it.”
-          </p>
-          <p class="notice-attrib">— Albert Einstein (attributed)</p>
-
-          <button id="agree-btn" type="button" class="btn-modern">
-            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            I agree
-          </button>
-        </div>
-      </div>
-    </div>
-
     <section style="padding-top:10%;">
-      <div id="pdf-container"></div>
+      <!-- Right content pane (gate overlays ONLY this element) -->
+      <div id="content-pane">
+        <!-- Notice Gate -->
+        <div id="notice-gate" class="open" aria-hidden="false">
+          <div class="notice-card" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+            <p class="notice-quote" id="notice-title">
+              “Wisdom is not a product of schooling but of the lifelong attempt to acquire it.”
+            </p>
+            <p class="notice-attrib">— Albert Einstein (attributed)</p>
+
+            <button id="agree-btn" type="button" class="btn-modern">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              I agree
+            </button>
+          </div>
+        </div>
+
+        <!-- Actual portfolio content -->
+        <div id="pdf-container"></div>
+      </div>
 
       <!-- Lightbox modal -->
       <div id="lightbox" class="lightbox" aria-hidden="true">
@@ -208,11 +184,10 @@
         // ===== CONFIG =====
         const OWNER  = "chrisjbawden";
         const REPO   = "chrisjbawden.github.io";
-        // Try common default branches in order
         const BRANCHES = ["main", "master"];
 
-        // Your folders (lowercase)
-        const RESUME_DIR = "portfolio/resume";       // NEW
+        // Folders
+        const RESUME_DIR = "portfolio/resume";
         const CERT_DIR   = "portfolio/certificates";
         const BADGE_DIR  = "portfolio/badges";
         const TERT_DIR   = "portfolio/tertiary";
@@ -220,20 +195,17 @@
         const PDF_EXT = new Set([".pdf"]);
         const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
 
-        // PDF.js worker for thumbnail rendering
+        // PDF.js worker
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
 
-        // Helpers
         const getExt = (name) => {
           const i = name.lastIndexOf(".");
           return i === -1 ? "" : name.slice(i).toLowerCase();
         };
 
-        // Encode each path segment but keep "/" separators
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
-        // Small inline notice if a directory is missing
         const showMissingDirNote = (path, status) => {
           const pdfContainer = document.getElementById('pdf-container');
           const note = document.createElement('p');
@@ -241,7 +213,6 @@
           pdfContainer.appendChild(note);
         };
 
-        // List files from GitHub API and return rawUrl for direct access
         const listDir = async (path) => {
           const encPath = encodePath(path);
 
@@ -256,7 +227,7 @@
                 .filter(x => x.type === "file")
                 .map(x => ({
                   name: x.name,
-                  rawUrl: x.download_url,  // direct file from repo
+                  rawUrl: x.download_url,
                   _ext: getExt(x.name)
                 }));
             } else {
@@ -276,7 +247,6 @@
         const lbImage = document.getElementById('lightbox-image');
 
         const openLightboxPDF = (pdfUrl) => {
-          // Use PDF.js hosted viewer to avoid cross-origin hiccups
           const viewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(pdfUrl);
           lbImage.style.display = "none";
           lbFrame.style.display = "block";
@@ -304,7 +274,6 @@
 
         lbClose.addEventListener('click', closeLightbox);
         lightbox.addEventListener('click', (e) => {
-          // Close when clicking backdrop (but not when clicking inside content)
           if (e.target === lightbox) closeLightbox();
         });
         document.addEventListener('keydown', (e) => {
@@ -318,7 +287,7 @@
           const isImage = IMG_EXT.has(file._ext);
 
           if (isBadge && isImage) {
-            // Badges: show image only (no filename, not clickable)
+            // Badges: image only, not clickable
             const div = document.createElement('div');
             div.classList.add('thumbnail');
 
@@ -334,7 +303,6 @@
             return;
           }
 
-          // Resume / Certificates / Tertiary:
           if (isPdf) {
             const loadingTask = pdfjsLib.getDocument(file.rawUrl);
             loadingTask.promise.then(function(pdf) {
@@ -366,7 +334,6 @@
                 });
               });
             }).catch(() => {
-              // Fallback link if PDF rendering fails
               const div = document.createElement('div');
               div.classList.add('thumbnail');
 
@@ -403,7 +370,6 @@
             return;
           }
 
-          // Unknown types: simple link that opens in new tab
           const div = document.createElement('div');
           div.classList.add('thumbnail');
 
@@ -417,7 +383,7 @@
           container.appendChild(div);
         };
 
-        // ------- Gate logic: don’t load any credentials until "I agree" -------
+        // ------- Gate logic: don’t load content until "I agree" -------
         const gate = document.getElementById('notice-gate');
         const agreeBtn = document.getElementById('agree-btn');
 
@@ -442,15 +408,18 @@
 
           const pdfContainer = document.getElementById('pdf-container');
 
-          const [resume, tertiary, badges, certs] = await Promise.all([
+          const [resumeAll, tertiary, badges, certs] = await Promise.all([
             listDir(RESUME_DIR),
             listDir(TERT_DIR),
             listDir(BADGE_DIR),
             listDir(CERT_DIR)
           ]);
 
+          // ---- Resume: PDF-only + hide section if none ----
+          const resume = resumeAll.filter(f => PDF_EXT.has(f._ext));
+
           const files = [
-            ...resume.map(f => ({ ...f, category: "Resume" })),
+            ...resume.map(f => ({ ...f, category: "Resume" })),      // only PDFs
             ...tertiary.map(f => ({ ...f, category: "Tertiary" })),
             ...badges.map(f => ({ ...f, category: "Badges" })),
             ...certs.map(f => ({ ...f, category: "Certificates" }))
