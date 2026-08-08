@@ -3,16 +3,6 @@
 <head>
   <meta charset="UTF-8">
 
-  <!--
-    DEV ACCESS CHECK
-
-    Requires:
-      dev=1
-
-    Example for setting it from the browser console:
-
-      document.cookie = "dev=1; path=/; max-age=31536000; SameSite=Lax";
-  -->
   <script>
     (() => {
       const hasDevCookie = document.cookie
@@ -28,7 +18,7 @@
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Portfolio Dev Preview</title>
+  <title>dev</title>
 
   <style>
     html,
@@ -54,17 +44,11 @@
 
   <iframe
     id="previewFrame"
-    title="Development Preview"
+    title="dev"
     sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
   ></iframe>
 
   <script>
-    /*
-     * ============================================================
-     * CONFIGURATION
-     * ============================================================
-     */
-
     const CONFIG = {
       owner: "chrisjbawden",
       repo: "chrisjbawden.github.io",
@@ -77,13 +61,6 @@
         "http://chrisjbawden.github.io"
       ]
     };
-
-
-    /*
-     * ============================================================
-     * INITIAL SETUP
-     * ============================================================
-     */
 
     const frame = document.getElementById("previewFrame");
 
@@ -98,9 +75,9 @@
 
 
     /*
-     * ============================================================
-     * CACHE BUSTING
-     * ============================================================
+     * ------------------------------------------------------------
+     * Cache busting
+     * ------------------------------------------------------------
      */
 
     function cacheBust(url) {
@@ -111,9 +88,9 @@
 
 
     /*
-     * ============================================================
-     * URL HELPERS
-     * ============================================================
+     * ------------------------------------------------------------
+     * URL helpers
+     * ------------------------------------------------------------
      */
 
     function isExternalUrl(value) {
@@ -128,17 +105,6 @@
         value.startsWith("data:") ||
         value.startsWith("blob:") ||
         value.startsWith("javascript:")
-      );
-    }
-
-
-    function isLiveSiteUrl(value) {
-      if (!value) {
-        return false;
-      }
-
-      return CONFIG.liveOrigins.some(origin =>
-        value.startsWith(origin)
       );
     }
 
@@ -170,30 +136,17 @@
 
 
     /*
-     * ============================================================
-     * LIVE SITE LINK SCRUBBING
-     * ============================================================
+     * ------------------------------------------------------------
+     * Live-site link scrubbing
+     * ------------------------------------------------------------
      *
-     * Converts:
+     * /about.html
+     * becomes
+     * about.html
      *
-     *   /projects.html
-     *
-     * into:
-     *
-     *   projects.html
-     *
-     *
-     * Converts:
-     *
-     *   https://chrisjbawden.github.io/projects.html
-     *
-     * into:
-     *
-     *   projects.html
-     *
-     *
-     * This allows copied production HTML to navigate through
-     * the /dev version instead.
+     * https://chrisjbawden.github.io/about.html
+     * becomes
+     * about.html
      */
 
     function scrubLiveSiteUrl(value) {
@@ -201,25 +154,10 @@
         return value;
       }
 
-      /*
-       * Leave page anchors alone.
-       */
       if (value.startsWith("#")) {
         return value;
       }
 
-
-      /*
-       * Root-relative URL.
-       *
-       * Example:
-       *
-       * /projects.html
-       *
-       * becomes:
-       *
-       * projects.html
-       */
       if (value.startsWith("/")) {
         const cleaned =
           value.replace(/^\/+/, "");
@@ -227,10 +165,6 @@
         return cleaned || CONFIG.entryFile;
       }
 
-
-      /*
-       * Absolute link back to production.
-       */
       for (const origin of CONFIG.liveOrigins) {
         if (value.startsWith(origin)) {
           let cleaned =
@@ -243,15 +177,14 @@
         }
       }
 
-
       return value;
     }
 
 
     /*
-     * ============================================================
-     * PATH RESOLUTION
-     * ============================================================
+     * ------------------------------------------------------------
+     * Path resolution
+     * ------------------------------------------------------------
      */
 
     function resolveRepoPath(
@@ -262,44 +195,22 @@
         return value;
       }
 
+      value =
+        scrubLiveSiteUrl(value);
 
-      /*
-       * First convert links pointing at the production site
-       * into development-relative links.
-       */
-      value = scrubLiveSiteUrl(value);
-
-
-      /*
-       * Anchors don't require path resolution.
-       */
       if (value.startsWith("#")) {
         return value;
       }
 
-
-      /*
-       * Genuine external URLs stay external.
-       */
       if (isExternalUrl(value)) {
         return value;
       }
 
-
       const baseDirectory =
         getDirectoryFromPath(basePath);
 
-
-      /*
-       * Use a fake origin purely to let URL() correctly resolve:
-       *
-       * ../
-       * ./
-       * nested directories
-       */
       const fakeBase =
         `https://preview.local/${baseDirectory}`;
-
 
       try {
         const resolved =
@@ -321,9 +232,9 @@
 
 
     /*
-     * ============================================================
-     * ASSET URL REWRITING
-     * ============================================================
+     * ------------------------------------------------------------
+     * Asset URL rewriting
+     * ------------------------------------------------------------
      */
 
     function rewriteAssetUrl(
@@ -334,12 +245,6 @@
         return value;
       }
 
-
-      /*
-       * Do NOT scrub production URLs for assets.
-       *
-       * Only relative development assets are rewritten.
-       */
       if (
         isExternalUrl(value) ||
         value.startsWith("#")
@@ -347,13 +252,11 @@
         return value;
       }
 
-
       const repoPath =
         resolveRepoPath(
           value,
           basePath
         );
-
 
       return cacheBust(
         rawUrlFor(repoPath)
@@ -389,9 +292,9 @@
 
 
     /*
-     * ============================================================
-     * SRCSET
-     * ============================================================
+     * ------------------------------------------------------------
+     * srcset
+     * ------------------------------------------------------------
      */
 
     function rewriteSrcset(
@@ -408,29 +311,27 @@
             return;
           }
 
+          const rewritten =
+            srcset
+              .split(",")
+              .map(candidate => {
+                const parts =
+                  candidate
+                    .trim()
+                    .split(/\s+/);
 
-          const rewritten = srcset
-            .split(",")
-            .map(candidate => {
-              const parts =
-                candidate
-                  .trim()
-                  .split(/\s+/);
+                const url =
+                  parts.shift();
 
-              const url =
-                parts.shift();
-
-
-              return [
-                rewriteAssetUrl(
-                  url,
-                  basePath
-                ),
-                ...parts
-              ].join(" ");
-            })
-            .join(", ");
-
+                return [
+                  rewriteAssetUrl(
+                    url,
+                    basePath
+                  ),
+                  ...parts
+                ].join(" ");
+              })
+              .join(", ");
 
           element.setAttribute(
             "srcset",
@@ -441,9 +342,9 @@
 
 
     /*
-     * ============================================================
-     * INLINE STYLE URLS
-     * ============================================================
+     * ------------------------------------------------------------
+     * Inline style URLs
+     * ------------------------------------------------------------
      */
 
     function rewriteInlineStyles(
@@ -460,24 +361,20 @@
             return;
           }
 
-
           const rewritten =
             style.replace(
               /url\((['"]?)(.*?)\1\)/gi,
-
               (
                 match,
                 quote,
                 assetUrl
               ) => {
-
                 if (
                   isExternalUrl(assetUrl) ||
                   assetUrl.startsWith("data:")
                 ) {
                   return match;
                 }
-
 
                 return (
                   `url("` +
@@ -490,7 +387,6 @@
               }
             );
 
-
           element.setAttribute(
             "style",
             rewritten
@@ -500,9 +396,9 @@
 
 
     /*
-     * ============================================================
-     * STYLESHEETS
-     * ============================================================
+     * ------------------------------------------------------------
+     * Stylesheets
+     * ------------------------------------------------------------
      */
 
     async function fetchAndRewriteStylesheets(
@@ -515,32 +411,19 @@
         )
       ];
 
-
       await Promise.all(
         stylesheets.map(
           async link => {
-
             const originalHref =
               link.getAttribute("href");
-
 
             if (!originalHref) {
               return;
             }
 
-
-            /*
-             * Leave genuinely external stylesheets alone.
-             *
-             * Examples:
-             *
-             * Google Fonts
-             * CDN libraries
-             */
             if (isExternalUrl(originalHref)) {
               return;
             }
-
 
             const stylesheetPath =
               resolveRepoPath(
@@ -548,12 +431,10 @@
                 basePath
               );
 
-
             const stylesheetUrl =
               rawUrlFor(
                 stylesheetPath
               );
-
 
             try {
               const response =
@@ -566,7 +447,6 @@
                   }
                 );
 
-
               if (!response.ok) {
                 throw new Error(
                   `HTTP ${response.status} ` +
@@ -574,33 +454,21 @@
                 );
               }
 
-
               let css =
                 await response.text();
-
 
               const stylesheetDirectory =
                 getDirectoryFromPath(
                   stylesheetPath
                 );
 
-
-              /*
-               * Rewrite url(...) references inside CSS.
-               *
-               * Example:
-               *
-               * ../images/background.jpg
-               */
               css = css.replace(
                 /url\((['"]?)(.*?)\1\)/gi,
-
                 (
                   match,
                   quote,
                   assetUrl
                 ) => {
-
                   if (
                     isExternalUrl(assetUrl) ||
                     assetUrl.startsWith("data:")
@@ -608,12 +476,10 @@
                     return match;
                   }
 
-
                   try {
                     const fakeBase =
                       `https://preview.local/` +
                       stylesheetDirectory;
-
 
                     const resolved =
                       new URL(
@@ -621,11 +487,9 @@
                         fakeBase
                       );
 
-
                     const repoPath =
                       resolved.pathname
                         .replace(/^\/+/, "");
-
 
                     return (
                       `url("` +
@@ -641,20 +505,16 @@
                 }
               );
 
-
-              /*
-               * Replace the stylesheet link with the
-               * freshly fetched CSS.
-               */
               const style =
                 documentRoot
                   .createElement("style");
 
+              style.textContent =
+                css;
 
-              style.textContent = css;
-
-
-              link.replaceWith(style);
+              link.replaceWith(
+                style
+              );
 
             } catch (error) {
               console.warn(
@@ -663,10 +523,6 @@
                 error
               );
 
-
-              /*
-               * Fall back to direct raw GitHub loading.
-               */
               link.href =
                 cacheBust(
                   stylesheetUrl
@@ -679,22 +535,15 @@
 
 
     /*
-     * ============================================================
-     * DOCUMENT ASSETS
-     * ============================================================
+     * ------------------------------------------------------------
+     * Document asset rewriting
+     * ------------------------------------------------------------
      */
 
     function rewriteDocumentAssets(
       documentRoot,
       basePath
     ) {
-      /*
-       * JavaScript
-       * Images
-       * Video
-       * Audio
-       * iframe sources
-       */
       rewriteAttributeUrls(
         documentRoot,
         "[src]",
@@ -702,10 +551,6 @@
         basePath
       );
 
-
-      /*
-       * Video poster images.
-       */
       rewriteAttributeUrls(
         documentRoot,
         "[poster]",
@@ -713,12 +558,10 @@
         basePath
       );
 
-
       rewriteSrcset(
         documentRoot,
         basePath
       );
-
 
       rewriteInlineStyles(
         documentRoot,
@@ -728,9 +571,32 @@
 
 
     /*
-     * ============================================================
-     * LINK SCRUBBING
-     * ============================================================
+     * ------------------------------------------------------------
+     * Remove base elements
+     * ------------------------------------------------------------
+     *
+     * This is important.
+     *
+     * A <base> element can cause relative links to resolve
+     * directly to raw.githubusercontent.com, which then causes
+     * the iframe to fail with "refused to connect".
+     */
+
+    function removeBaseElements(
+      documentRoot
+    ) {
+      documentRoot
+        .querySelectorAll("base")
+        .forEach(base => {
+          base.remove();
+        });
+    }
+
+
+    /*
+     * ------------------------------------------------------------
+     * Link scrubbing
+     * ------------------------------------------------------------
      */
 
     function scrubDocumentLinks(
@@ -739,19 +605,13 @@
       documentRoot
         .querySelectorAll("a[href]")
         .forEach(link => {
-
           const href =
             link.getAttribute("href");
-
 
           if (!href) {
             return;
           }
 
-
-          /*
-           * Leave special links alone.
-           */
           if (
             href.startsWith("#") ||
             href.startsWith("mailto:") ||
@@ -761,14 +621,10 @@
             return;
           }
 
-
-          /*
-           * Convert links back to the production site
-           * into development-relative links.
-           */
           const scrubbed =
-            scrubLiveSiteUrl(href);
-
+            scrubLiveSiteUrl(
+              href
+            );
 
           link.setAttribute(
             "href",
@@ -779,53 +635,9 @@
 
 
     /*
-     * ============================================================
-     * BASE ELEMENT
-     * ============================================================
-     */
-
-    function injectBase(
-      documentRoot,
-      basePath
-    ) {
-      const directory =
-        getDirectoryFromPath(
-          basePath
-        );
-
-
-      let base =
-        documentRoot
-          .querySelector("base");
-
-
-      if (!base) {
-        base =
-          documentRoot
-            .createElement("base");
-
-
-        documentRoot
-          .head
-          .prepend(base);
-      }
-
-
-      base.href =
-        rawUrlFor(directory);
-    }
-
-
-    /*
-     * ============================================================
-     * PREVIEW NAVIGATION
-     * ============================================================
-     *
-     * This script runs INSIDE the iframe.
-     *
-     * Instead of allowing the iframe to navigate directly
-     * to raw.githubusercontent.com, it tells preview.html
-     * which page needs to be loaded.
+     * ------------------------------------------------------------
+     * Navigation script injected into iframe
+     * ------------------------------------------------------------
      */
 
     function injectPreviewNavigation(
@@ -835,7 +647,6 @@
       const script =
         documentRoot
           .createElement("script");
-
 
       script.textContent = `
         (() => {
@@ -853,48 +664,35 @@
                   "a[href]"
                 );
 
-
               if (!link) {
                 return;
               }
-
 
               const href =
                 link.getAttribute(
                   "href"
                 );
 
-
               if (!href) {
                 return;
               }
 
-
-              /*
-               * Normal page anchor.
-               */
               if (
                 href.startsWith("#")
               ) {
                 return;
               }
 
-
-              /*
-               * Mail and telephone links.
-               */
               if (
                 href.startsWith("mailto:") ||
-                href.startsWith("tel:")
+                href.startsWith("tel:") ||
+                href.startsWith("javascript:")
               ) {
                 return;
               }
 
-
               /*
-               * Genuine external website.
-               *
-               * Allow normal browser behaviour.
+               * Genuine external links should behave normally.
                */
               if (
                 /^(?:https?:)?\\\\/\\\\//i.test(href)
@@ -902,12 +700,12 @@
                 return;
               }
 
-
               /*
-               * Internal development navigation.
+               * Prevent the iframe from navigating itself.
                */
               event.preventDefault();
 
+              event.stopPropagation();
 
               window.parent.postMessage(
                 {
@@ -923,29 +721,30 @@
                 "*"
               );
 
-            }
+            },
+            true
           );
 
         })();
       `;
 
-
       documentRoot
         .head
-        .appendChild(script);
+        .appendChild(
+          script
+        );
     }
 
 
     /*
-     * ============================================================
-     * NAVIGATION MESSAGE HANDLER
-     * ============================================================
+     * ------------------------------------------------------------
+     * Navigation message handler
+     * ------------------------------------------------------------
      */
 
     window.addEventListener(
       "message",
       event => {
-
         if (
           !event.data ||
           event.data.type !==
@@ -954,12 +753,10 @@
           return;
         }
 
-
         const {
           href,
           basePath
         } = event.data;
-
 
         const targetPath =
           resolveRepoPath(
@@ -967,10 +764,6 @@
             basePath
           );
 
-
-        /*
-         * Something unexpected resolved externally.
-         */
         if (
           isExternalUrl(targetPath)
         ) {
@@ -980,7 +773,6 @@
           return;
         }
 
-
         loadPage(
           targetPath
         );
@@ -989,28 +781,15 @@
 
 
     /*
-     * ============================================================
-     * PAGE LOADER
-     * ============================================================
+     * ------------------------------------------------------------
+     * Page loader
+     * ------------------------------------------------------------
      */
 
     async function loadPage(path) {
-
       currentPath =
         path.replace(/^\/+/, "");
 
-
-      /*
-       * Directory URLs default to index.html.
-       *
-       * Example:
-       *
-       * projects/
-       *
-       * becomes:
-       *
-       * projects/index.html
-       */
       if (
         currentPath.endsWith("/")
       ) {
@@ -1018,18 +797,12 @@
           "index.html";
       }
 
-
       try {
-
         const url =
           rawUrlFor(
             currentPath
           );
 
-
-        /*
-         * Cache-bust the HTML request.
-         */
         const response =
           await fetch(
             cacheBust(url),
@@ -1037,7 +810,6 @@
               cache: "no-store"
             }
           );
-
 
         if (!response.ok) {
           throw new Error(
@@ -1047,14 +819,11 @@
           );
         }
 
-
         const html =
           await response.text();
 
-
         const parser =
           new DOMParser();
-
 
         const documentRoot =
           parser.parseFromString(
@@ -1064,16 +833,16 @@
 
 
         /*
-         * Establish the correct directory context.
+         * Remove any existing base element before doing
+         * anything else.
          */
-        injectBase(
-          documentRoot,
-          currentPath
+        removeBaseElements(
+          documentRoot
         );
 
 
         /*
-         * Fetch fresh CSS and rewrite CSS assets.
+         * Fetch and rewrite CSS.
          */
         await fetchAndRewriteStylesheets(
           documentRoot,
@@ -1082,7 +851,7 @@
 
 
         /*
-         * Rewrite images, JavaScript and other assets.
+         * Rewrite images, scripts and other assets.
          */
         rewriteDocumentAssets(
           documentRoot,
@@ -1091,8 +860,7 @@
 
 
         /*
-         * Convert production-site navigation links
-         * into development navigation.
+         * Rewrite production-site links to dev links.
          */
         scrubDocumentLinks(
           documentRoot
@@ -1100,7 +868,8 @@
 
 
         /*
-         * Intercept internal navigation.
+         * Intercept clicks so the iframe never navigates
+         * directly to raw.githubusercontent.com.
          */
         injectPreviewNavigation(
           documentRoot,
@@ -1108,9 +877,6 @@
         );
 
 
-        /*
-         * Reconstruct the complete document.
-         */
         const serialisedHtml =
           "<!DOCTYPE html>" +
           documentRoot
@@ -1118,37 +884,33 @@
             .outerHTML;
 
 
-        /*
-         * Render inside the preview iframe.
-         */
         frame.srcdoc =
           serialisedHtml;
 
       } catch (error) {
-
-        showError(error);
-
+        showError(
+          error
+        );
       }
     }
 
 
     /*
-     * ============================================================
-     * ERROR DISPLAY
-     * ============================================================
+     * ------------------------------------------------------------
+     * Error handling
+     * ------------------------------------------------------------
      */
 
     function showError(error) {
-      console.error(error);
-
+      console.error(
+        error
+      );
 
       frame.srcdoc = `
         <!DOCTYPE html>
-
         <html lang="en">
 
         <head>
-
           <meta charset="UTF-8">
 
           <meta
@@ -1156,7 +918,7 @@
             content="width=device-width, initial-scale=1.0"
           >
 
-          <title>Preview Error</title>
+          <title>dev</title>
 
           <style>
             html,
@@ -1174,7 +936,6 @@
               white-space: pre-wrap;
             }
           </style>
-
         </head>
 
         <body>${escapeHtml(error.message)}</body>
@@ -1195,15 +956,14 @@
 
 
     /*
-     * ============================================================
-     * START PREVIEW
-     * ============================================================
+     * ------------------------------------------------------------
+     * Start
+     * ------------------------------------------------------------
      */
 
     loadPage(
       CONFIG.entryFile
     );
-
   </script>
 
 </body>
