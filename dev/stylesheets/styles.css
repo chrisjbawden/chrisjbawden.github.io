@@ -376,11 +376,11 @@ img {
 }
 
 .icon-button {
-  width: 72px;
-  height: 72px;
+  width: 68px;
+  height: 68px;
   border: 0;
   border-radius: 18px;
-  background: linear-gradient(180deg, #232323 0%, #111 100%);
+  background: linear-gradient(180deg, #2b2b2b 0%, #111 100%);
   color: #e6e6e6;
   display: inline-flex;
   align-items: center;
@@ -410,7 +410,8 @@ img {
 .shortcut-button {
   -webkit-appearance: none;
   appearance: none;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
 }
 
 .shortcut-icon {
@@ -421,7 +422,46 @@ img {
   transition: transform 0.18s ease, filter 0.18s ease;
 }
 
-.shortcut-button:hover {
+.shortcut-icon--scripts,
+.shortcut-icon--hash {
+  filter: brightness(0) invert(1);
+}
+
+.shortcut-tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #1f1f1f;
+  min-width: 72px;
+  cursor: pointer;
+}
+
+.shortcut-tile--button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.shortcut-label {
+  font-size: 0.82rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #2a2a2a;
+  text-align: center;
+}
+
+.shortcut-tile:hover .shortcut-label,
+.shortcut-tile:focus-visible .shortcut-label {
+  color: #111;
+}
+
+.shortcut-tile:hover .icon-button,
+.shortcut-tile:focus-visible .icon-button {
   transform: translateY(-3px) scale(1.03);
   filter: brightness(1.05);
   box-shadow:
@@ -429,12 +469,12 @@ img {
     inset 0 0 0 1px rgba(255, 255, 255, 0.14);
 }
 
-.shortcut-button:hover .shortcut-icon,
-.shortcut-button:hover .terminal-icon {
+.shortcut-tile:hover .shortcut-icon,
+.shortcut-tile:hover .terminal-icon {
   transform: scale(1.06);
 }
 
-.shortcut-button:active {
+.shortcut-tile:active .icon-button {
   transform: translateY(-1px) scale(0.98);
 }
 
@@ -636,20 +676,29 @@ img {
 
 @media (max-width: 600px) {
   .icon-button {
-    width: 64px;
-    height: 64px;
+    width: 60px;
+    height: 60px;
     font-size: 28px;
     border-radius: 16px;
   }
 
   .shortcut-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .terminal-icon {
     width: 25px;
     height: 25px;
   }
 
-  .terminal-icon {
-    width: 27px;
-    height: 27px;
+  .shortcut-tile {
+    min-width: 64px;
+    gap: 6px;
+  }
+
+  .shortcut-label {
+    font-size: 0.74rem;
   }
 
   #terminal-window {
