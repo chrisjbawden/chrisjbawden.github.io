@@ -160,9 +160,7 @@ document.addEventListener('contextmenu', function(e) {
 		      <span id="terminal-title">Terminal</span>
 		      <button type="button" id="terminal-close" aria-label="Close terminal">&times;</button>
 		    </div>
-		    <div id="terminal-output" aria-live="polite">
-		      <div class="terminal-line terminal-system">Ready. Type <code>dev</code> and press Enter.</div>
-		    </div>
+			    <div id="terminal-output" aria-live="polite"></div>
 		    <form id="terminal-form" autocomplete="off">
 		      <label class="sr-only" for="terminal-input">Terminal command</label>
 		      <div id="terminal-prompt-line">
@@ -193,6 +191,8 @@ document.addEventListener('contextmenu', function(e) {
 	    const overlay = document.getElementById('terminal-overlay');
 	    const openButton = document.getElementById('terminal-trigger');
 	    const closeButton = document.getElementById('terminal-close');
+	    const windowEl = document.getElementById('terminal-window');
+	    const headerEl = document.getElementById('terminal-header');
 	    const form = document.getElementById('terminal-form');
 	    const input = document.getElementById('terminal-input');
 	    const output = document.getElementById('terminal-output');
@@ -212,6 +212,7 @@ document.addEventListener('contextmenu', function(e) {
 	    const openTerminal = () => {
 	      overlay.style.display = 'flex';
 	      overlay.setAttribute('aria-hidden', 'false');
+	      positionWindow();
 	      input.value = '';
 	      input.focus();
 	    };
@@ -239,8 +240,73 @@ document.addEventListener('contextmenu', function(e) {
 	      appendLine(`Unknown command: ${value}`, 'terminal-line terminal-error');
 	    };
 
+	    const positionWindow = () => {
+	      const rect = windowEl.getBoundingClientRect();
+	      const left = Math.max(12, (window.innerWidth - rect.width) / 2);
+	      const top = Math.max(12, (window.innerHeight - rect.height) / 2);
+	      windowEl.style.left = `${left}px`;
+	      windowEl.style.top = `${top}px`;
+	    };
+
+	    const clampWindow = () => {
+	      const rect = windowEl.getBoundingClientRect();
+	      const maxLeft = window.innerWidth - rect.width - 12;
+	      const maxTop = window.innerHeight - rect.height - 12;
+	      const currentLeft = parseFloat(windowEl.style.left || `${rect.left}`) || rect.left;
+	      const currentTop = parseFloat(windowEl.style.top || `${rect.top}`) || rect.top;
+	      windowEl.style.left = `${Math.min(Math.max(12, currentLeft), Math.max(12, maxLeft))}px`;
+	      windowEl.style.top = `${Math.min(Math.max(12, currentTop), Math.max(12, maxTop))}px`;
+	    };
+
+	    let dragState = null;
+
+	    const startDrag = (event) => {
+	      if (event.target.closest('button, input, textarea, select, a')) {
+	        return;
+	      }
+
+	      event.preventDefault();
+	      const rect = windowEl.getBoundingClientRect();
+	      dragState = {
+	        offsetX: event.clientX - rect.left,
+	        offsetY: event.clientY - rect.top
+	      };
+	      windowEl.style.transform = 'none';
+	      windowEl.style.left = `${rect.left}px`;
+	      windowEl.style.top = `${rect.top}px`;
+	      document.body.style.userSelect = 'none';
+	    };
+
+	    const moveDrag = (event) => {
+	      if (!dragState) {
+	        return;
+	      }
+
+	      const rect = windowEl.getBoundingClientRect();
+	      const nextLeft = event.clientX - dragState.offsetX;
+	      const nextTop = event.clientY - dragState.offsetY;
+	      const maxLeft = window.innerWidth - rect.width - 12;
+	      const maxTop = window.innerHeight - rect.height - 12;
+
+	      windowEl.style.left = `${Math.min(Math.max(12, nextLeft), Math.max(12, maxLeft))}px`;
+	      windowEl.style.top = `${Math.min(Math.max(12, nextTop), Math.max(12, maxTop))}px`;
+	    };
+
+	    const stopDrag = () => {
+	      if (!dragState) {
+	        return;
+	      }
+
+	      dragState = null;
+	      document.body.style.userSelect = '';
+	    };
+
 	    openButton.addEventListener('click', openTerminal);
 	    closeButton.addEventListener('click', closeTerminal);
+	    headerEl.addEventListener('pointerdown', startDrag);
+	    window.addEventListener('pointermove', moveDrag);
+	    window.addEventListener('pointerup', stopDrag);
+	    window.addEventListener('resize', clampWindow);
 
 	    overlay.addEventListener('click', (event) => {
 	      if (event.target === overlay) {
@@ -259,6 +325,12 @@ document.addEventListener('contextmenu', function(e) {
 	      runCommand(input.value);
 	      input.value = '';
 	      input.focus();
+	    });
+
+	    input.addEventListener('keydown', (event) => {
+	      if (event.key === 'Escape') {
+	        closeTerminal();
+	      }
 	    });
 	  })();
 	</script>
