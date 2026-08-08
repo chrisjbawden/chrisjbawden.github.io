@@ -516,7 +516,8 @@ img {
   font-size: 14px;
   line-height: 1.6;
   overflow: auto;
-  min-height: 220px;
+  flex: 1 1 auto;
+  min-height: 0;
   background: #050505;
 }
 
@@ -543,6 +544,7 @@ img {
 }
 
 #terminal-form {
+  flex: 0 0 auto;
   border-top: 1px solid #666;
   padding: 12px 16px 16px;
   background: #111;
@@ -567,10 +569,18 @@ img {
   font: inherit;
   font-family: Monaco, Consolas, "Liberation Mono", monospace;
   caret-color: #f2f2f2;
+  outline: none;
+  box-shadow: none;
+  appearance: none;
 }
 
 #terminal-input::placeholder {
   color: #a0a0a0;
+}
+
+#terminal-input:focus {
+  outline: none;
+  box-shadow: none;
 }
 
 @media (max-width: 768px) {
@@ -590,10 +600,6 @@ img {
   #terminal-window {
     width: calc(100vw - 24px);
     height: calc(100vh - 24px);
-  }
-
-  #terminal-output {
-    min-height: 180px;
   }
 }
 
