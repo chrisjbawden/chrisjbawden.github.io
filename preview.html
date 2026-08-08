@@ -2,31 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-<script>
 
-  (() => {
+  <script>
+    (() => {
+      const hasDevCookie = document.cookie
+        .split(";")
+        .map(cookie => cookie.trim())
+        .some(cookie => cookie === "dev=1");
 
-    const hasDevCookie = document.cookie
+      if (!hasDevCookie) {
+        window.location.replace("/index.html");
+      }
+    })();
+  </script>
 
-      .split(";")
-
-      .map(cookie => cookie.trim())
-
-      .some(cookie => cookie.startsWith("dev="));
-
-    if (!hasDevCookie) {
-
-      window.location.replace("/index.html");
-
-    }
-
-  })();
-
-</script>
-  
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <title>Dev</title>
+  <title>Portfolio Dev Preview</title>
 
   <style>
     html,
@@ -67,107 +58,166 @@
 
     const frame = document.getElementById("previewFrame");
 
-    function getRawBaseUrl() {
-      return [
-        "https://raw.githubusercontent.com",
-        CONFIG.owner,
-        CONFIG.repo,
-        CONFIG.branch,
-        CONFIG.directory
-      ].join("/");
+    const RAW_ROOT =
+      `https://raw.githubusercontent.com/` +
+      `${CONFIG.owner}/` +
+      `${CONFIG.repo}/` +
+      `${CONFIG.branch}/` +
+      `${CONFIG.directory}/`;
+
+    let currentPath = CONFIG.entryFile;
+
+    function cacheBust(url) {
+      const separator = url.includes("?") ? "&" : "?";
+      return `${url}${separator}_dev=${Date.now()}`;
     }
 
-    function getEntryUrl() {
-      return `${getRawBaseUrl()}/${CONFIG.entryFile}`;
-    }
-
-    function isAbsoluteUrl(value) {
+    function isExternalUrl(value) {
       return (
         /^(?:[a-z]+:)?\/\//i.test(value) ||
-        value.startsWith("data:") ||
-        value.startsWith("blob:") ||
         value.startsWith("mailto:") ||
         value.startsWith("tel:") ||
-        value.startsWith("#")
+        value.startsWith("data:") ||
+        value.startsWith("blob:")
       );
     }
 
-    function resolveUrl(value) {
-      if (!value || isAbsoluteUrl(value)) {
+    function getDirectoryFromPath(path) {
+      const normalised = path.replace(/^\/+/, "");
+
+      const lastSlash = normalised.lastIndexOf("/");
+
+      if (lastSlash === -1) {
+        return "";
+      }
+
+      return normalised.slice(0, lastSlash + 1);
+    }
+
+    function resolveRepoPath(value, basePath = currentPath) {
+      if (!value) {
         return value;
       }
 
-      const base = `${getRawBaseUrl()}/`;
-
-      try {
-        return new URL(value, base).href;
-      } catch (error) {
-        console.warn("Could not resolve URL:", value, error);
+      if (
+        isExternalUrl(value) ||
+        value.startsWith("#")
+      ) {
         return value;
       }
+
+      const baseDirectory = getDirectoryFromPath(basePath);
+
+      const fakeBase =
+        `https://example.local/${baseDirectory}`;
+
+      const resolved = new URL(value, fakeBase);
+
+      return resolved.pathname.replace(/^\/+/, "");
     }
 
-    function rewriteAttributeUrls(documentRoot, selector, attribute) {
-      documentRoot.querySelectorAll(selector).forEach(element => {
-        const value = element.getAttribute(attribute);
-
-        if (!value) {
-          return;
-        }
-
-        element.setAttribute(attribute, resolveUrl(value));
-      });
+    function rawUrlFor(path) {
+      return RAW_ROOT + path.replace(/^\/+/, "");
     }
 
-    function rewriteSrcset(documentRoot) {
-      documentRoot.querySelectorAll("[srcset]").forEach(element => {
-        const srcset = element.getAttribute("srcset");
+    function rewriteUrl(value, basePath) {
+      if (!value) {
+        return value;
+      }
 
-        if (!srcset) {
-          return;
-        }
+      if (
+        isExternalUrl(value) ||
+        value.startsWith("#")
+      ) {
+        return value;
+      }
 
-        const rewritten = srcset
-          .split(",")
-          .map(candidate => {
-            const parts = candidate.trim().split(/\s+/);
-            const url = parts.shift();
+      const repoPath = resolveRepoPath(value, basePath);
 
-            return [
-              resolveUrl(url),
-              ...parts
-            ].join(" ");
-          })
-          .join(", ");
-
-        element.setAttribute("srcset", rewritten);
-      });
+      return cacheBust(rawUrlFor(repoPath));
     }
 
-    function rewriteInlineStyles(documentRoot) {
-      documentRoot.querySelectorAll("[style]").forEach(element => {
-        const style = element.getAttribute("style");
+    function rewriteAttributeUrls(
+      documentRoot,
+      selector,
+      attribute,
+      basePath
+    ) {
+      documentRoot
+        .querySelectorAll(selector)
+        .forEach(element => {
+          const value = element.getAttribute(attribute);
 
-        if (!style) {
-          return;
-        }
-
-        const rewritten = style.replace(
-          /url\((['"]?)(.*?)\1\)/gi,
-          (match, quote, url) => {
-            if (isAbsoluteUrl(url)) {
-              return match;
-            }
-
-            return `url("${resolveUrl(url)}")`;
+          if (!value) {
+            return;
           }
-        );
 
-        element.setAttribute("style", rewritten);
-      });
+          element.setAttribute(
+            attribute,
+            rewriteUrl(value, basePath)
+          );
+        });
     }
 
-    async function fetchAndRewriteStylesheets(documentRoot) {
+    function rewriteSrcset(documentRoot, basePath) {
+      documentRoot
+        .querySelectorAll("[srcset]")
+        .forEach(element => {
+          const srcset = element.getAttribute("srcset");
+
+          if (!srcset) {
+            return;
+          }
+
+          const rewritten = srcset
+            .split(",")
+            .map(candidate => {
+              const parts = candidate.trim().split(/\s+/);
+              const url = parts.shift();
+
+              return [
+                rewriteUrl(url, basePath),
+                ...parts
+              ].join(" ");
+            })
+            .join(", ");
+
+          element.setAttribute("srcset", rewritten);
+        });
+    }
+
+    function rewriteInlineStyles(documentRoot, basePath) {
+      documentRoot
+        .querySelectorAll("[style]")
+        .forEach(element => {
+          const style = element.getAttribute("style");
+
+          if (!style) {
+            return;
+          }
+
+          const rewritten = style.replace(
+            /url\((['"]?)(.*?)\1\)/gi,
+            (match, quote, url) => {
+              if (
+                isExternalUrl(url) ||
+                url.startsWith("data:")
+              ) {
+                return match;
+              }
+
+              return `url("${rewriteUrl(url, basePath)}")`;
+            }
+          );
+
+          element.setAttribute("style", rewritten);
+        });
+    }
+
+    async function fetchAndRewriteStylesheets(
+      documentRoot,
+      basePath
+    ) {
       const stylesheets = [
         ...documentRoot.querySelectorAll(
           'link[rel="stylesheet"][href]'
@@ -182,11 +232,15 @@
             return;
           }
 
-          const stylesheetUrl = resolveUrl(originalHref);
+          const stylesheetPath =
+            resolveRepoPath(originalHref, basePath);
+
+          const stylesheetUrl =
+            rawUrlFor(stylesheetPath);
 
           try {
             const response = await fetch(
-              `${stylesheetUrl}?preview=${Date.now()}`,
+              cacheBust(stylesheetUrl),
               {
                 cache: "no-store"
               }
@@ -200,63 +254,35 @@
 
             let css = await response.text();
 
-            /*
-             * Rewrite relative URLs inside CSS.
-             *
-             * Example:
-             *
-             * background-image: url("../images/test.jpg");
-             *
-             * becomes an absolute raw.githubusercontent.com URL.
-             */
+            const stylesheetDirectory =
+              getDirectoryFromPath(stylesheetPath);
+
             css = css.replace(
               /url\((['"]?)(.*?)\1\)/gi,
               (match, quote, assetUrl) => {
-                if (isAbsoluteUrl(assetUrl)) {
+                if (
+                  isExternalUrl(assetUrl) ||
+                  assetUrl.startsWith("data:")
+                ) {
                   return match;
                 }
 
-                try {
-                  const absoluteUrl = new URL(
-                    assetUrl,
-                    stylesheetUrl
-                  ).href;
+                const fakeBase =
+                  `https://example.local/${stylesheetDirectory}`;
 
-                  return `url("${absoluteUrl}")`;
-                } catch {
-                  return match;
-                }
+                const resolved =
+                  new URL(assetUrl, fakeBase);
+
+                const repoPath =
+                  resolved.pathname.replace(/^\/+/, "");
+
+                return `url("${cacheBust(rawUrlFor(repoPath))}")`;
               }
             );
 
-            /*
-             * Rewrite relative @import URLs.
-             */
-            css = css.replace(
-              /@import\s+(?:url\()?['"]([^'"]+)['"]\)?/gi,
-              (match, importUrl) => {
-                if (isAbsoluteUrl(importUrl)) {
-                  return match;
-                }
+            const style =
+              documentRoot.createElement("style");
 
-                try {
-                  const absoluteUrl = new URL(
-                    importUrl,
-                    stylesheetUrl
-                  ).href;
-
-                  return `@import url("${absoluteUrl}")`;
-                } catch {
-                  return match;
-                }
-              }
-            );
-
-            /*
-             * Replace the stylesheet link with an inline
-             * style element.
-             */
-            const style = documentRoot.createElement("style");
             style.textContent = css;
 
             link.replaceWith(style);
@@ -268,152 +294,211 @@
               error
             );
 
-            /*
-             * Fall back to loading the stylesheet directly.
-             */
-            link.href = stylesheetUrl;
+            link.href =
+              cacheBust(stylesheetUrl);
           }
         })
       );
     }
 
-    function rewriteDocumentUrls(documentRoot) {
-      rewriteAttributeUrls(documentRoot, "[src]", "src");
-      rewriteAttributeUrls(documentRoot, "[href]", "href");
-      rewriteAttributeUrls(documentRoot, "[poster]", "poster");
-      rewriteAttributeUrls(documentRoot, "[action]", "action");
+    function rewriteDocumentUrls(documentRoot, basePath) {
+      rewriteAttributeUrls(
+        documentRoot,
+        "[src]",
+        "src",
+        basePath
+      );
 
-      rewriteSrcset(documentRoot);
-      rewriteInlineStyles(documentRoot);
+      rewriteAttributeUrls(
+        documentRoot,
+        "[poster]",
+        "poster",
+        basePath
+      );
+
+      rewriteAttributeUrls(
+        documentRoot,
+        "[action]",
+        "action",
+        basePath
+      );
+
+      rewriteSrcset(
+        documentRoot,
+        basePath
+      );
+
+      rewriteInlineStyles(
+        documentRoot,
+        basePath
+      );
     }
 
-    function injectBaseElement(documentRoot) {
-      let base = documentRoot.querySelector("base");
-
-      if (!base) {
-        base = documentRoot.createElement("base");
-        documentRoot.head.prepend(base);
-      }
-
-      base.href = `${getRawBaseUrl()}/`;
-    }
-
-    function injectPreviewScript(documentRoot) {
-      const script = documentRoot.createElement("script");
+    function injectPreviewNavigation(
+      documentRoot,
+      basePath
+    ) {
+      const script =
+        documentRoot.createElement("script");
 
       script.textContent = `
         (() => {
+          const CURRENT_PATH =
+            ${JSON.stringify(basePath)};
 
-          const RAW_BASE =
-            ${JSON.stringify(getRawBaseUrl() + "/")};
-
-          function resolvePreviewUrl(value) {
-
-            if (!value) {
-              return value;
-            }
-
-            if (
+          function isExternalUrl(value) {
+            return (
               /^(?:[a-z]+:)?\\\\/\\\\//i.test(value) ||
-              value.startsWith("data:") ||
-              value.startsWith("blob:") ||
               value.startsWith("mailto:") ||
               value.startsWith("tel:") ||
-              value.startsWith("#")
-            ) {
-              return value;
-            }
-
-            try {
-              return new URL(value, RAW_BASE).href;
-            } catch {
-              return value;
-            }
+              value.startsWith("data:") ||
+              value.startsWith("blob:")
+            );
           }
 
-          /*
-           * Fix dynamically triggered links.
-           */
           document.addEventListener("click", event => {
-
-            const link = event.target.closest("a[href]");
+            const link =
+              event.target.closest("a[href]");
 
             if (!link) {
               return;
             }
 
-            const href = link.getAttribute("href");
+            const href =
+              link.getAttribute("href");
 
-            if (!href || href.startsWith("#")) {
+            if (!href) {
               return;
             }
 
-            link.href = resolvePreviewUrl(href);
-          });
-
-          /*
-           * Rewrite relative fetch() calls made by the
-           * development site.
-           */
-          const originalFetch = window.fetch;
-
-          window.fetch = function(resource, options) {
-
-            if (typeof resource === "string") {
-              resource = resolvePreviewUrl(resource);
+            if (href.startsWith("#")) {
+              return;
             }
 
-            return originalFetch.call(
-              this,
-              resource,
-              options
-            );
-          };
+            if (isExternalUrl(href)) {
+              return;
+            }
 
+            event.preventDefault();
+
+            window.parent.postMessage(
+              {
+                type: "previewNavigate",
+                href,
+                basePath: CURRENT_PATH
+              },
+              "*"
+            );
+          });
         })();
       `;
 
       documentRoot.head.appendChild(script);
     }
 
-    function showError(error) {
-      console.error(error);
+    function injectBase(documentRoot, basePath) {
+      const directory =
+        getDirectoryFromPath(basePath);
 
-      const escapedMessage = escapeHtml(error.message);
+      let base =
+        documentRoot.querySelector("base");
 
-      frame.srcdoc = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <meta
-            name="viewport"
-            content="width=device-width, initial-scale=1.0"
-          >
+      if (!base) {
+        base =
+          documentRoot.createElement("base");
 
-          <title>Preview Error</title>
+        documentRoot.head.prepend(base);
+      }
 
-          <style>
+      base.href =
+        rawUrlFor(directory);
+    }
+
+    async function loadPage(path) {
+      currentPath =
+        path.replace(/^\/+/, "");
+
+      try {
+        const url =
+          rawUrlFor(currentPath);
+
+        const response = await fetch(
+          cacheBust(url),
+          {
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Unable to load ${currentPath}.\n\n` +
+            `HTTP status: ${response.status}`
+          );
+        }
+
+        const html =
+          await response.text();
+
+        const parser =
+          new DOMParser();
+
+        const documentRoot =
+          parser.parseFromString(
             html,
-            body {
-              margin: 0;
-              min-height: 100%;
-              background: #111;
-              color: #ff8b8b;
-              font-family: monospace;
-            }
+            "text/html"
+          );
 
-            body {
-              padding: 30px;
-              box-sizing: border-box;
-              white-space: pre-wrap;
-            }
-          </style>
-        </head>
+        injectBase(
+          documentRoot,
+          currentPath
+        );
 
-        <body>${escapedMessage}</body>
-        </html>
-      `;
+        await fetchAndRewriteStylesheets(
+          documentRoot,
+          currentPath
+        );
+
+        rewriteDocumentUrls(
+          documentRoot,
+          currentPath
+        );
+
+        injectPreviewNavigation(
+          documentRoot,
+          currentPath
+        );
+
+        const serialisedHtml =
+          "<!DOCTYPE html>" +
+          documentRoot.documentElement.outerHTML;
+
+        frame.srcdoc =
+          serialisedHtml;
+
+      } catch (error) {
+        console.error(error);
+
+        frame.srcdoc = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <style>
+              html,
+              body {
+                margin: 0;
+                padding: 30px;
+                background: #111;
+                color: #ff8b8b;
+                font-family: monospace;
+                white-space: pre-wrap;
+              }
+            </style>
+          </head>
+          <body>${escapeHtml(error.message)}</body>
+          </html>
+        `;
+      }
     }
 
     function escapeHtml(value) {
@@ -425,81 +510,32 @@
         .replaceAll("'", "&#039;");
     }
 
-    async function loadPreview() {
-
-      try {
-
-        /*
-         * Add a timestamp to prevent the browser from
-         * displaying an old cached version after a push.
-         */
-        const entryUrl =
-          `${getEntryUrl()}?preview=${Date.now()}`;
-
-        const response = await fetch(entryUrl, {
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-
-          throw new Error(
-            `Unable to load ${CONFIG.directory}/${CONFIG.entryFile}.\n\n` +
-            `HTTP status: ${response.status}\n\n` +
-            `Make sure the following file exists:\n` +
-            `${CONFIG.branch}/${CONFIG.directory}/${CONFIG.entryFile}`
-          );
+    window.addEventListener(
+      "message",
+      event => {
+        if (
+          !event.data ||
+          event.data.type !== "previewNavigate"
+        ) {
+          return;
         }
 
-        const html = await response.text();
+        const {
+          href,
+          basePath
+        } = event.data;
 
-        const parser = new DOMParser();
+        const targetPath =
+          resolveRepoPath(
+            href,
+            basePath
+          );
 
-        const documentRoot = parser.parseFromString(
-          html,
-          "text/html"
-        );
-
-        /*
-         * Establish /dev/ as the base directory.
-         */
-        injectBaseElement(documentRoot);
-
-        /*
-         * Fetch and rewrite CSS before inserting the page.
-         */
-        await fetchAndRewriteStylesheets(documentRoot);
-
-        /*
-         * Rewrite HTML asset URLs.
-         */
-        rewriteDocumentUrls(documentRoot);
-
-        /*
-         * Add support for relative fetch() requests and
-         * dynamically clicked links.
-         */
-        injectPreviewScript(documentRoot);
-
-        /*
-         * Reconstruct the complete HTML document.
-         */
-        const serialisedHtml =
-          "<!DOCTYPE html>" +
-          documentRoot.documentElement.outerHTML;
-
-        /*
-         * Display the development site.
-         */
-        frame.srcdoc = serialisedHtml;
-
-      } catch (error) {
-
-        showError(error);
-
+        loadPage(targetPath);
       }
-    }
+    );
 
-    loadPreview();
+    loadPage(CONFIG.entryFile);
   </script>
 
 </body>
