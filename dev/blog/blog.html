@@ -36,43 +36,149 @@
         margin: 12px auto 6px auto;
       }
 
-      /* Post blocks */
-      details.post { margin: 6px 0; }
-      details.post > summary { cursor: pointer; list-style: none; }
-      details.post > summary::-webkit-details-marker { display: none; }
+      /* Post buttons */
+      .post-item {
+        max-width: 880px;
+        margin: 10px auto;
+      }
+      .post-open-btn {
+        width: 100%;
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 18px;
+        border: 1px solid #d6d6d6;
+        border-radius: 14px;
+        background: linear-gradient(180deg, #ffffff 0%, #f4f6f8 100%);
+        color: #222;
+        font: inherit;
+        font-weight: 700;
+        text-align: left;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+        transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+      }
+      .post-open-btn:hover {
+        transform: translateY(-1px);
+        border-color: #b9b9b9;
+        box-shadow: 0 10px 22px rgba(0, 0, 0, 0.08);
+        background: linear-gradient(180deg, #ffffff 0%, #eef1f4 100%);
+      }
+      .post-open-btn:focus-visible {
+        outline: 3px solid #1e5aa8;
+        outline-offset: 3px;
+      }
+      .post-open-title {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: visible;
+        text-overflow: initial;
+        white-space: normal;
+        line-height: 1.35;
+      }
+      .post-open-meta {
+        flex: 0 0 auto;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(32, 39, 48, 0.08);
+        color: #444;
+        font-size: 0.82rem;
+        letter-spacing: 0.01em;
+      }
+      .post-open-meta::after {
+        content: "↗";
+        font-size: 0.95em;
+        line-height: 1;
+      }
+
+      /* Modal */
+      body.modal-open {
+        overflow: hidden;
+      }
+      .post-modal {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 10050;
+        padding: 24px;
+        background: rgba(8, 12, 18, 0.74);
+        backdrop-filter: blur(6px);
+      }
+      .post-modal.open {
+        display: flex;
+        align-items: flex-start;
+        justify-content: center;
+        overflow: auto;
+      }
+      .post-modal-panel {
+        position: relative;
+        width: min(940px, 100%);
+        margin: 42px 0;
+        max-height: calc(100vh - 84px);
+        overflow: auto;
+        border-radius: 20px;
+        background: #fff;
+        color: #222;
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+      }
+      .post-modal-shell {
+        position: relative;
+        padding: 28px 28px 32px 28px;
+      }
+      .post-modal-close {
+        position: absolute;
+        top: 18px;
+        right: 18px;
+        width: 42px;
+        height: 42px;
+        border: 0;
+        border-radius: 999px;
+        background: rgba(24, 28, 32, 0.08);
+        color: #1f1f1f;
+        font-size: 30px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .post-modal-close:hover {
+        background: rgba(24, 28, 32, 0.14);
+      }
+      .post-modal-close:focus-visible {
+        outline: 3px solid #1e5aa8;
+        outline-offset: 2px;
+      }
+      .post-modal-kicker {
+        margin: 0 0 10px 0;
+        color: #6b7280;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+      }
+      .post-modal-title {
+        margin: 0 0 18px 0;
+        padding-right: 56px;
+        color: #111;
+        font-size: clamp(1.6rem, 2.5vw, 2.25rem);
+        line-height: 1.1;
+      }
+      .post-modal-body {
+        font-size: 1rem;
+        line-height: 1.6;
+      }
+      .post-modal-body img {
+        max-width: 100%;
+        height: auto;
+      }
+      .post-modal-body iframe,
+      .post-modal-body video {
+        max-width: 100%;
+      }
     </style>
 
-    <script>
-    // Open parent <details> for deep links like #my-post
-    (function() {
-      function openDetailsForHashTarget() {
-        if (!window.location.hash) return;
-        const targetId = window.location.hash.slice(1);
-        const target = document.getElementById(targetId);
-        if (target) {
-          let parent = target.parentElement, opened = false;
-          while (parent) {
-            if (parent.tagName && parent.tagName.toLowerCase() === "details") {
-              parent.open = true; opened = true;
-            }
-            parent = parent.parentElement;
-          }
-          if (opened) setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
-        }
-      }
-      document.addEventListener("DOMContentLoaded", function() {
-        let tries = 0;
-        function tryOpen() {
-          openDetailsForHashTarget(); tries++;
-          if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
-            setTimeout(tryOpen, 200);
-          }
-        }
-        tryOpen();
-      });
-      window.addEventListener("hashchange", openDetailsForHashTarget);
-    })();
-    </script>
   </head>
 
   <body>
@@ -102,12 +208,24 @@
         <!-- Blog posts will be dynamically loaded below -->
       </section>
 
+      <div id="post-modal" class="post-modal" aria-hidden="true">
+        <div class="post-modal-panel" role="dialog" aria-modal="true" aria-labelledby="post-modal-title">
+          <div class="post-modal-shell">
+            <button type="button" id="post-modal-close" class="post-modal-close" aria-label="Close post">×</button>
+            <p class="post-modal-kicker">Blog post</p>
+            <h2 id="post-modal-title" class="post-modal-title"></h2>
+            <div id="post-modal-body" class="post-modal-body"></div>
+          </div>
+        </div>
+      </div>
+
       <script>
         // ===== CONFIG =====
         const OWNER    = "chrisjbawden";
         const REPO     = "chrisjbawden.github.io";
         const BRANCHES = ["main", "master"];   // try main then master
         const POSTS_DIR = "blog/posts";        // repo path to HTML posts
+        const POSTS_BY_ID = new Map();
 
         // ===== Helpers =====
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
@@ -190,11 +308,61 @@
             const textContent = (doc.body ? doc.body.textContent : "")
               .replace(/\s+/g, " ").trim();
 
-            return { ...file, title, date, html: cleaned, text: textContent };
+            const id = file.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+
+            return { ...file, id, title, date, html: cleaned, text: textContent };
           } catch (e) {
             console.warn("Failed to fetch post:", file.name, e);
             const date = parseDateFromFilename(file.name);
-            return { ...file, title: stripLeadingDate(file.name.replace(/\.html?$/i, "")), date, html: `<p>Failed to load post content.</p>`, text: "" };
+            const id = file.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+            return { ...file, id, title: stripLeadingDate(file.name.replace(/\.html?$/i, "")), date, html: `<p>Failed to load post content.</p>`, text: "" };
+          }
+        }
+
+        function setModalOpen(isOpen) {
+          const modal = document.getElementById("post-modal");
+          modal.classList.toggle("open", isOpen);
+          modal.setAttribute("aria-hidden", isOpen ? "false" : "true");
+          document.body.classList.toggle("modal-open", isOpen);
+        }
+
+        function clearPostHash() {
+          const url = `${window.location.pathname}${window.location.search}`;
+          window.history.replaceState(null, "", url);
+        }
+
+        function openPostModal(postId, { updateHash = true } = {}) {
+          const post = POSTS_BY_ID.get(postId);
+          if (!post) return;
+
+          const titleEl = document.getElementById("post-modal-title");
+          const bodyEl = document.getElementById("post-modal-body");
+          const panel = document.querySelector(".post-modal-panel");
+
+          titleEl.textContent = post.title;
+          bodyEl.innerHTML = "";
+
+          const article = document.createElement("article");
+          article.className = "post-modal-article";
+          article.innerHTML = post.html;
+          bodyEl.appendChild(article);
+          panel.scrollTop = 0;
+
+          setModalOpen(true);
+
+          if (updateHash) {
+            const url = `${window.location.pathname}${window.location.search}#${postId}`;
+            window.history.replaceState(null, "", url);
+          }
+
+          const closeBtn = document.getElementById("post-modal-close");
+          closeBtn.focus();
+        }
+
+        function closePostModal({ updateHash = true } = {}) {
+          setModalOpen(false);
+          if (updateHash && window.location.hash) {
+            clearPostHash();
           }
         }
 
@@ -245,31 +413,35 @@
             });
 
             for (const post of sorted) {
-              const details = document.createElement("details");
-              details.className = "post";
-              details.dataset.title = post.title.toLowerCase();
-              details.dataset.text  = (post.text || "").toLowerCase();
-              details.dataset.year  = year;
+              POSTS_BY_ID.set(post.id, post);
 
-              const summary = document.createElement("summary");
-              summary.textContent = post.title; // title only — no date
-              details.appendChild(summary);
+              const item = document.createElement("div");
+              item.className = "post-item";
+              item.dataset.title = post.title.toLowerCase();
+              item.dataset.text  = (post.text || "").toLowerCase();
+              item.dataset.year  = year;
 
-              const inner = document.createElement("div");
-              inner.className = "post-content";
+              const button = document.createElement("button");
+              button.type = "button";
+              button.className = "post-open-btn";
+              button.id = post.id;
+              button.setAttribute("aria-haspopup", "dialog");
+              button.setAttribute("aria-controls", "post-modal");
+              button.dataset.postId = post.id;
 
-              // Stable id for deep links
-              const anchorId = post.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-              const anchor = document.createElement("a");
-              anchor.id = anchorId;
-              anchor.style.display = "block";
-              anchor.style.position = "relative";
-              anchor.style.top = "-60px";
-              inner.appendChild(anchor);
+              const titleSpan = document.createElement("span");
+              titleSpan.className = "post-open-title";
+              titleSpan.textContent = post.title;
 
-              inner.insertAdjacentHTML("beforeend", post.html);
-              details.appendChild(inner);
-              container.appendChild(details);
+              const metaSpan = document.createElement("span");
+              metaSpan.className = "post-open-meta";
+              metaSpan.textContent = "Open";
+
+              button.appendChild(titleSpan);
+              button.appendChild(metaSpan);
+              button.addEventListener("click", () => openPostModal(post.id));
+              item.appendChild(button);
+              container.appendChild(item);
             }
           });
         }
@@ -281,7 +453,7 @@
 
           const applyFilter = () => {
             const q = input.value.trim().toLowerCase();
-            const posts = Array.from(container.querySelectorAll("details.post"));
+            const posts = Array.from(container.querySelectorAll(".post-item"));
             const yearHeadings = Array.from(container.querySelectorAll(".year-heading"));
             const separators   = Array.from(container.querySelectorAll(".year-separator"));
 
@@ -306,7 +478,38 @@
           input.addEventListener("input", applyFilter);
         }
 
+        function setupModal() {
+          const modal = document.getElementById("post-modal");
+          const closeBtn = document.getElementById("post-modal-close");
+          const panel = modal.querySelector(".post-modal-panel");
+
+          closeBtn.addEventListener("click", () => closePostModal());
+          modal.addEventListener("click", (event) => {
+            if (event.target === modal) closePostModal();
+          });
+
+          window.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && modal.classList.contains("open")) {
+              closePostModal();
+            }
+          });
+
+          window.addEventListener("hashchange", () => {
+            const postId = window.location.hash.slice(1);
+            if (!postId) {
+              closePostModal({ updateHash: false });
+              return;
+            }
+            if (POSTS_BY_ID.has(postId)) {
+              openPostModal(postId, { updateHash: false });
+            } else {
+              closePostModal({ updateHash: false });
+            }
+          });
+        }
+
         (async () => {
+          setupModal();
           const files = await listPostFiles();
           const metas = await Promise.all(files.map(fetchPostMeta));
           renderPosts(metas);
