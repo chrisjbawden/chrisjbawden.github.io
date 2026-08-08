@@ -1,0 +1,52 @@
+# .github/workflows/promote-dev.yml
+name: dev > prod
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Copy changed dev files to production
+        shell: bash
+        run: |
+          set -e
+
+          echo "Comparing /dev with production files..."
+
+          find dev -type f | while read -r SOURCE; do
+            DESTINATION="${SOURCE#dev/}"
+
+            if [ ! -f "$DESTINATION" ] || ! cmp -s "$SOURCE" "$DESTINATION"; then
+              echo "Updating: $DESTINATION"
+
+              mkdir -p "$(dirname "$DESTINATION")"
+              cp "$SOURCE" "$DESTINATION"
+            fi
+          done
+
+      - name: Commit production changes
+        shell: bash
+        run: |
+          set -e
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "No production files changed."
+            exit 0
+          fi
+
+          git commit -m "Promote dev changes to production"
+          git push
