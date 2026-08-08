@@ -17,94 +17,7 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
 
-	  <script>
-(function() {
-	  let buffer = "";
-	  let codeBuffer = "";
-	  let overlay = null;
-	  let timer = null;
-
-  // Replace with your own MP4 link!
-  const mp4Url = "media/error.mp4";
-
-  function showVideoOverlay() {
-    // Remove existing overlay if needed
-    if (overlay) overlay.remove();
-
-    // Create overlay div
-    overlay = document.createElement("div");
-    overlay.style.position = "fixed";
-    overlay.style.top = "0";
-    overlay.style.left = "0";
-    overlay.style.width = "100vw";
-    overlay.style.height = "100vh";
-    overlay.style.background = "#000";
-    overlay.style.zIndex = "9999";
-    overlay.style.display = "flex";
-    overlay.style.alignItems = "center";
-    overlay.style.justifyContent = "center";
-    overlay.style.transition = "opacity 0.5s";
-
-    // Create video element
-    const video = document.createElement("video");
-    video.src = mp4Url;
-    video.autoplay = true;
-    video.muted = true; // Avoids browser autoplay restrictions
-    video.loop = false;
-    video.controls = false;
-    video.style.maxWidth = "100vw";
-    video.style.maxHeight = "100vh";
-    video.style.boxShadow = "0 0 32px #000";
-    video.playsInline = true;
-
-    overlay.appendChild(video);
-    document.body.appendChild(overlay);
-
-    // Play the video (for some browsers)
-    video.play();
-
-    // Remove after 10 seconds
-    timer = setTimeout(() => {
-      overlay.style.opacity = "0";
-      setTimeout(() => { overlay.remove(); overlay = null; }, 500);
-    }, 10000);
-  }
-
-  document.addEventListener("keydown", function(e) {
-    if (e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']")) {
-      return;
-    }
-
-    if (e.key.length === 1) {
-      buffer += e.key.toLowerCase();
-      codeBuffer += e.key.toLowerCase();
-      if (buffer.length > 8) buffer = buffer.slice(-8);
-      if (codeBuffer.length > 4) codeBuffer = codeBuffer.slice(-4);
-
-      if (buffer.endsWith("password")) {
-        buffer = "";
-        codeBuffer = "";
-        if (timer) clearTimeout(timer);
-        showVideoOverlay();
-      }
-
-      if (codeBuffer.endsWith("code")) {
-        codeBuffer = "";
-        const terminalTrigger = document.getElementById('terminal-trigger');
-        if (terminalTrigger) {
-          terminalTrigger.click();
-        }
-      }
-    }
-  });
-})();
-</script>
-
-	  <script>
-document.addEventListener('contextmenu', function(e) {
-  e.preventDefault();
-});
-</script>
+	    <script src="terminal.js"></script>
 
 
   </head>
@@ -194,9 +107,23 @@ document.addEventListener('contextmenu', function(e) {
 		      </div>
 		    </form>
 		  </div>
-		</div>
-		<script>
-	  document.getElementById('qr-trigger')?.addEventListener('click', () => {
+			</div>
+			<div id="nano-overlay" aria-hidden="true">
+			  <div id="nano-window" role="dialog" aria-modal="true" aria-labelledby="nano-title">
+			    <div id="nano-header">
+			      <span id="nano-title">GNU nano</span>
+			      <button type="button" id="nano-close" aria-label="Close nano">&times;</button>
+			    </div>
+			    <div id="nano-meta">
+			      <span id="nano-path"></span>
+			      <span id="nano-status">Ready</span>
+			    </div>
+			    <textarea id="nano-editor" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+			    <div id="nano-footer">^O Write Out   ^X Exit</div>
+			  </div>
+			</div>
+			<script>
+		  document.getElementById('qr-trigger')?.addEventListener('click', () => {
 	    document.getElementById('qr-overlay').style.display = 'flex';
 	  });
 	
@@ -211,8 +138,9 @@ document.addEventListener('contextmenu', function(e) {
 	    }
 	  });
 	</script>
-	<script>
-	  (() => {
+		<script>
+	  if (!window.__terminalModuleLoaded) {
+	    (() => {
 	    const overlay = document.getElementById('terminal-overlay');
 	    const openButton = document.getElementById('terminal-trigger');
 	    const closeButton = document.getElementById('terminal-close');
@@ -987,8 +915,9 @@ document.addEventListener('contextmenu', function(e) {
 	        closeTerminal();
 	      }
 	    });
-	  })();
-	</script>
+		  })();
+	  }
+		</script>
 
 	  <hr>
 		<p>
