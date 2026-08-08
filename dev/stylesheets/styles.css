@@ -391,6 +391,12 @@ img {
   transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
+.terminal-icon {
+  width: 34px;
+  height: 34px;
+  display: block;
+}
+
 .icon-button:hover {
   background: #1b1b1b;
   transform: translateY(-1px);
