@@ -4,7 +4,10 @@ name: Deploy GitHub Pages
 on:
   push:
     branches: [main]
-  workflow_dispatch:  #  manual "Run workflow" button
+    paths-ignore:
+      - 'dev/**'
+      - '.github/workflows/**'
+  workflow_dispatch:  # manual "Run workflow" button
 
 permissions:
   contents: read
@@ -24,7 +27,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .  # Change this to the directory your static files live in
+          path: .
 
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
