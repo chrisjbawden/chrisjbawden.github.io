@@ -4,63 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>Portfolio Dev Preview</title>
+  <title>Dev</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
     html,
     body {
       margin: 0;
+      padding: 0;
       width: 100%;
       height: 100%;
-      font-family: Arial, sans-serif;
-      background: #111;
-      color: #fff;
-    }
-
-    body {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .toolbar {
-      display: flex;
-      align-items: centre;
-      gap: 12px;
-      padding: 10px 14px;
-      background: #1b1b1b;
-      border-bottom: 1px solid #333;
-      flex-shrink: 0;
-    }
-
-    .toolbar strong {
-      margin-right: auto;
-    }
-
-    .toolbar button {
-      border: 1px solid #555;
-      background: #292929;
-      color: #fff;
-      padding: 7px 14px;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-
-    .toolbar button:hover {
-      background: #383838;
-    }
-
-    .status {
-      font-size: 13px;
-      color: #aaa;
-    }
-
-    .preview {
-      flex: 1;
-      position: relative;
+      overflow: hidden;
     }
 
     iframe {
@@ -70,36 +23,16 @@
       border: 0;
       background: white;
     }
-
-    .error {
-      padding: 30px;
-      color: #ff8b8b;
-      white-space: pre-wrap;
-    }
   </style>
 </head>
 
 <body>
 
-  <div class="toolbar">
-    <strong>Portfolio Dev Preview</strong>
-
-    <span id="status" class="status">
-      Loading…
-    </span>
-
-    <button id="reloadButton" type="button">
-      Reload
-    </button>
-  </div>
-
-  <div class="preview">
-    <iframe
-      id="previewFrame"
-      title="Development Preview"
-      sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
-    ></iframe>
-  </div>
+  <iframe
+    id="previewFrame"
+    title="Development Preview"
+    sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
+  ></iframe>
 
   <script>
     const CONFIG = {
@@ -111,8 +44,6 @@
     };
 
     const frame = document.getElementById("previewFrame");
-    const status = document.getElementById("status");
-    const reloadButton = document.getElementById("reloadButton");
 
     function getRawBaseUrl() {
       return [
@@ -247,6 +178,15 @@
 
             let css = await response.text();
 
+            /*
+             * Rewrite relative URLs inside CSS.
+             *
+             * Example:
+             *
+             * background-image: url("../images/test.jpg");
+             *
+             * becomes an absolute raw.githubusercontent.com URL.
+             */
             css = css.replace(
               /url\((['"]?)(.*?)\1\)/gi,
               (match, quote, assetUrl) => {
@@ -267,6 +207,9 @@
               }
             );
 
+            /*
+             * Rewrite relative @import URLs.
+             */
             css = css.replace(
               /@import\s+(?:url\()?['"]([^'"]+)['"]\)?/gi,
               (match, importUrl) => {
@@ -287,10 +230,15 @@
               }
             );
 
+            /*
+             * Replace the stylesheet link with an inline
+             * style element.
+             */
             const style = documentRoot.createElement("style");
             style.textContent = css;
 
             link.replaceWith(style);
+
           } catch (error) {
             console.warn(
               "Could not inline stylesheet:",
@@ -298,6 +246,9 @@
               error
             );
 
+            /*
+             * Fall back to loading the stylesheet directly.
+             */
             link.href = stylesheetUrl;
           }
         })
@@ -330,9 +281,12 @@
 
       script.textContent = `
         (() => {
-          const RAW_BASE = ${JSON.stringify(getRawBaseUrl() + "/")};
+
+          const RAW_BASE =
+            ${JSON.stringify(getRawBaseUrl() + "/")};
 
           function resolvePreviewUrl(value) {
+
             if (!value) {
               return value;
             }
@@ -355,7 +309,11 @@
             }
           }
 
+          /*
+           * Fix dynamically triggered links.
+           */
           document.addEventListener("click", event => {
+
             const link = event.target.closest("a[href]");
 
             if (!link) {
@@ -371,95 +329,69 @@
             link.href = resolvePreviewUrl(href);
           });
 
+          /*
+           * Rewrite relative fetch() calls made by the
+           * development site.
+           */
           const originalFetch = window.fetch;
 
           window.fetch = function(resource, options) {
+
             if (typeof resource === "string") {
               resource = resolvePreviewUrl(resource);
             }
 
-            return originalFetch.call(this, resource, options);
+            return originalFetch.call(
+              this,
+              resource,
+              options
+            );
           };
+
         })();
       `;
 
       documentRoot.head.appendChild(script);
     }
 
-    async function loadPreview() {
-      status.textContent = "Loading…";
-      reloadButton.disabled = true;
+    function showError(error) {
+      console.error(error);
 
-      try {
-        const entryUrl = getEntryUrl();
+      const escapedMessage = escapeHtml(error.message);
 
-        const response = await fetch(
-          `${entryUrl}?preview=${Date.now()}`,
-          {
-            cache: "no-store"
-          }
-        );
+      frame.srcdoc = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta
+            name="viewport"
+            content="width=device-width, initial-scale=1.0"
+          >
 
-        if (!response.ok) {
-          throw new Error(
-            [
-              `Unable to load ${CONFIG.directory}/${CONFIG.entryFile}.`,
-              "",
-              `HTTP status: ${response.status}`,
-              "",
-              "Make sure the following file exists:",
-              `${CONFIG.directory}/${CONFIG.entryFile}`
-            ].join("\\n")
-          );
-        }
+          <title>Preview Error</title>
 
-        const html = await response.text();
+          <style>
+            html,
+            body {
+              margin: 0;
+              min-height: 100%;
+              background: #111;
+              color: #ff8b8b;
+              font-family: monospace;
+            }
 
-        const parser = new DOMParser();
-        const documentRoot = parser.parseFromString(
-          html,
-          "text/html"
-        );
+            body {
+              padding: 30px;
+              box-sizing: border-box;
+              white-space: pre-wrap;
+            }
+          </style>
+        </head>
 
-        injectBaseElement(documentRoot);
-
-        await fetchAndRewriteStylesheets(documentRoot);
-
-        rewriteDocumentUrls(documentRoot);
-
-        injectPreviewScript(documentRoot);
-
-        const serialisedHtml =
-          "<!DOCTYPE html>\\n" +
-          documentRoot.documentElement.outerHTML;
-
-        frame.srcdoc = serialisedHtml;
-
-        status.textContent =
-          `${CONFIG.branch}/${CONFIG.directory}/${CONFIG.entryFile}`;
-      } catch (error) {
-        console.error(error);
-
-        status.textContent = "Error";
-
-        frame.srcdoc = `
-          <!DOCTYPE html>
-          <html>
-            <body
-              style="
-                margin: 0;
-                padding: 30px;
-                background: #111;
-                color: #ff8b8b;
-                font-family: monospace;
-                white-space: pre-wrap;
-              "
-            >${escapeHtml(error.message)}</body>
-          </html>
-        `;
-      } finally {
-        reloadButton.disabled = false;
-      }
+        <body>${escapedMessage}</body>
+        </html>
+      `;
     }
 
     function escapeHtml(value) {
@@ -471,7 +403,79 @@
         .replaceAll("'", "&#039;");
     }
 
-    reloadButton.addEventListener("click", loadPreview);
+    async function loadPreview() {
+
+      try {
+
+        /*
+         * Add a timestamp to prevent the browser from
+         * displaying an old cached version after a push.
+         */
+        const entryUrl =
+          `${getEntryUrl()}?preview=${Date.now()}`;
+
+        const response = await fetch(entryUrl, {
+          cache: "no-store"
+        });
+
+        if (!response.ok) {
+
+          throw new Error(
+            `Unable to load ${CONFIG.directory}/${CONFIG.entryFile}.\n\n` +
+            `HTTP status: ${response.status}\n\n` +
+            `Make sure the following file exists:\n` +
+            `${CONFIG.branch}/${CONFIG.directory}/${CONFIG.entryFile}`
+          );
+        }
+
+        const html = await response.text();
+
+        const parser = new DOMParser();
+
+        const documentRoot = parser.parseFromString(
+          html,
+          "text/html"
+        );
+
+        /*
+         * Establish /dev/ as the base directory.
+         */
+        injectBaseElement(documentRoot);
+
+        /*
+         * Fetch and rewrite CSS before inserting the page.
+         */
+        await fetchAndRewriteStylesheets(documentRoot);
+
+        /*
+         * Rewrite HTML asset URLs.
+         */
+        rewriteDocumentUrls(documentRoot);
+
+        /*
+         * Add support for relative fetch() requests and
+         * dynamically clicked links.
+         */
+        injectPreviewScript(documentRoot);
+
+        /*
+         * Reconstruct the complete HTML document.
+         */
+        const serialisedHtml =
+          "<!DOCTYPE html>" +
+          documentRoot.documentElement.outerHTML;
+
+        /*
+         * Display the development site.
+         */
+        frame.srcdoc = serialisedHtml;
+
+      } catch (error) {
+
+        showError(error);
+
+      }
+    }
 
     loadPreview();
   </script>
