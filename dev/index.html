@@ -235,6 +235,8 @@ document.addEventListener('contextmenu', function(e) {
 	    };
 
 	    const currentUser = 'user';
+	    const currentHost = 'browser';
+	    let currentWorkingDir = '/';
 	    const terminalHistory = [];
 	    const virtualFsKey = 'terminal-virtual-fs-v1';
 	    const defaultVirtualFs = {
@@ -294,12 +296,53 @@ document.addEventListener('contextmenu', function(e) {
 	      return node;
 	    };
 
+	    const isDirectoryNode = (node) => node && node.type === 'dir';
+
 	    const getVirtualParent = (path) => {
 	      const parts = path.split('/').filter(Boolean);
 	      const name = parts.pop();
 	      const parentPath = parts.length ? `/${parts.join('/')}` : '/';
 	      const parent = getVirtualNode(parentPath);
 	      return { parent, name, parentPath };
+	    };
+
+	    const resolvePath = (target, basePath = currentWorkingDir) => {
+	      const trimmed = String(target || '').trim();
+	      if (!trimmed) {
+	        return basePath;
+	      }
+
+	      if (trimmed.startsWith('/')) {
+	        return normalizeLocalPath(trimmed);
+	      }
+
+	      const parts = (basePath === '/' ? [] : basePath.split('/').filter(Boolean)).slice();
+	      for (const part of trimmed.split('/')) {
+	        if (!part || part === '.') {
+	          continue;
+	        }
+
+	        if (part === '..') {
+	          parts.pop();
+	        } else {
+	          parts.push(part);
+	        }
+	      }
+
+	      return parts.length ? `/${parts.join('/')}` : '/';
+	    };
+
+	    const setWorkingDirectory = (target) => {
+	      const resolvedPath = resolvePath(target);
+	      const builtinEntries = siteListings[resolvedPath === '/' ? '/' : resolvedPath] || null;
+	      const virtualNode = getVirtualNode(resolvedPath);
+
+	      if (builtinEntries || isDirectoryNode(virtualNode)) {
+	        currentWorkingDir = resolvedPath;
+	        return { ok: true, path: resolvedPath };
+	      }
+
+	      return { ok: false, error: `cd: ${target}: No such file or directory` };
 	    };
 
 	    const touchVirtualFile = (path) => {
@@ -356,6 +399,40 @@ document.addEventListener('contextmenu', function(e) {
 	      return { ok: true };
 	    };
 
+	    const deleteVirtualNode = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      if (!normalizedPath || normalizedPath === '/') {
+	        return { ok: false, error: 'rm: cannot remove root' };
+	      }
+
+	      const { parent, name } = getVirtualParent(normalizedPath);
+	      if (!parent || !parent.children || !parent.children[name]) {
+	        return { ok: false, error: `rm: cannot remove '${path}': No such file or directory` };
+	      }
+
+	      delete parent.children[name];
+	      saveVirtualFs(virtualFs);
+	      return { ok: true };
+	    };
+
+	    const cloneVirtualNode = (node) => JSON.parse(JSON.stringify(node));
+
+	    const copyVirtualNode = (sourcePath, destPath) => {
+	      const sourceNode = getVirtualNode(sourcePath);
+	      if (!sourceNode) {
+	        return { ok: false, error: `cp: cannot stat '${sourcePath}': No such file or directory` };
+	      }
+
+	      const { parent, name } = getVirtualParent(destPath);
+	      if (!parent || parent.type !== 'dir') {
+	        return { ok: false, error: `cp: cannot create regular file '${destPath}': No such file or directory` };
+	      }
+
+	      parent.children[name] = cloneVirtualNode(sourceNode);
+	      saveVirtualFs(virtualFs);
+	      return { ok: true };
+	    };
+
 	    const listVirtualEntries = (path) => {
 	      const normalizedPath = normalizeLocalPath(path);
 	      const node = getVirtualNode(normalizedPath);
@@ -376,6 +453,13 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      return virtualEntries || builtinEntries;
+	    };
+
+	    const renderPrompt = () => {
+	      const prompt = document.getElementById('terminal-prompt');
+	      if (prompt) {
+	        prompt.textContent = `${currentUser}@${currentHost}:${currentWorkingDir}$`;
+	      }
 	    };
 
 	    const readVirtualFile = (path) => {
@@ -437,6 +521,7 @@ document.addEventListener('contextmenu', function(e) {
 	      overlay.setAttribute('aria-hidden', 'false');
 	      positionWindow();
 	      input.value = '';
+	      renderPrompt();
 	      input.focus();
 	    };
 
@@ -496,12 +581,12 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'pwd') {
-	        appendLine('/', 'terminal-line terminal-system');
+	        appendLine(currentWorkingDir, 'terminal-line terminal-system');
 	        return;
 	      }
 
 	      if (command === 'ls') {
-	        const target = args[0] ? normalizeLocalPath(args[0]) : '/';
+	        const target = args[0] ? resolvePath(args[0]) : currentWorkingDir;
 	        const entries = listEntries(target);
 	        if (!entries) {
 	          appendLine(`ls: cannot access '${args[0] || target}': no listing available in browser terminal`, 'terminal-line terminal-error');
@@ -519,7 +604,7 @@ document.addEventListener('contextmenu', function(e) {
 	          return;
 	        }
 
-	        const result = touchVirtualFile(target);
+	        const result = touchVirtualFile(resolvePath(target));
 	        if (!result.ok) {
 	          appendLine(result.error, 'terminal-line terminal-error');
 	          return;
@@ -536,7 +621,7 @@ document.addEventListener('contextmenu', function(e) {
 	        }
 
 	        const content = args.slice(1).join(' ');
-	        const result = writeVirtualFile(target, content);
+	        const result = writeVirtualFile(resolvePath(target), content);
 	        if (!result.ok) {
 	          appendLine(result.error, 'terminal-line terminal-error');
 	          return;
@@ -552,7 +637,7 @@ document.addEventListener('contextmenu', function(e) {
 	          return;
 	        }
 
-	        const result = mkdirVirtualDir(target);
+	        const result = mkdirVirtualDir(resolvePath(target));
 	        if (!result.ok) {
 	          appendLine(result.error, 'terminal-line terminal-error');
 	          return;
@@ -586,7 +671,7 @@ document.addEventListener('contextmenu', function(e) {
 	        }
 
 	        const url = normalizeTarget(target);
-	        const filename = outputPath || basenameFromUrl(url);
+	        const filename = outputPath ? resolvePath(outputPath) : resolvePath(basenameFromUrl(url));
 	        try {
 	          const response = await fetch(url, { cache: 'no-store' });
 	          if (!response.ok) {
@@ -615,7 +700,7 @@ document.addEventListener('contextmenu', function(e) {
 	          return;
 	        }
 
-	        const path = normalizeLocalPath(target);
+	        const path = resolvePath(target);
 	        const virtualContent = readVirtualFile(path);
 	        if (virtualContent !== null) {
 	          appendLine(virtualContent || '[empty file]', 'terminal-line terminal-system');
@@ -644,6 +729,18 @@ document.addEventListener('contextmenu', function(e) {
 
 	      if (command === 'uname') {
 	        appendLine(`${navigator.userAgent}`, 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'cd') {
+	        const target = args[0] || '/';
+	        const result = setWorkingDirectory(target);
+	        if (!result.ok) {
+	          appendLine(result.error, 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        renderPrompt();
 	        return;
 	      }
 
@@ -718,6 +815,79 @@ document.addEventListener('contextmenu', function(e) {
 	          });
 	        } catch (error) {
 	          appendLine(`nslookup failed for ${host}.`, 'terminal-line terminal-error');
+	        }
+	        return;
+	      }
+
+	      if (command === 'rm') {
+	        const force = args.includes('-f');
+	        const recursive = args.includes('-r') || args.includes('-rf') || args.includes('-fr');
+	        const target = args.find((value) => !value.startsWith('-'));
+	        if (!target) {
+	          appendLine('Usage: rm [-r] [-f] <path>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const resolved = resolvePath(target);
+	        const node = getVirtualNode(resolved);
+	        if (!node) {
+	          if (!force) {
+	            appendLine(`rm: cannot remove '${target}': No such file or directory`, 'terminal-line terminal-error');
+	          }
+	          return;
+	        }
+
+	        if (resolved === '/') {
+	          appendLine('rm: refusing to remove root', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        if (isDirectoryNode(node) && !recursive) {
+	          appendLine(`rm: cannot remove '${target}': Is a directory`, 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const result = deleteVirtualNode(resolved);
+	        if (!result.ok && !force) {
+	          appendLine(result.error, 'terminal-line terminal-error');
+	        }
+	        return;
+	      }
+
+	      if (command === 'cp') {
+	        const source = args[0];
+	        const destination = args[1];
+	        if (!source || !destination) {
+	          appendLine('Usage: cp <source> <destination>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const sourcePath = resolvePath(source);
+	        const destinationPath = resolvePath(destination);
+	        const sourceNode = getVirtualNode(sourcePath);
+
+	        if (sourceNode) {
+	          const result = copyVirtualNode(sourcePath, destinationPath);
+	          if (!result.ok) {
+	            appendLine(result.error, 'terminal-line terminal-error');
+	          }
+	          return;
+	        }
+
+	        try {
+	          const response = await fetch(sourcePath, { cache: 'no-store' });
+	          if (!response.ok) {
+	            appendLine(`cp: cannot stat '${source}': ${response.status} ${response.statusText}`, 'terminal-line terminal-error');
+	            return;
+	          }
+
+	          const bodyText = await response.text();
+	          const result = writeVirtualFile(destinationPath, bodyText);
+	          if (!result.ok) {
+	            appendLine(result.error, 'terminal-line terminal-error');
+	          }
+	        } catch (error) {
+	          appendLine(`cp: unable to copy '${source}' in browser context`, 'terminal-line terminal-error');
 	        }
 	        return;
 	      }
