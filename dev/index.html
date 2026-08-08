@@ -265,7 +265,44 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'help') {
-	        appendLine('Available commands: dev, exit, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'clear') {
+	        output.innerHTML = '';
+	        return;
+	      }
+
+	      if (command === 'whoami') {
+	        appendLine('Developer', 'terminal-line terminal-system');
+	        appendLine('Security researcher', 'terminal-line terminal-system');
+	        appendLine('...', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'pwd') {
+	        appendLine('/', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'ls') {
+	        appendLine('blog/  javascripts/  media/  portfolio/  projects/  stylesheets/', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'echo') {
+	        appendLine(args.join(' ') || '', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'date') {
+	        appendLine(new Date().toString(), 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'uname') {
+	        appendLine(`${navigator.userAgent}`, 'terminal-line terminal-system');
 	        return;
 	      }
 
