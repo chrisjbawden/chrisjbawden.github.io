@@ -19,9 +19,10 @@
 
 	  <script>
 (function() {
-  let buffer = "";
-  let overlay = null;
-  let timer = null;
+	  let buffer = "";
+	  let codeBuffer = "";
+	  let overlay = null;
+	  let timer = null;
 
   // Replace with your own MP4 link!
   const mp4Url = "media/error.mp4";
@@ -70,14 +71,29 @@
   }
 
   document.addEventListener("keydown", function(e) {
+    if (e.target && e.target.closest && e.target.closest("input, textarea, [contenteditable='true']")) {
+      return;
+    }
+
     if (e.key.length === 1) {
       buffer += e.key.toLowerCase();
+      codeBuffer += e.key.toLowerCase();
       if (buffer.length > 8) buffer = buffer.slice(-8);
+      if (codeBuffer.length > 4) codeBuffer = codeBuffer.slice(-4);
 
       if (buffer.endsWith("password")) {
         buffer = "";
+        codeBuffer = "";
         if (timer) clearTimeout(timer);
         showVideoOverlay();
+      }
+
+      if (codeBuffer.endsWith("code")) {
+        codeBuffer = "";
+        const terminalTrigger = document.getElementById('terminal-trigger');
+        if (terminalTrigger) {
+          terminalTrigger.click();
+        }
       }
     }
   });
@@ -305,6 +321,22 @@ document.addEventListener('contextmenu', function(e) {
 	      return { ok: true };
 	    };
 
+	    const writeVirtualFile = (path, content) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      if (!normalizedPath || normalizedPath === '/') {
+	        return { ok: false, error: 'write: invalid file name' };
+	      }
+
+	      const { parent, name } = getVirtualParent(normalizedPath);
+	      if (!parent || parent.type !== 'dir') {
+	        return { ok: false, error: `write: cannot create '${path}': No such file or directory` };
+	      }
+
+	      parent.children[name] = { type: 'file', content: String(content) };
+	      saveVirtualFs(virtualFs);
+	      return { ok: true };
+	    };
+
 	    const mkdirVirtualDir = (path) => {
 	      const normalizedPath = normalizeLocalPath(path);
 	      if (!normalizedPath || normalizedPath === '/') {
@@ -356,6 +388,17 @@ document.addEventListener('contextmenu', function(e) {
 	      return node.content || '';
 	    };
 
+	    const basenameFromUrl = (url) => {
+	      try {
+	        const parsed = new URL(url, window.location.href);
+	        const parts = parsed.pathname.split('/').filter(Boolean);
+	        const last = parts[parts.length - 1] || 'index.html';
+	        return decodeURIComponent(last);
+	      } catch (error) {
+	        return 'download.txt';
+	      }
+	    };
+
 	    const normalizeTarget = (target) => {
 	      const trimmed = target.trim();
 	      if (!trimmed) {
@@ -364,6 +407,10 @@ document.addEventListener('contextmenu', function(e) {
 
 	      if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
 	        return trimmed;
+	      }
+
+	      if (trimmed.startsWith('/') || trimmed.startsWith('.')) {
+	        return new URL(trimmed, window.location.href).href;
 	      }
 
 	      return `https://${trimmed}`;
@@ -422,7 +469,7 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'help') {
-	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, touch <file>, mkdir <dir>, cat <path>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, touch <file>, mkdir <dir>, cat <path>, write <file> <text>, wget [-O <file>] <url>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
 	        return;
 	      }
 
@@ -481,6 +528,23 @@ document.addEventListener('contextmenu', function(e) {
 	        return;
 	      }
 
+	      if (command === 'write') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: write <file> <text>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const content = args.slice(1).join(' ');
+	        const result = writeVirtualFile(target, content);
+	        if (!result.ok) {
+	          appendLine(result.error, 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        return;
+	      }
+
 	      if (command === 'mkdir') {
 	        const target = args[0];
 	        if (!target) {
@@ -499,6 +563,48 @@ document.addEventListener('contextmenu', function(e) {
 
 	      if (command === 'echo') {
 	        appendLine(args.join(' ') || '', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'wget') {
+	        if (!args.length) {
+	          appendLine('Usage: wget [-O <file>] <url>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        let outputPath = null;
+	        let urlArgIndex = 0;
+	        if (args[0] === '-O') {
+	          outputPath = args[1];
+	          urlArgIndex = 2;
+	        }
+
+	        const target = args[urlArgIndex];
+	        if (!target) {
+	          appendLine('Usage: wget [-O <file>] <url>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const url = normalizeTarget(target);
+	        const filename = outputPath || basenameFromUrl(url);
+	        try {
+	          const response = await fetch(url, { cache: 'no-store' });
+	          if (!response.ok) {
+	            appendLine(`wget: ${target}: ${response.status} ${response.statusText}`, 'terminal-line terminal-error');
+	            return;
+	          }
+
+	          const bodyText = await response.text();
+	          const result = writeVirtualFile(filename, bodyText);
+	          if (!result.ok) {
+	            appendLine(result.error, 'terminal-line terminal-error');
+	            return;
+	          }
+
+	          appendLine(`Saved '${filename}'`, 'terminal-line terminal-success');
+	        } catch (error) {
+	          appendLine(`wget failed for ${target}. Browser CORS or network restrictions may apply.`, 'terminal-line terminal-error');
+	        }
 	        return;
 	      }
 
