@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   promote:
@@ -34,6 +35,7 @@ jobs:
           done
 
       - name: Commit production changes
+        id: commit
         shell: bash
         run: |
           set -e
@@ -45,8 +47,18 @@ jobs:
 
           if git diff --cached --quiet; then
             echo "No production files changed."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git commit -m "Promote dev changes to production"
           git push
+
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Trigger GitHub Pages deployment
+        if: steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run deploy-github-pages.yml --ref master
