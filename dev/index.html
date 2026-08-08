@@ -128,18 +128,22 @@ document.addEventListener('contextmenu', function(e) {
 		<p>
 			Quick links - 
 		</p>
-	  <div id="scripts-icon-container" style="padding: 40px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
-	    <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank" title="Scripts and Programs">
-	      <img src="media/xml.png" alt="Scripts" style="width: 82px; height: 82px;">
+		  <div id="scripts-icon-container" style="padding: 40px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+		    <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank" title="Scripts and Programs">
+		      <img src="media/xml.png" alt="Scripts" style="width: 82px; height: 82px;">
+		    </a>
+	    <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank" title="Java MD5 Hash Check">
+	      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
 	    </a>
-    <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank" title="Java MD5 Hash Check">
-      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
-    </a>
-    <button type="button" id="terminal-trigger" class="icon-button" title="Open terminal">
-      <i class="fas fa-terminal" aria-hidden="true"></i>
-      <span class="sr-only">Terminal</span>
-    </button>
-  </div>
+	    <button type="button" id="terminal-trigger" class="icon-button" title="Open terminal">
+	      <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false" class="terminal-icon">
+	        <rect x="6" y="8" width="52" height="48" rx="8" ry="8" fill="none" stroke="currentColor" stroke-width="4"></rect>
+	        <path d="M18 24l10 8-10 8" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"></path>
+	        <path d="M32 40h14" fill="none" stroke="currentColor" stroke-width="4" stroke-linecap="round"></path>
+	      </svg>
+	      <span class="sr-only">Terminal</span>
+	    </button>
+	  </div>
 	<div class="qr-icon-container">
 		<hr>
 	  <i class="fas fa-qrcode" id="qr-trigger" style="font-size: 82px; cursor: pointer;"></i>
@@ -209,6 +213,18 @@ document.addEventListener('contextmenu', function(e) {
 	      output.scrollTop = output.scrollHeight;
 	    };
 
+	    const terminalHistory = [];
+
+	    const siteListings = {
+	      '/': ['blog/', 'index.html', 'javascripts/', 'media/', 'portfolio/', 'sidebar.html', 'stylesheets/'],
+	      '.': ['blog/', 'index.html', 'javascripts/', 'media/', 'portfolio/', 'sidebar.html', 'stylesheets/'],
+	      blog: ['bin/', 'blog.html', 'cs50.html', 'loader.js', 'media/', 'pick/', 'posts/'],
+	      portfolio: ['badges/', 'certificates/', 'content.json', 'media/', 'portfolio.html', 'tertiary/'],
+	      media: ['6C83376E-6257-4D85-9631-B2F3EF39B982.png', 'error.mp4', 'hash.png', 'mail_icon_128820.png', 'profile/', 'qr-code.png', 'video.mp4', 'xml.png'],
+	      stylesheets: ['pygment_trac.css', 'styles.css'],
+	      javascripts: ['scale.fix.js']
+	    };
+
 	    const normalizeTarget = (target) => {
 	      const trimmed = target.trim();
 	      if (!trimmed) {
@@ -220,6 +236,15 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      return `https://${trimmed}`;
+	    };
+
+	    const normalizeLocalPath = (target) => {
+	      const trimmed = target.trim();
+	      if (!trimmed) {
+	        return '';
+	      }
+
+	      return trimmed.replace(/^\/+/, '').replace(/\/+$/, '') || '/';
 	    };
 
 	    const splitCommand = (rawValue) => {
@@ -248,6 +273,7 @@ document.addEventListener('contextmenu', function(e) {
 	        return;
 	      }
 
+	      terminalHistory.push(value);
 	      appendLine(`> ${value}`, 'terminal-line terminal-command');
 
 	      const { command, args } = splitCommand(value);
@@ -274,6 +300,18 @@ document.addEventListener('contextmenu', function(e) {
 	        return;
 	      }
 
+	      if (command === 'history') {
+	        if (!terminalHistory.length) {
+	          appendLine('(no history yet)', 'terminal-line terminal-system');
+	          return;
+	        }
+
+	        terminalHistory.forEach((entry, index) => {
+	          appendLine(`${index + 1}  ${entry}`, 'terminal-line terminal-system');
+	        });
+	        return;
+	      }
+
 	      if (command === 'whoami') {
 	        appendLine('Developer', 'terminal-line terminal-system');
 	        appendLine('Security researcher', 'terminal-line terminal-system');
@@ -287,12 +325,42 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'ls') {
-	        appendLine('blog/  javascripts/  media/  portfolio/  projects/  stylesheets/', 'terminal-line terminal-system');
+	        const target = args[0] ? normalizeLocalPath(args[0]) : '/';
+	        const entries = siteListings[target === '/' ? '/' : target];
+	        if (!entries) {
+	          appendLine(`ls: cannot access '${args[0] || target}': no listing available in browser terminal`, 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        appendLine(entries.join('  '), 'terminal-line terminal-system');
 	        return;
 	      }
 
 	      if (command === 'echo') {
 	        appendLine(args.join(' ') || '', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'cat') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: cat <path>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const path = normalizeLocalPath(target);
+	        try {
+	          const response = await fetch(path, { cache: 'no-store' });
+	          if (!response.ok) {
+	            appendLine(`cat: ${target}: ${response.status} ${response.statusText}`, 'terminal-line terminal-error');
+	            return;
+	          }
+
+	          const bodyText = await response.text();
+	          appendLine(bodyText || '[empty file]', 'terminal-line terminal-system');
+	        } catch (error) {
+	          appendLine(`cat: ${target}: unable to read in browser context`, 'terminal-line terminal-error');
+	        }
 	        return;
 	      }
 
