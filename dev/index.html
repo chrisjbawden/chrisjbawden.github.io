@@ -125,10 +125,7 @@ document.addEventListener('contextmenu', function(e) {
   
       </header>
 	<section>
-		<p>
-			Quick links - 
-		</p>
-		  <div id="scripts-icon-container" style="padding: 40px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+	  <div id="scripts-icon-container" style="padding: 40px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
 		    <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank" title="Scripts and Programs">
 		      <img src="media/xml.png" alt="Scripts" style="width: 82px; height: 82px;">
 		    </a>
@@ -213,7 +210,13 @@ document.addEventListener('contextmenu', function(e) {
 	      output.scrollTop = output.scrollHeight;
 	    };
 
+	    const currentUser = 'user';
 	    const terminalHistory = [];
+	    const virtualFsKey = 'terminal-virtual-fs-v1';
+	    const defaultVirtualFs = {
+	      type: 'dir',
+	      children: {}
+	    };
 
 	    const siteListings = {
 	      '/': ['blog/', 'index.html', 'javascripts/', 'media/', 'portfolio/', 'sidebar.html', 'stylesheets/'],
@@ -223,6 +226,126 @@ document.addEventListener('contextmenu', function(e) {
 	      media: ['6C83376E-6257-4D85-9631-B2F3EF39B982.png', 'error.mp4', 'hash.png', 'mail_icon_128820.png', 'profile/', 'qr-code.png', 'video.mp4', 'xml.png'],
 	      stylesheets: ['pygment_trac.css', 'styles.css'],
 	      javascripts: ['scale.fix.js']
+	    };
+
+	    const cloneDefaultVirtualFs = () => JSON.parse(JSON.stringify(defaultVirtualFs));
+
+	    const loadVirtualFs = () => {
+	      try {
+	        const raw = localStorage.getItem(virtualFsKey);
+	        if (!raw) {
+	          return cloneDefaultVirtualFs();
+	        }
+
+	        return JSON.parse(raw);
+	      } catch (error) {
+	        return cloneDefaultVirtualFs();
+	      }
+	    };
+
+	    const saveVirtualFs = (fs) => {
+	      try {
+	        localStorage.setItem(virtualFsKey, JSON.stringify(fs));
+	      } catch (error) {
+	        // Ignore storage failures in restricted browser contexts.
+	      }
+	    };
+
+	    const virtualFs = loadVirtualFs();
+
+	    const getVirtualNode = (path) => {
+	      if (path === '/' || path === '') {
+	        return virtualFs;
+	      }
+
+	      const parts = path.split('/').filter(Boolean);
+	      let node = virtualFs;
+	      for (const part of parts) {
+	        if (!node.children || !node.children[part]) {
+	          return null;
+	        }
+	        node = node.children[part];
+	      }
+
+	      return node;
+	    };
+
+	    const getVirtualParent = (path) => {
+	      const parts = path.split('/').filter(Boolean);
+	      const name = parts.pop();
+	      const parentPath = parts.length ? `/${parts.join('/')}` : '/';
+	      const parent = getVirtualNode(parentPath);
+	      return { parent, name, parentPath };
+	    };
+
+	    const touchVirtualFile = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      if (!normalizedPath || normalizedPath === '/') {
+	        return { ok: false, error: 'touch: invalid file name' };
+	      }
+
+	      const { parent, name } = getVirtualParent(normalizedPath);
+	      if (!parent || parent.type !== 'dir') {
+	        return { ok: false, error: `touch: cannot create '${path}': No such file or directory` };
+	      }
+
+	      if (!parent.children[name]) {
+	        parent.children[name] = { type: 'file', content: '' };
+	        saveVirtualFs(virtualFs);
+	      }
+
+	      return { ok: true };
+	    };
+
+	    const mkdirVirtualDir = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      if (!normalizedPath || normalizedPath === '/') {
+	        return { ok: false, error: 'mkdir: invalid directory name' };
+	      }
+
+	      const { parent, name } = getVirtualParent(normalizedPath);
+	      if (!parent || parent.type !== 'dir') {
+	        return { ok: false, error: `mkdir: cannot create directory '${path}': No such file or directory` };
+	      }
+
+	      if (!parent.children[name]) {
+	        parent.children[name] = { type: 'dir', children: {} };
+	        saveVirtualFs(virtualFs);
+	      }
+
+	      return { ok: true };
+	    };
+
+	    const listVirtualEntries = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      const node = getVirtualNode(normalizedPath);
+	      if (!node || node.type !== 'dir') {
+	        return null;
+	      }
+
+	      return Object.entries(node.children || {}).map(([name, entry]) => (entry.type === 'dir' ? `${name}/` : name));
+	    };
+
+	    const listEntries = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      const builtinEntries = siteListings[normalizedPath === '/' ? '/' : normalizedPath] || null;
+	      const virtualEntries = listVirtualEntries(normalizedPath);
+
+	      if (builtinEntries && virtualEntries) {
+	        return Array.from(new Set([...builtinEntries, ...virtualEntries]));
+	      }
+
+	      return virtualEntries || builtinEntries;
+	    };
+
+	    const readVirtualFile = (path) => {
+	      const normalizedPath = normalizeLocalPath(path);
+	      const node = getVirtualNode(normalizedPath);
+	      if (!node || node.type !== 'file') {
+	        return null;
+	      }
+
+	      return node.content || '';
 	    };
 
 	    const normalizeTarget = (target) => {
@@ -291,7 +414,7 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'help') {
-	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, touch <file>, mkdir <dir>, cat <path>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
 	        return;
 	      }
 
@@ -313,9 +436,7 @@ document.addEventListener('contextmenu', function(e) {
 	      }
 
 	      if (command === 'whoami') {
-	        appendLine('Developer', 'terminal-line terminal-system');
-	        appendLine('Security researcher', 'terminal-line terminal-system');
-	        appendLine('...', 'terminal-line terminal-system');
+	        appendLine(currentUser, 'terminal-line terminal-system');
 	        return;
 	      }
 
@@ -326,13 +447,45 @@ document.addEventListener('contextmenu', function(e) {
 
 	      if (command === 'ls') {
 	        const target = args[0] ? normalizeLocalPath(args[0]) : '/';
-	        const entries = siteListings[target === '/' ? '/' : target];
+	        const entries = listEntries(target);
 	        if (!entries) {
 	          appendLine(`ls: cannot access '${args[0] || target}': no listing available in browser terminal`, 'terminal-line terminal-error');
 	          return;
 	        }
 
 	        appendLine(entries.join('  '), 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'touch') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: touch <file>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const result = touchVirtualFile(target);
+	        if (!result.ok) {
+	          appendLine(result.error, 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        return;
+	      }
+
+	      if (command === 'mkdir') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: mkdir <dir>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const result = mkdirVirtualDir(target);
+	        if (!result.ok) {
+	          appendLine(result.error, 'terminal-line terminal-error');
+	          return;
+	        }
+
 	        return;
 	      }
 
@@ -349,6 +502,12 @@ document.addEventListener('contextmenu', function(e) {
 	        }
 
 	        const path = normalizeLocalPath(target);
+	        const virtualContent = readVirtualFile(path);
+	        if (virtualContent !== null) {
+	          appendLine(virtualContent || '[empty file]', 'terminal-line terminal-system');
+	          return;
+	        }
+
 	        try {
 	          const response = await fetch(path, { cache: 'no-store' });
 	          if (!response.ok) {
@@ -571,7 +730,7 @@ document.addEventListener('contextmenu', function(e) {
 	    <hr>
 
 		    <p>
-		Recent blog posts - 
+			Recent - 
 			    <br>
 			    <br>
 			    > <strong><a href="https://chrisjbawden.github.io/blog/blog.html#multi-tab" target="_blank" > Multi-tab URL launcher</a></strong>
@@ -583,26 +742,6 @@ document.addEventListener('contextmenu', function(e) {
 
 	    <br>
 	    <hr>
-
-		<div style="text-align:center;padding:1em;font-size:1.2em;font-family:sans-serif;">
-		    <span id="ip-location-banner">
-		    </span>
-		</div>
-<script>
-fetch("https://ipinfo.io/json")
-  .then(response => response.json())
-  .then(data => {
-    const el = document.getElementById("ip-location-banner");
-    if(data && data.ip) {
-      el.textContent = `${data.ip} — ${data.region ? data.region + ', ' : ''}${data.country || ''}`.replace(/, ,/g, ',').replace(/, $/, '');
-    } else {
-      el.textContent = "Could not determine IP/location.";
-    }
-  })
-  .catch(() => {
-    document.getElementById("ip-location-banner").textContent = "Could not determine IP/location.";
-  });
-</script>
 
 		    	</section>
       <footer>
