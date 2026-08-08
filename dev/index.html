@@ -209,6 +209,26 @@ document.addEventListener('contextmenu', function(e) {
 	      output.scrollTop = output.scrollHeight;
 	    };
 
+	    const normalizeTarget = (target) => {
+	      const trimmed = target.trim();
+	      if (!trimmed) {
+	        return '';
+	      }
+
+	      if (/^[a-zA-Z][a-zA-Z\d+\-.]*:\/\//.test(trimmed)) {
+	        return trimmed;
+	      }
+
+	      return `https://${trimmed}`;
+	    };
+
+	    const splitCommand = (rawValue) => {
+	      const parts = rawValue.trim().match(/"[^"]*"|'[^']*'|\S+/g) || [];
+	      const command = (parts.shift() || '').toLowerCase();
+	      const args = parts.map((part) => part.replace(/^["']|["']$/g, ''));
+	      return { command, args };
+	    };
+
 	    const openTerminal = () => {
 	      overlay.style.display = 'flex';
 	      overlay.setAttribute('aria-hidden', 'false');
@@ -222,7 +242,7 @@ document.addEventListener('contextmenu', function(e) {
 	      overlay.setAttribute('aria-hidden', 'true');
 	    };
 
-	    const runCommand = (rawValue) => {
+	    const runCommand = async (rawValue) => {
 	      const value = rawValue.trim();
 	      if (!value) {
 	        return;
@@ -230,10 +250,97 @@ document.addEventListener('contextmenu', function(e) {
 
 	      appendLine(`> ${value}`, 'terminal-line terminal-command');
 
-	      if (value.toLowerCase() === 'dev') {
+	      const { command, args } = splitCommand(value);
+
+	      if (command === 'dev') {
 	        document.cookie = 'dev=1; path=/; max-age=28800; samesite=lax';
 	        appendLine('Dev cookie set for 8 hours.', 'terminal-line terminal-success');
 	        window.open('/preview.html', '_blank', 'noopener');
+	        return;
+	      }
+
+	      if (command === 'exit') {
+	        closeTerminal();
+	        return;
+	      }
+
+	      if (command === 'help') {
+	        appendLine('Available commands: dev, exit, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        return;
+	      }
+
+	      if (command === 'ping') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: ping <host-or-url>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const url = normalizeTarget(target);
+	        const startedAt = performance.now();
+	        try {
+	          await fetch(`${url}${url.includes('?') ? '&' : '?'}_=${Date.now()}`, {
+	            method: 'GET',
+	            cache: 'no-store',
+	            mode: 'no-cors'
+	          });
+	          appendLine(`Reply from ${target}: time=${Math.round(performance.now() - startedAt)}ms`, 'terminal-line terminal-success');
+	        } catch (error) {
+	          appendLine(`Ping failed for ${target}.`, 'terminal-line terminal-error');
+	        }
+	        return;
+	      }
+
+	      if (command === 'curl') {
+	        const target = args[0];
+	        if (!target) {
+	          appendLine('Usage: curl <url>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        const url = normalizeTarget(target);
+	        try {
+	          const response = await fetch(url, { cache: 'no-store' });
+	          const bodyText = await response.text();
+	          appendLine(`HTTP ${response.status} ${response.statusText}`, 'terminal-line terminal-system');
+	          response.headers.forEach((value, key) => {
+	            appendLine(`${key}: ${value}`, 'terminal-line terminal-system');
+	          });
+	          appendLine(bodyText.slice(0, 1000) || '[empty body]', 'terminal-line terminal-success');
+	        } catch (error) {
+	          appendLine(`curl failed for ${target}. Browser CORS or network restrictions may apply.`, 'terminal-line terminal-error');
+	        }
+	        return;
+	      }
+
+	      if (command === 'nslookup') {
+	        const host = args[0];
+	        if (!host) {
+	          appendLine('Usage: nslookup <host>', 'terminal-line terminal-error');
+	          return;
+	        }
+
+	        try {
+	          const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${encodeURIComponent(host)}&type=A`, {
+	            headers: {
+	              Accept: 'application/dns-json'
+	            },
+	            cache: 'no-store'
+	          });
+	          const data = await response.json();
+	          const answers = Array.isArray(data.Answer) ? data.Answer : [];
+	          if (!answers.length) {
+	            appendLine(`No A records found for ${host}.`, 'terminal-line terminal-system');
+	            return;
+	          }
+
+	          appendLine(`Name: ${host}`, 'terminal-line terminal-system');
+	          answers.forEach((answer) => {
+	            appendLine(`Address: ${answer.data}`, 'terminal-line terminal-success');
+	          });
+	        } catch (error) {
+	          appendLine(`nslookup failed for ${host}.`, 'terminal-line terminal-error');
+	        }
 	        return;
 	      }
 
