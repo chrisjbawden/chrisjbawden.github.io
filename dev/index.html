@@ -132,10 +132,14 @@ document.addEventListener('contextmenu', function(e) {
 	    <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank" title="Scripts and Programs">
 	      <img src="media/xml.png" alt="Scripts" style="width: 82px; height: 82px;">
 	    </a>
-	    <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank" title="Java MD5 Hash Check">
-	      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
-	    </a>
-	  </div>
+    <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank" title="Java MD5 Hash Check">
+      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
+    </a>
+    <button type="button" id="terminal-trigger" class="icon-button" title="Open terminal">
+      <i class="fas fa-terminal" aria-hidden="true"></i>
+      <span class="sr-only">Terminal</span>
+    </button>
+  </div>
 	<div class="qr-icon-container">
 		<hr>
 	  <i class="fas fa-qrcode" id="qr-trigger" style="font-size: 82px; cursor: pointer;"></i>
@@ -144,13 +148,31 @@ document.addEventListener('contextmenu', function(e) {
 	</div>
 	
 	<!-- QR Code Overlay -->
-	<div id="qr-overlay">
-	  <div id="qr-content">
-	    <span id="qr-close">&times;</span>
-	    <img src="media/qr-code.png" alt="QR Code" id="qr-image">
-	  </div>
-	</div>
-	<script>
+		<div id="qr-overlay">
+		  <div id="qr-content">
+		    <span id="qr-close">&times;</span>
+		    <img src="media/qr-code.png" alt="QR Code" id="qr-image">
+		  </div>
+		</div>
+		<div id="terminal-overlay" aria-hidden="true">
+		  <div id="terminal-window" role="dialog" aria-modal="true" aria-labelledby="terminal-title">
+		    <div id="terminal-header">
+		      <span id="terminal-title">Terminal</span>
+		      <button type="button" id="terminal-close" aria-label="Close terminal">&times;</button>
+		    </div>
+		    <div id="terminal-output" aria-live="polite">
+		      <div class="terminal-line terminal-system">Ready. Type <code>dev</code> and press Enter.</div>
+		    </div>
+		    <form id="terminal-form" autocomplete="off">
+		      <label class="sr-only" for="terminal-input">Terminal command</label>
+		      <div id="terminal-prompt-line">
+		        <span id="terminal-prompt">&gt;</span>
+		        <input id="terminal-input" type="text" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" />
+		      </div>
+		    </form>
+		  </div>
+		</div>
+		<script>
 	  document.getElementById('qr-trigger')?.addEventListener('click', () => {
 	    document.getElementById('qr-overlay').style.display = 'flex';
 	  });
@@ -160,11 +182,85 @@ document.addEventListener('contextmenu', function(e) {
 	  });
 	
 	  // Optional: allow tapping outside image to close
-	  document.getElementById('qr-overlay')?.addEventListener('click', (e) => {
+		document.getElementById('qr-overlay')?.addEventListener('click', (e) => {
 	    if (e.target.id === 'qr-overlay') {
 	      document.getElementById('qr-overlay').style.display = 'none';
 	    }
 	  });
+	</script>
+	<script>
+	  (() => {
+	    const overlay = document.getElementById('terminal-overlay');
+	    const openButton = document.getElementById('terminal-trigger');
+	    const closeButton = document.getElementById('terminal-close');
+	    const form = document.getElementById('terminal-form');
+	    const input = document.getElementById('terminal-input');
+	    const output = document.getElementById('terminal-output');
+
+	    if (!overlay || !openButton || !closeButton || !form || !input || !output) {
+	      return;
+	    }
+
+	    const appendLine = (text, className = 'terminal-line') => {
+	      const line = document.createElement('div');
+	      line.className = className;
+	      line.textContent = text;
+	      output.appendChild(line);
+	      output.scrollTop = output.scrollHeight;
+	    };
+
+	    const openTerminal = () => {
+	      overlay.style.display = 'flex';
+	      overlay.setAttribute('aria-hidden', 'false');
+	      input.value = '';
+	      input.focus();
+	    };
+
+	    const closeTerminal = () => {
+	      overlay.style.display = 'none';
+	      overlay.setAttribute('aria-hidden', 'true');
+	    };
+
+	    const runCommand = (rawValue) => {
+	      const value = rawValue.trim();
+	      if (!value) {
+	        return;
+	      }
+
+	      appendLine(`> ${value}`, 'terminal-line terminal-command');
+
+	      if (value.toLowerCase() === 'dev') {
+	        document.cookie = 'dev=1; path=/; max-age=28800; samesite=lax';
+	        appendLine('Dev cookie set for 8 hours.', 'terminal-line terminal-success');
+	        window.open('/preview.html', '_blank', 'noopener');
+	        return;
+	      }
+
+	      appendLine(`Unknown command: ${value}`, 'terminal-line terminal-error');
+	    };
+
+	    openButton.addEventListener('click', openTerminal);
+	    closeButton.addEventListener('click', closeTerminal);
+
+	    overlay.addEventListener('click', (event) => {
+	      if (event.target === overlay) {
+	        closeTerminal();
+	      }
+	    });
+
+	    document.addEventListener('keydown', (event) => {
+	      if (event.key === 'Escape' && overlay.style.display === 'flex') {
+	        closeTerminal();
+	      }
+	    });
+
+	    form.addEventListener('submit', (event) => {
+	      event.preventDefault();
+	      runCommand(input.value);
+	      input.value = '';
+	      input.focus();
+	    });
+	  })();
 	</script>
 
 	  <hr>
@@ -181,7 +277,6 @@ document.addEventListener('contextmenu', function(e) {
 <span class="hide-on-mobile">
   <hr>
   <br>
-  <p style="text-align: center;">dont type 'password' :P</p>
   <br>
 </span>
 		<style>
