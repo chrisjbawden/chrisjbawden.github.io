@@ -1,0 +1,87 @@
+[
+  {
+    "name": "Diploma in Information Technology - Networking",
+    "path": "https://chrisjbawden.github.io/portfolio/Diploma%20in%20Information%20Technology%20-%20Networking.pdf",
+    "category": "Tertiary"
+  },
+  {
+    "name": "Ubiquiti Broadband Wireless Admin",
+    "path": "https://chrisjbawden.github.io/portfolio/UBWA.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "Ubiquiti Enterprise Wireless Admin",
+    "path": "https://chrisjbawden.github.io/portfolio/UEWA.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "Advanced Network Security Certification",
+    "path": "https://chrisjbawden.github.io/portfolio/Advanced%20Network%20Security%20Certification.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "Digital Forensics Certification",
+    "path": "https://chrisjbawden.github.io/portfolio/Digital%20Forensics%20-%20Certificate%20of%20Achievement.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "Google Cyber Security Certificate",
+    "path": "/portfolio/gcsb.png",
+    "category": "Badges"
+  },
+  {
+    "name": "Google Cyber Security Certificate",
+    "path": "/portfolio/Coursera%20-%20Google%20Cyber%20Security%20Certificate.pdf",
+    "category": "Certifications"
+  }, 
+  {
+    "name": "Graduate Certification of Cyber Security",
+    "path": "https://chrisjbawden.github.io/portfolio/CSU%20-%20Graduate%20Certificate%20in%20Cyber%20Security.pdf",
+    "category": "Tertiary"
+  },
+  {
+    "name": "APISEC API Fundamentals",
+    "path": "https://chrisjbawden.github.io/portfolio/apisecfund.png",
+    "category": "Badges"
+  },
+  {
+    "name": "ISC Graduate",
+    "path": "https://chrisjbawden.github.io/portfolio/isccand.png",
+    "category": "Badges"
+  },
+  {
+    "name": "Cert III in Web Technologies",
+    "path": "https://chrisjbawden.github.io/portfolio/SBIT%20-%20Cert%20III%20in%20Web%20technologies.pdf",
+    "category": "Tertiary"
+  },
+  {
+    "name": "DCNP Security",
+    "path": "https://chrisjbawden.github.io/portfolio/DCNP%20Security.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "CCSK v5",
+    "path": "https://chrisjbawden.github.io/portfolio/certificate-of-cloud-security-knowledge-v-5.png",
+    "category": "Badges"
+  },
+  {
+    "name": "CCSK v5",
+    "path": "https://chrisjbawden.github.io/portfolio/ccsk-certificate_DEC-07-2024-redacted.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "CCZT",
+    "path": "https://chrisjbawden.github.io/portfolio/cczt.png",
+    "category": "Badges"
+  },
+  {
+    "name": "CCZT",
+    "path": "https://chrisjbawden.github.io/portfolio/cczt-certificate_DEC-08-2024-redacted.pdf",
+    "category": "Certifications"
+  },
+  {
+    "name": "Computer Science - CS50",
+    "path": "https://chrisjbawden.github.io/portfolio/CS50x.pdf",
+    "category": "Certifications"
+  }
+]

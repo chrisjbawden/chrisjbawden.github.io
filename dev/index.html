@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>Chris Bawden</title>
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+	  <script>
+(function() {
+  let buffer = "";
+  let overlay = null;
+  let timer = null;
+
+  // Replace with your own MP4 link!
+  const mp4Url = "media/error.mp4";
+
+  function showVideoOverlay() {
+    // Remove existing overlay if needed
+    if (overlay) overlay.remove();
+
+    // Create overlay div
+    overlay = document.createElement("div");
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.background = "#000";
+    overlay.style.zIndex = "9999";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.transition = "opacity 0.5s";
+
+    // Create video element
+    const video = document.createElement("video");
+    video.src = mp4Url;
+    video.autoplay = true;
+    video.muted = true; // Avoids browser autoplay restrictions
+    video.loop = false;
+    video.controls = false;
+    video.style.maxWidth = "100vw";
+    video.style.maxHeight = "100vh";
+    video.style.boxShadow = "0 0 32px #000";
+    video.playsInline = true;
+
+    overlay.appendChild(video);
+    document.body.appendChild(overlay);
+
+    // Play the video (for some browsers)
+    video.play();
+
+    // Remove after 10 seconds
+    timer = setTimeout(() => {
+      overlay.style.opacity = "0";
+      setTimeout(() => { overlay.remove(); overlay = null; }, 500);
+    }, 10000);
+  }
+
+  document.addEventListener("keydown", function(e) {
+    if (e.key.length === 1) {
+      buffer += e.key.toLowerCase();
+      if (buffer.length > 8) buffer = buffer.slice(-8);
+
+      if (buffer.endsWith("password")) {
+        buffer = "";
+        if (timer) clearTimeout(timer);
+        showVideoOverlay();
+      }
+    }
+  });
+})();
+</script>
+
+	  <script>
+document.addEventListener('contextmenu', function(e) {
+  e.preventDefault();
+});
+</script>
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <div class="profile-picture">
+        <p align="center"><img width="200" height="200" padding-right="20" src="media/profile/02.png" alt="Christopher Bawden"/></p>
+        </div>
+        <p align="center" width="100%" class="social-buttons">
+          
+          <tr>
+            <td><a href="https://www.linkedin.com/in/christopherjbawden/"><img src="media/6C83376E-6257-4D85-9631-B2F3EF39B982.png" alt="linkedin" align="center" width="30" height="30"></td>
+            <td padding-left="20"></a></td>  
+            <td><a href="mailto:chrisjbawden@outlook.com"><img src="media/mail_icon_128820.png" alt="mail" align="center" width="30" height="30"></a></td>
+        </tr>
+	  
+          </p>
+
+          <div id="main-menu">
+
+            <a href="/projects/projects.html"><strong>PROJECTS</strong></a>
+            <br>
+          
+           
+            <a href="/portfolio/portfolio.html"><strong>PORTFOLIO</strong></a>
+            <br>
+
+            
+            <a href="/blog/blog.html"><strong>BLOG</strong></a>
+            <br>
+            
+          </div>
+  
+      </header>
+	<section>
+		<p>
+			Quick links - 
+		</p>
+	  <div id="scripts-icon-container" style="padding: 40px 20px; display: flex; flex-wrap: wrap; justify-content: center; gap: 20px;">
+	    <a href="https://github.com/chrisjbawden/scripts-programs" target="_blank" title="Scripts and Programs">
+	      <img src="media/xml.png" alt="Scripts" style="width: 82px; height: 82px;">
+	    </a>
+	    <a href="https://chrisjbawden.github.io/projects/java-md5-tool/index.html" target="_blank" title="Java MD5 Hash Check">
+	      <img src="media/hash.png" alt="MD5 Tool" style="width: 82px; height: 82px;">
+	    </a>
+	  </div>
+	<div class="qr-icon-container">
+		<hr>
+	  <i class="fas fa-qrcode" id="qr-trigger" style="font-size: 82px; cursor: pointer;"></i>
+		<br>
+		<br>
+	</div>
+	
+	<!-- QR Code Overlay -->
+	<div id="qr-overlay">
+	  <div id="qr-content">
+	    <span id="qr-close">&times;</span>
+	    <img src="media/qr-code.png" alt="QR Code" id="qr-image">
+	  </div>
+	</div>
+	<script>
+	  document.getElementById('qr-trigger')?.addEventListener('click', () => {
+	    document.getElementById('qr-overlay').style.display = 'flex';
+	  });
+	
+	  document.getElementById('qr-close')?.addEventListener('click', () => {
+	    document.getElementById('qr-overlay').style.display = 'none';
+	  });
+	
+	  // Optional: allow tapping outside image to close
+	  document.getElementById('qr-overlay')?.addEventListener('click', (e) => {
+	    if (e.target.id === 'qr-overlay') {
+	      document.getElementById('qr-overlay').style.display = 'none';
+	    }
+	  });
+	</script>
+
+	  <hr>
+		<p>
+			whoami?
+			<br>
+			<br>
+			> Developer
+			<br>
+			> Security researcher
+			<br>
+			> ...
+		</p>
+<span class="hide-on-mobile">
+  <hr>
+  <br>
+  <p style="text-align: center;">dont type 'password' :P</p>
+  <br>
+</span>
+		<style>
+@media (max-width: 600px) {
+  .hide-on-mobile { display: none !important; }
+}
+</style>
+	    <hr>
+
+		    <p>
+		Recent blog posts - 
+			    <br>
+			    <br>
+			    > <strong><a href="https://chrisjbawden.github.io/blog/blog.html#multi-tab" target="_blank" > Multi-tab URL launcher</a></strong>
+			    <br>
+		            > <strong><a href="https://chrisjbawden.github.io/blog/blog.html#captcha" target="_blank"> Captcha practice</a></strong>
+			    <br>
+			    
+		    </p>
+
+	    <br>
+	    <hr>
+
+		<div style="text-align:center;padding:1em;font-size:1.2em;font-family:sans-serif;">
+		    <span id="ip-location-banner">
+		    </span>
+		</div>
+<script>
+fetch("https://ipinfo.io/json")
+  .then(response => response.json())
+  .then(data => {
+    const el = document.getElementById("ip-location-banner");
+    if(data && data.ip) {
+      el.textContent = `${data.ip} — ${data.region ? data.region + ', ' : ''}${data.country || ''}`.replace(/, ,/g, ',').replace(/, $/, '');
+    } else {
+      el.textContent = "Could not determine IP/location.";
+    }
+  })
+  .catch(() => {
+    document.getElementById("ip-location-banner").textContent = "Could not determine IP/location.";
+  });
+</script>
+
+		    	</section>
+      <footer>
+        <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
+        <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+  
+
+</div>
+  </body>
+</html>

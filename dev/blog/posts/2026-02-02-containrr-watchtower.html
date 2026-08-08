@@ -1,0 +1,61 @@
+<br>
+<br>
+<title>Why containrrr/watchtower is no longer my go-to Docker auto-update tool</title>
+<p>
+This is mostly a note to myself (and maybe helpful for others running Docker homelabs or self-hosted stacks) — a quick update about the state of the popular Watchtower container auto-updater and why you might want to use a fork instead.
+</p>
+<p>
+For years, the `containrrr/watchtower` image has been the go-to way to automatically update running Docker containers whenever new base images are pushed to a registry. It watches your containers via the Docker socket and, when it detects a new image, pulls it and restarts the container with the updated image — a handy set-and-forget solution.
+</p>
+<p>
+However, there’s an important recent change: the original **containrrr/watchtower** project is now officially **no longer maintained**. The GitHub repository status and README make this clear, and the lack of recent commits has left many users concerned about the future of the project. 
+</p>
+<p>
+Modern versions of Docker (such as Docker **29+**) expose a newer API, and the abandoned containrrr/watchtower simply doesn’t handle that properly. Users have reported errors where it detects an old API version and fails, meaning it won’t work “out of the box” with current Docker releases. 
+</p>
+<p>
+That’s where **nickfedor/watchtower** comes in — a **community-maintained fork** that’s actively updated and compatible with newer Docker API versions. This replacement image receives regular updates on Docker Hub and tags, and its documentation shows it supports all of the same basic use cases (plus newer features and fixes).
+</p>
+<p>
+In practical terms, switching is usually as simple as replacing the image name in your Docker Compose or `docker run` command from:
+
+  <div style="margin-left: 30px;">
+  <br>
+  <code>containrrr/watchtower</code>
+  <br>
+  to
+  <br>
+  <code>nickfedor/watchtower</code>.
+
+  </div>
+</p>
+<p>
+If you’re still running `containrrr/watchtower` today, you might find it stops working or fails silently once your Docker engine updates beyond the API versions it supports. The community fork keeps pace with ongoing Docker releases, making it a more reliable choice for long-term unattended container updates.
+</p>
+<p>
+So while Watchtower itself isn’t dead in spirit, the **original project is effectively archived**, and **nickfedor/watchtower** is now the maintained, Docker-API-friendly version most people should be using.
+</p>
+
+<p>
+<strong>Example: running Watchtower with Docker</strong>
+</p>
+<p>
+If you’re switching to the maintained fork, adding Watchtower is straightforward with a simple <code>docker run</code> command:
+</p>
+<p>
+<pre><code>docker run -d \
+  --name watchtower \
+  --restart unless-stopped \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  -e WATCHTOWER_CLEANUP=true \
+  -e WATCHTOWER_POLL_INTERVAL=300 \
+  nickfedor/watchtower
+</code></pre>
+</p>
+<p>
+This runs Watchtower in the background, grants it access to the Docker API via the socket, and checks for updated images every five minutes. When a newer image is found, the container is automatically updated and the old image is cleaned up.
+</p>
+<p>
+As with any container that mounts the Docker socket, this should only be used on systems you trust, but for homelabs and self-hosted environments it remains a practical and low-maintenance way to keep containers up to date.
+</p>
+

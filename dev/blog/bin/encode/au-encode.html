@@ -1,0 +1,95 @@
+
+<html data-lt-installed="true"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"><title>urlencode - urldecode | encodeURIComponent - decodeURIComponent | encodeURI - decodeURI | escape - unescape</title>
+
+<meta name="description" content="SNOW URL-encoder">
+
+<style>
+* { -moz-box-sizing: border-box; -webkit-box-sizing: border-box; box-sizing: border-box; }
+body { margin:40px; background-color:#FFF; font-family:arial; font-size:14px; }
+#container { width:800px; background-color:#FFF; text-align:center; -moz-border-radius:10px; margin-left: auto; margin-right: auto;}
+.results h3 { margin:0; padding:0; padding-top:15px; }
+.results textarea { border:1px solid #CCC; background-color:#FFF; padding:5px 10px; min-height:15px; width:100% }
+#decode { visibility:hide; display:none; }
+#switcher { font-size:28px; font-weight:bold; margin-bottom:30px;}
+#switcher div { display:inline; background-color:#FFF; padding:5px 10px; -moz-border-radius:10px; margin-right:10px;}
+#sel {visibility: hidden;}
+#encodeURIComponent {text-align: center;}
+</style>
+
+<script>
+var clearThis = 0;
+</script>
+
+</head><body>
+
+
+<script>
+function encode(text) {
+   if (document.getElementById('which_urlencode').checked == true) {
+      if (text.includes('.au')) { 
+          var domain = text.split(".au", 1);
+          var domain = domain + ".au";
+      } else {
+          
+          var domain = text.split(".com", 1);
+          var domain = domain + ".com";
+      };
+      text = text.replace(domain, "");
+      text = encodeURIComponent(text);
+      text = domain + "/nav_to.do?uri=" + text
+      document.getElementById('encodeURIComponent').innerHTML = (text);
+
+   }
+   else {
+      document.getElementById('decodeURIComponent').innerHTML = decodeURIComponent(text); 
+   }
+}
+function urlencode (str) {
+
+    return encodeURIComponent(str).replace(/!/g, '%21').replace(/'/g, '%27').replace(/\(/g, '%28').replace(/\)/g, '%29').replace(/\*/g, '%2A').replace(/%20/g, '+');
+
+}
+function urldecode (str) {
+    return decodeURIComponent((str+'').replace(/\+/g, '%20'));
+}
+function switchit() {
+   if (document.getElementById('which_urlencode').checked == true) {
+      document.getElementById('encode').style.display = 'block';
+      document.getElementById('encode').style.visibility = 'visible';      
+      document.getElementById('decode').style.display = 'none';
+      document.getElementById('decode').style.visibility = 'hidden'; 
+      encode(document.getElementById('text').value);           
+   }
+   else {
+      document.getElementById('decode').style.display = 'block';
+      document.getElementById('decode').style.visibility = 'visible';      
+      document.getElementById('encode').style.display = 'none';
+      document.getElementById('encode').style.visibility = 'hidden';               
+      encode(document.getElementById('text').value);           
+   }
+}
+</script>
+
+<div id="container">
+
+<div style="font-size:24px; font-weight:bold; padding-bottom:20px; padding-top:8px">SNOW URL-encoder</div>
+
+<p>Paste permalink below</p>
+
+<lt-mirror contenteditable="false" style="display: none;"><lt-highlighter contenteditable="false" style="display: none;"><lt-div spellcheck="false" class="lt-highlighter__wrapper" style="width: 462.667px !important; height: 67.3333px !important; transform: none !important; transform-origin: 233.333px 35.6667px !important; zoom: 1 !important; margin-top: 2px !important; margin-left: 148.667px !important;"><lt-div class="lt-highlighter__scroll-element" style="top: 0px !important; left: 0px !important; width: 462.667px !important; height: 67px !important;"></lt-div></lt-div></lt-highlighter><lt-div spellcheck="false" class="lt-mirror__wrapper notranslate" data-lt-scroll-top="0" data-lt-scroll-left="0" data-lt-scroll-top-scaled="0" data-lt-scroll-left-scaled="0" data-lt-scroll-top-scaled-and-zoomed="0" data-lt-scroll-left-scaled-and-zoomed="0" style="border: 2px solid rgb(153, 153, 153) !important; border-radius: 0px !important; direction: ltr !important; font: 400 13.3333px monospace !important; font-feature-settings: normal !important; font-kerning: auto !important; font-synthesis: weight style small-caps !important; hyphens: manual !important; letter-spacing: normal !important; line-break: auto !important; margin: 0px 0px 0px 146.667px !important; padding: 3px !important; text-align: start !important; text-decoration: none solid rgb(0, 0, 0) !important; text-indent: 0px !important; text-rendering: auto !important; text-transform: none !important; transform: none !important; transform-origin: 233.333px 35.6667px !important; unicode-bidi: normal !important; white-space: pre-wrap !important; word-spacing: 0px !important; overflow-wrap: break-word !important; writing-mode: horizontal-tb !important; zoom: 1 !important; -webkit-locale: auto !important; -webkit-rtl-ordering: logical !important; width: 456.667px !important; height: 61.3333px !important;"><lt-div class="lt-mirror__canvas" style="margin-top: 0px !important; margin-left: 0px !important; width: 456.667px !important; height: 61px !important;"></lt-div></lt-div></lt-mirror><textarea rows="4" cols="60" id="text" style="border:2px solid #999; padding:3px; font-family:monospace" onkeyup="encode(this.value)" data-lt-tmp-id="lt-127769" spellcheck="false" data-gramm="false"></textarea><br><br>
+
+<div id="switcher"><div id="sel"><input type="radio" id="which_urlencode" name="which" value="urlencode" checked="" onchange="switchit()"> URL-encode</div>
+
+<div id="encode" class="results">
+
+<p> </p>
+   <lt-mirror contenteditable="false" style="display: none;"><lt-highlighter contenteditable="false" style="display: none;"><lt-div spellcheck="false" class="lt-highlighter__wrapper" style="width: 758px !important; height: 40.6667px !important; transform: none !important; transform-origin: 380px 21.3333px !important; zoom: 1 !important; margin-top: 1px !important; margin-left: 1px !important;"><lt-div class="lt-highlighter__scroll-element" style="top: 0px !important; left: 0px !important; width: 758px !important; height: 40.6667px !important;"><canvas class="lt-highlighter__canvas" width="171" height="16" style="display: none; top: 5px !important; left: 9px !important;"></canvas></lt-div></lt-div></lt-highlighter><lt-div spellcheck="false" class="lt-mirror__wrapper notranslate" data-lt-scroll-top="0" data-lt-scroll-left="0" data-lt-scroll-top-scaled="0" data-lt-scroll-left-scaled="0" data-lt-scroll-top-scaled-and-zoomed="0" data-lt-scroll-left-scaled-and-zoomed="0" style="border: 1px solid rgb(204, 204, 204) !important; border-radius: 0px !important; direction: ltr !important; font: 400 13.3333px monospace !important; font-feature-settings: normal !important; font-kerning: auto !important; font-synthesis: weight style small-caps !important; hyphens: manual !important; letter-spacing: normal !important; line-break: auto !important; margin: 0px !important; padding: 5px 10px !important; text-align: start !important; text-decoration: none solid rgb(0, 0, 0) !important; text-indent: 0px !important; text-rendering: auto !important; text-transform: none !important; transform: none !important; transform-origin: 380px 21.3333px !important; unicode-bidi: normal !important; white-space: pre-wrap !important; word-spacing: 0px !important; overflow-wrap: break-word !important; writing-mode: horizontal-tb !important; zoom: 1 !important; -webkit-locale: auto !important; -webkit-rtl-ordering: logical !important; width: 738px !important; height: 30.6667px !important;"><lt-div class="lt-mirror__canvas" style="margin-top: 0px !important; margin-left: 0px !important; width: 738px !important; height: 31px !important;"></lt-div></lt-div></lt-mirror><textarea id="encodeURIComponent" data-lt-tmp-id="lt-458799" spellcheck="false" data-gramm="false"></textarea>
+
+</div>
+
+
+
+
+</div>
+
+</html>

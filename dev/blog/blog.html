@@ -1,0 +1,335 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Chris Bawden</title>
+    <link rel="stylesheet" href="/stylesheets/styles.css">
+    <link rel="stylesheet" href="/stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+      /* Search bar lives inside the content section so it won't overlap the sidebar */
+      .blog-search-wrap {
+        display: flex;
+        justify-content: center;
+        padding: 12px 16px 0 16px;
+      }
+      #post-search {
+        width: 100%;
+        max-width: 880px;     /* keep it neat */
+        padding: 10px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 16px;
+      }
+
+      /* Year heading + centred vertical separator */
+      .year-heading {
+        text-align: center;
+        margin: 28px 0 10px 0;
+      }
+      .year-separator {
+        width: 2px;
+        height: 40px;
+        background: #cfcfcf;
+        margin: 12px auto 6px auto;
+      }
+
+      /* Post blocks */
+      details.post { margin: 6px 0; }
+      details.post > summary { cursor: pointer; list-style: none; }
+      details.post > summary::-webkit-details-marker { display: none; }
+    </style>
+
+    <script>
+    // Open parent <details> for deep links like #my-post
+    (function() {
+      function openDetailsForHashTarget() {
+        if (!window.location.hash) return;
+        const targetId = window.location.hash.slice(1);
+        const target = document.getElementById(targetId);
+        if (target) {
+          let parent = target.parentElement, opened = false;
+          while (parent) {
+            if (parent.tagName && parent.tagName.toLowerCase() === "details") {
+              parent.open = true; opened = true;
+            }
+            parent = parent.parentElement;
+          }
+          if (opened) setTimeout(() => target.scrollIntoView({behavior: "smooth", block: "center"}), 100);
+        }
+      }
+      document.addEventListener("DOMContentLoaded", function() {
+        let tries = 0;
+        function tryOpen() {
+          openDetailsForHashTarget(); tries++;
+          if (tries < 20 && window.location.hash && !document.getElementById(window.location.hash.slice(1))) {
+            setTimeout(tryOpen, 200);
+          }
+        }
+        tryOpen();
+      });
+      window.addEventListener("hashchange", openDetailsForHashTarget);
+    })();
+    </script>
+  </head>
+
+  <body>
+    <div class="wrapper">
+
+      <div id="sidebar-placeholder"></div>
+      <script>
+        fetch('/sidebar.html')
+          .then(res => res.text())
+          .then(html => {
+            const container = document.getElementById('sidebar-placeholder');
+            container.innerHTML = html;
+            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+            const links = container.querySelectorAll('#main-menu a');
+            links.forEach(link => {
+              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+              if (href === currentPath) link.style.display = 'none';
+            });
+          });
+      </script>
+
+      <section id="blog-posts" style="padding-left:20px;">
+        <!-- Search inside the content column so it doesn't cross the sidebar -->
+        <div class="blog-search-wrap">
+          <input id="post-search" type="search" placeholder="Search posts…">
+        </div>
+        <!-- Blog posts will be dynamically loaded below -->
+      </section>
+
+      <script>
+        // ===== CONFIG =====
+        const OWNER    = "chrisjbawden";
+        const REPO     = "chrisjbawden.github.io";
+        const BRANCHES = ["main", "master"];   // try main then master
+        const POSTS_DIR = "blog/posts";        // repo path to HTML posts
+
+        // ===== Helpers =====
+        const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
+
+        const rawBaseFor = (branch, dir) =>
+          `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(branch)}/${dir.replace(/\/+$/,'')}/`;
+
+        // List .html files in POSTS_DIR from the repo (no Pages involved)
+        async function listPostFiles() {
+          const enc = encodePath(POSTS_DIR);
+          for (const branch of BRANCHES) {
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${enc}?ref=${encodeURIComponent(branch)}`;
+            console.debug("List posts URL:", url);
+            const res = await fetch(url);
+            if (res.ok) {
+              const items = await res.json();
+              return items
+                .filter(x => x.type === "file" && /\.html?$/i.test(x.name) && x.name.toLowerCase() !== "index.html")
+                .map(x => ({
+                  name: x.name,
+                  rawUrl: x.download_url,
+                  branch,
+                  dirRawBase: rawBaseFor(branch, POSTS_DIR)
+                }));
+            }
+          }
+          return [];
+        }
+
+        // Parse date from filename prefix "YYYY-MM-DD-..." (for sorting only)
+        function parseDateFromFilename(name) {
+          const m = name.match(/^(\d{4})-(\d{2})-(\d{2})[-_ ]/);
+          if (!m) return null;
+          const [ , y, mo, d ] = m;
+          const iso = `${y}-${mo}-${d}`;
+          const ts = Date.parse(iso);
+          if (isNaN(ts)) return null;
+          return { iso, year: y, ts };
+        }
+
+        // Strip a leading date pattern from a string title
+        function stripLeadingDate(s) {
+          return s.replace(/^\s*\d{4}-\d{2}-\d{2}[-_ ]*\s*/,'');
+        }
+
+        // Rewrite relative src/href inside the HTML to the raw repo base, so images/CSS in posts work
+        function rewriteRelativeUrls(html, base) {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          const fixUrl = (u) => {
+            if (!u) return u;
+            if (/^[a-z]+:\/\//i.test(u) || u.startsWith("data:") || u.startsWith("mailto:") || u.startsWith("#")) return u;
+            if (u.startsWith("/")) return u; // keep site-root links
+            return base + u.replace(/^\.\/+/, "");
+          };
+          doc.querySelectorAll("[src]").forEach(el => el.setAttribute("src", fixUrl(el.getAttribute("src"))));
+          doc.querySelectorAll("link[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
+          doc.querySelectorAll("a[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
+          return doc.body ? doc.body.innerHTML : html;
+        }
+
+        async function fetchPostMeta(file) {
+          try {
+            const res = await fetch(file.rawUrl);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            const htmlText = await res.text();
+
+            const doc = new DOMParser().parseFromString(htmlText, "text/html");
+            let title =
+              (doc.querySelector("h1") && doc.querySelector("h1").textContent.trim()) ||
+              (doc.querySelector("title") && doc.querySelector("title").textContent.trim()) ||
+              file.name.replace(/\.html?$/i, "");
+
+            // Remove any leading date from the title we display
+            title = stripLeadingDate(title);
+
+            const cleaned = rewriteRelativeUrls(htmlText, file.dirRawBase);
+            const date = parseDateFromFilename(file.name);
+
+            // Plain text (for searching)
+            const textContent = (doc.body ? doc.body.textContent : "")
+              .replace(/\s+/g, " ").trim();
+
+            return { ...file, title, date, html: cleaned, text: textContent };
+          } catch (e) {
+            console.warn("Failed to fetch post:", file.name, e);
+            const date = parseDateFromFilename(file.name);
+            return { ...file, title: stripLeadingDate(file.name.replace(/\.html?$/i, "")), date, html: `<p>Failed to load post content.</p>`, text: "" };
+          }
+        }
+
+        function renderPosts(posts) {
+          const container = document.getElementById("blog-posts");
+
+          // Clear existing (keep the search bar div)
+          const searchWrap = container.querySelector(".blog-search-wrap");
+          container.innerHTML = "";
+          if (searchWrap) container.appendChild(searchWrap);
+
+          if (!posts.length) {
+            const p = document.createElement("p");
+            p.textContent = "No posts found yet. Add .html files under /blog/posts in the repo.";
+            container.appendChild(p);
+            return;
+          }
+
+          // Group by year
+          const groups = {};
+          for (const p of posts) {
+            const y = (p.date && p.date.year) || "Unsorted";
+            if (!groups[y]) groups[y] = [];
+            groups[y].push(p);
+          }
+
+          const years = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+          years.forEach((year, idx) => {
+            // Vertical separator above each year except the first
+            if (idx > 0) {
+              const sep = document.createElement("div");
+              sep.className = "year-separator";
+              container.appendChild(sep);
+            }
+
+            // Year heading
+            const h = document.createElement("h3");
+            h.className = "year-heading";
+            h.textContent = year;
+            container.appendChild(h);
+
+            // Sort posts in this year: newest first (date), then name
+            const sorted = groups[year].sort((a,b) => {
+              const at = a.date?.ts ?? 0, bt = b.date?.ts ?? 0;
+              if (bt !== at) return bt - at;
+              return b.name.localeCompare(a.name);
+            });
+
+            for (const post of sorted) {
+              const details = document.createElement("details");
+              details.className = "post";
+              details.dataset.title = post.title.toLowerCase();
+              details.dataset.text  = (post.text || "").toLowerCase();
+              details.dataset.year  = year;
+
+              const summary = document.createElement("summary");
+              summary.textContent = post.title; // title only — no date
+              details.appendChild(summary);
+
+              const inner = document.createElement("div");
+              inner.className = "post-content";
+
+              // Stable id for deep links
+              const anchorId = post.name.replace(/\.[^.]+$/, "").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+              const anchor = document.createElement("a");
+              anchor.id = anchorId;
+              anchor.style.display = "block";
+              anchor.style.position = "relative";
+              anchor.style.top = "-60px";
+              inner.appendChild(anchor);
+
+              inner.insertAdjacentHTML("beforeend", post.html);
+              details.appendChild(inner);
+              container.appendChild(details);
+            }
+          });
+        }
+
+        // Live search: filter posts, hide empty years & separators
+        function setupSearch() {
+          const input = document.getElementById("post-search");
+          const container = document.getElementById("blog-posts");
+
+          const applyFilter = () => {
+            const q = input.value.trim().toLowerCase();
+            const posts = Array.from(container.querySelectorAll("details.post"));
+            const yearHeadings = Array.from(container.querySelectorAll(".year-heading"));
+            const separators   = Array.from(container.querySelectorAll(".year-separator"));
+
+            posts.forEach(p => {
+              const hay = p.dataset.title + " " + p.dataset.text;
+              p.style.display = hay.includes(q) ? "" : "none";
+            });
+
+            yearHeadings.forEach(h => {
+              const year = h.textContent.trim();
+              const hasVisible = posts.some(p => p.dataset.year === year && p.style.display !== "none");
+              h.style.display = hasVisible ? "" : "none";
+            });
+
+            separators.forEach(sep => {
+              const next = sep.nextElementSibling; // year heading
+              const show = next && next.classList.contains("year-heading") && next.style.display !== "none";
+              sep.style.display = show ? "" : "none";
+            });
+          };
+
+          input.addEventListener("input", applyFilter);
+        }
+
+        (async () => {
+          const files = await listPostFiles();
+          const metas = await Promise.all(files.map(fetchPostMeta));
+          renderPosts(metas);
+          setupSearch();
+
+          // Re-run hash opener once content exists
+          if (window.location.hash) window.dispatchEvent(new Event("hashchange"));
+        })();
+      </script>
+
+      <footer>
+        <p><span>Projects maintained by </span>
+          <script>
+            var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+            var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);
+            document.write(m);
+          </script>
+          <noscript>You must enable JavaScript to see this text.</noscript>
+        </p>
+        <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+      </footer>
+    </div>
+
+    <script src="/javascripts/scale.fix.js"></script>
+  </body>
+</html>

@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chris Bawden - Portfolio</title>
+  <link rel="stylesheet" href="/stylesheets/styles.css">
+
+  <!-- PDF.js (core) for thumbnail rendering -->
+  <script src="https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
+
+  <style>
+    /* ---------------- Lightbox ---------------- */
+    .lightbox {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.75);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox-content {
+      position: relative;
+      width: min(95vw, 1200px);
+      height: min(90vh, 900px);
+      background: #111;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+    .lightbox iframe, .lightbox img {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+      background: #222;
+      object-fit: contain;
+    }
+    .lightbox-close {
+      position: absolute;
+      top: 8px; right: 10px;
+      font-size: 28px;
+      line-height: 1;
+      background: #000;
+      color: #fff;
+      border: 1px solid #333;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      z-index: 1;
+    }
+
+    /* ---------------- Thumbnails ---------------- */
+    .thumbnail { display: inline-flex; flex-direction: column; align-items: center; margin: 10px; }
+    .thumbnail span { margin: 6px 0; text-align: center; display: block; }
+    .thumbnail-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+    .category-title { text-align: center; }
+
+    /* ---------------- Content pane + Notice gate ----------------
+       The key fix: gate overlays ONLY the right content pane (not the whole page).
+    */
+    #content-pane {
+      position: relative;
+      min-height: 60vh; /* enough height for the gate to feel centred */
+    }
+
+    #notice-gate {
+      position: absolute;
+      inset: 0;
+      z-index: 50;          /* above content-pane thumbnails, below lightbox */
+      display: none;
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 12px;
+    }
+    #notice-gate.open {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .notice-card {
+      width: min(720px, 92%);
+      background: rgba(255,255,255,0.75);
+      border: 1px solid rgba(0,0,0,0.10);
+      border-radius: 16px;
+      padding: 28px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.12);
+      color: #111;
+      text-align: center;
+    }
+    .notice-quote {
+      font-size: clamp(18px, 2.2vw, 26px);
+      line-height: 1.35;
+      margin: 0 0 14px 0;
+    }
+    .notice-attrib {
+      margin: 0 0 22px 0;
+      opacity: 0.7;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn-modern {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.08s ease, filter 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      user-select: none;
+      background: linear-gradient(135deg, #2563eb, #6366f1);
+      color: #fff;
+      box-shadow: 0 10px 28px rgba(37,99,235,0.22);
+    }
+    .btn-modern:active { transform: translateY(1px); }
+    .btn-icon { width: 18px; height: 18px; display: inline-block; }
+  </style>
+</head>
+
+<body>
+  <div class="wrapper">
+    <div id="sidebar-placeholder"></div>
+
+    <script>
+      // Load sidebar and hide link to current page
+      fetch('/sidebar.html')
+        .then(res => res.text())
+        .then(html => {
+          const container = document.getElementById('sidebar-placeholder');
+          container.innerHTML = html;
+
+          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+          const links = container.querySelectorAll('#main-menu a');
+          links.forEach(link => {
+            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+            if (href === currentPath) {
+              link.style.display = 'none';
+            }
+          });
+        });
+    </script>
+
+    <section style="padding-top:10%;">
+      <!-- Right content pane (gate overlays ONLY this element) -->
+      <div id="content-pane">
+        <!-- Notice Gate -->
+        <div id="notice-gate" class="open" aria-hidden="false">
+          <div class="notice-card" role="dialog" aria-modal="true" aria-labelledby="notice-title">
+            <p class="notice-quote" id="notice-title">
+              “Wisdom is not a product of schooling but of the lifelong attempt to acquire it.”
+            </p>
+            <p class="notice-attrib">— Albert Einstein (attributed)</p>
+
+            <button id="agree-btn" type="button" class="btn-modern">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              I agree
+            </button>
+          </div>
+        </div>
+
+        <!-- Actual portfolio content -->
+        <div id="pdf-container"></div>
+      </div>
+
+      <!-- Lightbox modal -->
+      <div id="lightbox" class="lightbox" aria-hidden="true">
+        <div class="lightbox-content">
+          <button type="button" class="lightbox-close" id="lightbox-close" aria-label="Close">×</button>
+          <iframe id="lightbox-frame" style="display:none;"></iframe>
+          <img id="lightbox-image" alt="" style="display:none;">
+        </div>
+      </div>
+
+      <script>
+        // ===== CONFIG =====
+        const OWNER  = "chrisjbawden";
+        const REPO   = "chrisjbawden.github.io";
+        const BRANCHES = ["main", "master"];
+
+        // Folders
+        const RESUME_DIR = "portfolio/resume";
+        const CERT_DIR   = "portfolio/certificates";
+        const BADGE_DIR  = "portfolio/badges";
+        const TERT_DIR   = "portfolio/tertiary";
+
+        const PDF_EXT = new Set([".pdf"]);
+        const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+
+        // PDF.js worker
+        const pdfjsLib = window['pdfjs-dist/build/pdf'];
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+
+        const getExt = (name) => {
+          const i = name.lastIndexOf(".");
+          return i === -1 ? "" : name.slice(i).toLowerCase();
+        };
+
+        const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
+
+        const showMissingDirNote = (path, status) => {
+          const pdfContainer = document.getElementById('pdf-container');
+          const note = document.createElement('p');
+          note.textContent = `Couldn’t load “/${path}” (HTTP ${status}). Check the folder name/branch exists in the repo.`;
+          pdfContainer.appendChild(note);
+        };
+
+        const listDir = async (path) => {
+          const encPath = encodePath(path);
+
+          for (const branch of BRANCHES) {
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encPath}?ref=${encodeURIComponent(branch)}`;
+            console.debug("GitHub API URL:", url);
+
+            const res = await fetch(url);
+            if (res.ok) {
+              const items = await res.json();
+              return items
+                .filter(x => x.type === "file")
+                .map(x => ({
+                  name: x.name,
+                  rawUrl: x.download_url,
+                  _ext: getExt(x.name)
+                }));
+            } else {
+              console.warn(`listDir: ${path} on branch "${branch}" -> ${res.status}`);
+              if (branch === BRANCHES[BRANCHES.length - 1]) {
+                showMissingDirNote(path, res.status);
+              }
+            }
+          }
+          return [];
+        };
+
+        // ------- Lightbox logic -------
+        const lightbox = document.getElementById('lightbox');
+        const lbClose = document.getElementById('lightbox-close');
+        const lbFrame = document.getElementById('lightbox-frame');
+        const lbImage = document.getElementById('lightbox-image');
+
+        const openLightboxPDF = (pdfUrl) => {
+          const viewer = "https://mozilla.github.io/pdf.js/web/viewer.html?file=" + encodeURIComponent(pdfUrl);
+          lbImage.style.display = "none";
+          lbFrame.style.display = "block";
+          lbFrame.src = viewer;
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+        };
+
+        const openLightboxImage = (imgUrl, altText = "") => {
+          lbFrame.style.display = "none";
+          lbImage.style.display = "block";
+          lbImage.src = imgUrl;
+          lbImage.alt = altText;
+          lightbox.classList.add('open');
+          lightbox.setAttribute('aria-hidden', 'false');
+        };
+
+        const closeLightbox = () => {
+          lightbox.classList.remove('open');
+          lightbox.setAttribute('aria-hidden', 'true');
+          lbFrame.src = "about:blank";
+          lbImage.src = "";
+          lbImage.alt = "";
+        };
+
+        lbClose.addEventListener('click', closeLightbox);
+        lightbox.addEventListener('click', (e) => {
+          if (e.target === lightbox) closeLightbox();
+        });
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && lightbox.classList.contains('open')) closeLightbox();
+        });
+
+        // ------- Rendering (preserved) -------
+        const generateThumbnail = (file, container) => {
+          const isBadge = file.category === "Badges";
+          const isPdf = PDF_EXT.has(file._ext);
+          const isImage = IMG_EXT.has(file._ext);
+
+          if (isBadge && isImage) {
+            // Badges: image only, not clickable
+            const div = document.createElement('div');
+            div.classList.add('thumbnail');
+
+            const img = document.createElement('img');
+            img.src = file.rawUrl;
+            img.alt = file.name;
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.loading = 'lazy';
+
+            div.appendChild(img);
+            container.appendChild(div);
+            return;
+          }
+
+          if (isPdf) {
+            const loadingTask = pdfjsLib.getDocument(file.rawUrl);
+            loadingTask.promise.then(function(pdf) {
+              pdf.getPage(1).then(function(page) {
+                const scale = 0.3;
+                const viewport = page.getViewport({ scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+
+                const renderContext = { canvasContext: context, viewport };
+                page.render(renderContext).promise.then(function() {
+                  const div = document.createElement('div');
+                  div.classList.add('thumbnail');
+
+                  const thumb = document.createElement('a');
+                  thumb.href = "javascript:void(0)";
+                  thumb.addEventListener('click', () => openLightboxPDF(file.rawUrl));
+                  thumb.appendChild(canvas);
+
+                  const text = document.createElement('span');
+                  text.innerText = file.name.replace(/\.[^.]+$/, "");
+
+                  div.appendChild(text);
+                  div.appendChild(thumb);
+                  container.appendChild(div);
+                });
+              });
+            }).catch(() => {
+              const div = document.createElement('div');
+              div.classList.add('thumbnail');
+
+              const a = document.createElement('a');
+              a.href = "javascript:void(0)";
+              a.innerText = file.name.replace(/\.[^.]+$/, "") + " (Open)";
+              a.addEventListener('click', () => openLightboxPDF(file.rawUrl));
+
+              div.appendChild(a);
+              container.appendChild(div);
+            });
+            return;
+          }
+
+          if (isImage) {
+            const div = document.createElement('div');
+            div.classList.add('thumbnail');
+
+            const img = document.createElement('img');
+            img.src = file.rawUrl;
+            img.alt = file.name.replace(/\.[^.]+$/, "");
+            img.style.width = '150px';
+            img.style.height = '150px';
+            img.loading = 'lazy';
+            img.style.cursor = 'zoom-in';
+            img.addEventListener('click', () => openLightboxImage(file.rawUrl, img.alt));
+
+            const text = document.createElement('span');
+            text.innerText = file.name.replace(/\.[^.]+$/, "");
+
+            div.appendChild(text);
+            div.appendChild(img);
+            container.appendChild(div);
+            return;
+          }
+
+          const div = document.createElement('div');
+          div.classList.add('thumbnail');
+
+          const link = document.createElement('a');
+          link.href = file.rawUrl;
+          link.target = '_blank';
+          link.rel = 'noopener';
+          link.innerText = file.name.replace(/\.[^.]+$/, "");
+
+          div.appendChild(link);
+          container.appendChild(div);
+        };
+
+        // ------- Gate logic: don’t load content until "I agree" -------
+        const gate = document.getElementById('notice-gate');
+        const agreeBtn = document.getElementById('agree-btn');
+
+        const openGate = () => {
+          gate.classList.add('open');
+          gate.setAttribute('aria-hidden', 'false');
+          agreeBtn.focus();
+        };
+
+        const closeGate = () => {
+          gate.classList.remove('open');
+          gate.setAttribute('aria-hidden', 'true');
+        };
+
+        openGate();
+
+        let loadedOnce = false;
+
+        const loadPortfolioContent = async () => {
+          if (loadedOnce) return;
+          loadedOnce = true;
+
+          const pdfContainer = document.getElementById('pdf-container');
+
+          const [resumeAll, tertiary, badges, certs] = await Promise.all([
+            listDir(RESUME_DIR),
+            listDir(TERT_DIR),
+            listDir(BADGE_DIR),
+            listDir(CERT_DIR)
+          ]);
+
+          // ---- Resume: PDF-only + hide section if none ----
+          const resume = resumeAll.filter(f => PDF_EXT.has(f._ext));
+
+          const files = [
+            ...resume.map(f => ({ ...f, category: "Resume" })),      // only PDFs
+            ...tertiary.map(f => ({ ...f, category: "Tertiary" })),
+            ...badges.map(f => ({ ...f, category: "Badges" })),
+            ...certs.map(f => ({ ...f, category: "Certificates" }))
+          ];
+
+          const orderedCategories = ["Resume", "Tertiary", "Certificates", "Badges"];
+          for (const cat of orderedCategories) {
+            const group = files.filter(f => f.category === cat);
+            if (!group.length) continue;
+
+            const categoryDiv = document.createElement('div');
+            categoryDiv.classList.add('category');
+
+            const title = document.createElement('h3');
+            title.classList.add('category-title');
+            title.innerText = cat;
+            categoryDiv.appendChild(title);
+
+            const container = document.createElement('div');
+            container.classList.add('thumbnail-container');
+            categoryDiv.appendChild(container);
+
+            group.forEach(file => generateThumbnail(file, container));
+            pdfContainer.appendChild(categoryDiv);
+          }
+
+          if (!files.length) {
+            const note = document.createElement('p');
+            note.textContent = "No items found yet. Add files to /portfolio/resume, /portfolio/tertiary, /portfolio/badges, or /portfolio/certificates.";
+            pdfContainer.appendChild(note);
+          }
+        };
+
+        agreeBtn.addEventListener('click', async () => {
+          closeGate();
+          await loadPortfolioContent();
+        });
+
+        // Keep gate as a true gate: Esc doesn’t dismiss it
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && gate.classList.contains('open')) {
+            e.preventDefault();
+          }
+        });
+      </script>
+    </section>
+
+    <footer>
+      <p><span>Projects maintained by </span>
+        <script>
+          var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";
+          var m=""; for(var i=0;i<s.length;i++) m+=String.fromCharCode(s.charCodeAt(i)-1);
+          document.write(m);
+        </script>
+        <noscript>You must enable JavaScript to see this text.</noscript>
+      </p>
+      <p><small>Hosted with GitHub Pages — Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
+    </footer>
+  </div>
+
+  <script src="/javascripts/scale.fix.js"></script>
+</body>
+</html>
