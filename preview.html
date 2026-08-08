@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Portfolio Dev Preview</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #fff;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: centre;
+      gap: 12px;
+      padding: 10px 14px;
+      background: #1b1b1b;
+      border-bottom: 1px solid #333;
+      flex-shrink: 0;
+    }
+
+    .toolbar strong {
+      margin-right: auto;
+    }
+
+    .toolbar button {
+      border: 1px solid #555;
+      background: #292929;
+      color: #fff;
+      padding: 7px 14px;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .toolbar button:hover {
+      background: #383838;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #aaa;
+    }
+
+    .preview {
+      flex: 1;
+      position: relative;
+    }
+
+    iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      background: white;
+    }
+
+    .error {
+      padding: 30px;
+      color: #ff8b8b;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="toolbar">
+    <strong>Portfolio Dev Preview</strong>
+
+    <span id="status" class="status">
+      Loading…
+    </span>
+
+    <button id="reloadButton" type="button">
+      Reload
+    </button>
+  </div>
+
+  <div class="preview">
+    <iframe
+      id="previewFrame"
+      title="Development Preview"
+      sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin"
+    ></iframe>
+  </div>
+
+  <script>
+    const CONFIG = {
+      owner: "chrisjbawden",
+      repo: "chrisjbawden.github.io",
+      branch: "main",
+      directory: "dev",
+      entryFile: "index.html"
+    };
+
+    const frame = document.getElementById("previewFrame");
+    const status = document.getElementById("status");
+    const reloadButton = document.getElementById("reloadButton");
+
+    function getRawBaseUrl() {
+      return [
+        "https://raw.githubusercontent.com",
+        CONFIG.owner,
+        CONFIG.repo,
+        CONFIG.branch,
+        CONFIG.directory
+      ].join("/");
+    }
+
+    function getEntryUrl() {
+      return `${getRawBaseUrl()}/${CONFIG.entryFile}`;
+    }
+
+    function isAbsoluteUrl(value) {
+      return (
+        /^(?:[a-z]+:)?\/\//i.test(value) ||
+        value.startsWith("data:") ||
+        value.startsWith("blob:") ||
+        value.startsWith("mailto:") ||
+        value.startsWith("tel:") ||
+        value.startsWith("#")
+      );
+    }
+
+    function resolveUrl(value) {
+      if (!value || isAbsoluteUrl(value)) {
+        return value;
+      }
+
+      const base = `${getRawBaseUrl()}/`;
+
+      try {
+        return new URL(value, base).href;
+      } catch (error) {
+        console.warn("Could not resolve URL:", value, error);
+        return value;
+      }
+    }
+
+    function rewriteAttributeUrls(documentRoot, selector, attribute) {
+      documentRoot.querySelectorAll(selector).forEach(element => {
+        const value = element.getAttribute(attribute);
+
+        if (!value) {
+          return;
+        }
+
+        element.setAttribute(attribute, resolveUrl(value));
+      });
+    }
+
+    function rewriteSrcset(documentRoot) {
+      documentRoot.querySelectorAll("[srcset]").forEach(element => {
+        const srcset = element.getAttribute("srcset");
+
+        if (!srcset) {
+          return;
+        }
+
+        const rewritten = srcset
+          .split(",")
+          .map(candidate => {
+            const parts = candidate.trim().split(/\s+/);
+            const url = parts.shift();
+
+            return [
+              resolveUrl(url),
+              ...parts
+            ].join(" ");
+          })
+          .join(", ");
+
+        element.setAttribute("srcset", rewritten);
+      });
+    }
+
+    function rewriteInlineStyles(documentRoot) {
+      documentRoot.querySelectorAll("[style]").forEach(element => {
+        const style = element.getAttribute("style");
+
+        if (!style) {
+          return;
+        }
+
+        const rewritten = style.replace(
+          /url\((['"]?)(.*?)\1\)/gi,
+          (match, quote, url) => {
+            if (isAbsoluteUrl(url)) {
+              return match;
+            }
+
+            return `url("${resolveUrl(url)}")`;
+          }
+        );
+
+        element.setAttribute("style", rewritten);
+      });
+    }
+
+    async function fetchAndRewriteStylesheets(documentRoot) {
+      const stylesheets = [
+        ...documentRoot.querySelectorAll(
+          'link[rel="stylesheet"][href]'
+        )
+      ];
+
+      await Promise.all(
+        stylesheets.map(async link => {
+          const originalHref = link.getAttribute("href");
+
+          if (!originalHref) {
+            return;
+          }
+
+          const stylesheetUrl = resolveUrl(originalHref);
+
+          try {
+            const response = await fetch(
+              `${stylesheetUrl}?preview=${Date.now()}`,
+              {
+                cache: "no-store"
+              }
+            );
+
+            if (!response.ok) {
+              throw new Error(
+                `HTTP ${response.status} for ${stylesheetUrl}`
+              );
+            }
+
+            let css = await response.text();
+
+            css = css.replace(
+              /url\((['"]?)(.*?)\1\)/gi,
+              (match, quote, assetUrl) => {
+                if (isAbsoluteUrl(assetUrl)) {
+                  return match;
+                }
+
+                try {
+                  const absoluteUrl = new URL(
+                    assetUrl,
+                    stylesheetUrl
+                  ).href;
+
+                  return `url("${absoluteUrl}")`;
+                } catch {
+                  return match;
+                }
+              }
+            );
+
+            css = css.replace(
+              /@import\s+(?:url\()?['"]([^'"]+)['"]\)?/gi,
+              (match, importUrl) => {
+                if (isAbsoluteUrl(importUrl)) {
+                  return match;
+                }
+
+                try {
+                  const absoluteUrl = new URL(
+                    importUrl,
+                    stylesheetUrl
+                  ).href;
+
+                  return `@import url("${absoluteUrl}")`;
+                } catch {
+                  return match;
+                }
+              }
+            );
+
+            const style = documentRoot.createElement("style");
+            style.textContent = css;
+
+            link.replaceWith(style);
+          } catch (error) {
+            console.warn(
+              "Could not inline stylesheet:",
+              stylesheetUrl,
+              error
+            );
+
+            link.href = stylesheetUrl;
+          }
+        })
+      );
+    }
+
+    function rewriteDocumentUrls(documentRoot) {
+      rewriteAttributeUrls(documentRoot, "[src]", "src");
+      rewriteAttributeUrls(documentRoot, "[href]", "href");
+      rewriteAttributeUrls(documentRoot, "[poster]", "poster");
+      rewriteAttributeUrls(documentRoot, "[action]", "action");
+
+      rewriteSrcset(documentRoot);
+      rewriteInlineStyles(documentRoot);
+    }
+
+    function injectBaseElement(documentRoot) {
+      let base = documentRoot.querySelector("base");
+
+      if (!base) {
+        base = documentRoot.createElement("base");
+        documentRoot.head.prepend(base);
+      }
+
+      base.href = `${getRawBaseUrl()}/`;
+    }
+
+    function injectPreviewScript(documentRoot) {
+      const script = documentRoot.createElement("script");
+
+      script.textContent = `
+        (() => {
+          const RAW_BASE = ${JSON.stringify(getRawBaseUrl() + "/")};
+
+          function resolvePreviewUrl(value) {
+            if (!value) {
+              return value;
+            }
+
+            if (
+              /^(?:[a-z]+:)?\\\\/\\\\//i.test(value) ||
+              value.startsWith("data:") ||
+              value.startsWith("blob:") ||
+              value.startsWith("mailto:") ||
+              value.startsWith("tel:") ||
+              value.startsWith("#")
+            ) {
+              return value;
+            }
+
+            try {
+              return new URL(value, RAW_BASE).href;
+            } catch {
+              return value;
+            }
+          }
+
+          document.addEventListener("click", event => {
+            const link = event.target.closest("a[href]");
+
+            if (!link) {
+              return;
+            }
+
+            const href = link.getAttribute("href");
+
+            if (!href || href.startsWith("#")) {
+              return;
+            }
+
+            link.href = resolvePreviewUrl(href);
+          });
+
+          const originalFetch = window.fetch;
+
+          window.fetch = function(resource, options) {
+            if (typeof resource === "string") {
+              resource = resolvePreviewUrl(resource);
+            }
+
+            return originalFetch.call(this, resource, options);
+          };
+        })();
+      `;
+
+      documentRoot.head.appendChild(script);
+    }
+
+    async function loadPreview() {
+      status.textContent = "Loading…";
+      reloadButton.disabled = true;
+
+      try {
+        const entryUrl = getEntryUrl();
+
+        const response = await fetch(
+          `${entryUrl}?preview=${Date.now()}`,
+          {
+            cache: "no-store"
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            [
+              `Unable to load ${CONFIG.directory}/${CONFIG.entryFile}.`,
+              "",
+              `HTTP status: ${response.status}`,
+              "",
+              "Make sure the following file exists:",
+              `${CONFIG.directory}/${CONFIG.entryFile}`
+            ].join("\\n")
+          );
+        }
+
+        const html = await response.text();
+
+        const parser = new DOMParser();
+        const documentRoot = parser.parseFromString(
+          html,
+          "text/html"
+        );
+
+        injectBaseElement(documentRoot);
+
+        await fetchAndRewriteStylesheets(documentRoot);
+
+        rewriteDocumentUrls(documentRoot);
+
+        injectPreviewScript(documentRoot);
+
+        const serialisedHtml =
+          "<!DOCTYPE html>\\n" +
+          documentRoot.documentElement.outerHTML;
+
+        frame.srcdoc = serialisedHtml;
+
+        status.textContent =
+          `${CONFIG.branch}/${CONFIG.directory}/${CONFIG.entryFile}`;
+      } catch (error) {
+        console.error(error);
+
+        status.textContent = "Error";
+
+        frame.srcdoc = `
+          <!DOCTYPE html>
+          <html>
+            <body
+              style="
+                margin: 0;
+                padding: 30px;
+                background: #111;
+                color: #ff8b8b;
+                font-family: monospace;
+                white-space: pre-wrap;
+              "
+            >${escapeHtml(error.message)}</body>
+          </html>
+        `;
+      } finally {
+        reloadButton.disabled = false;
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    reloadButton.addEventListener("click", loadPreview);
+
+    loadPreview();
+  </script>
+
+</body>
+</html>
