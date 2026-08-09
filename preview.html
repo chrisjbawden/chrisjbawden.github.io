@@ -135,6 +135,29 @@
     }
 
 
+    function injectPreviewContext(
+      documentRoot,
+      basePath
+    ) {
+      const script =
+        documentRoot
+          .createElement("script");
+
+      script.textContent = `
+        window.__DEV_PREVIEW__ = ${JSON.stringify({
+          basePath,
+          entryFile: CONFIG.entryFile,
+          rawRoot: RAW_ROOT
+        })};
+      `;
+
+      documentRoot.head.insertBefore(
+        script,
+        documentRoot.head.firstChild
+      );
+    }
+
+
     /*
      * ------------------------------------------------------------
      * Live-site link scrubbing
@@ -838,6 +861,12 @@
          */
         removeBaseElements(
           documentRoot
+        );
+
+
+        injectPreviewContext(
+          documentRoot,
+          currentPath
         );
 
 
