@@ -1,8 +1,11 @@
 document.addEventListener("DOMContentLoaded", async () => {
   const container = document.getElementById("blog-posts");
+  const previewRoot = window.__DEV_PREVIEW__?.rawRoot || "";
+  const resolveRepoUrl = (path) =>
+    previewRoot ? `${previewRoot}${path.replace(/^\/+/, "")}` : path;
 
   try {
-    const postFiles = await fetch('/blog/posts/index.json').then(res => res.json());
+    const postFiles = await fetch(resolveRepoUrl('/blog/posts/index.json')).then(res => res.json());
 
     // Sort by date descending
     postFiles.sort((a, b) => b.date.localeCompare(a.date));
@@ -34,7 +37,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
       // Posts for that year
       for (const post of postsByYear[year]) {
-        const path = `/blog/posts/${post.file}`;
+        const path = resolveRepoUrl(`/blog/posts/${post.file}`);
         const html = await fetch(path).then(res => {
           if (!res.ok) throw new Error(`Failed to fetch ${path}`);
           return res.text();

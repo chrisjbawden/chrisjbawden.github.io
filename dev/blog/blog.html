@@ -186,7 +186,11 @@
 
       <div id="sidebar-placeholder"></div>
       <script>
-        fetch('/sidebar.html')
+        const sidebarUrl = window.__DEV_PREVIEW__?.rawRoot
+          ? `${window.__DEV_PREVIEW__.rawRoot}sidebar.html`
+          : '/sidebar.html';
+
+        fetch(sidebarUrl)
           .then(res => res.text())
           .then(html => {
             const container = document.getElementById('sidebar-placeholder');
@@ -223,32 +227,108 @@
         // ===== CONFIG =====
         const OWNER    = "chrisjbawden";
         const REPO     = "chrisjbawden.github.io";
-        const BRANCHES = ["main", "master"];   // try main then master
+        const BRANCHES = ["main", "master"];   // kept as a fallback
         const POSTS_DIR = "blog/posts";        // repo path to HTML posts
+        const POSTS_MANIFEST = `${POSTS_DIR}/index.json`;
         const POSTS_BY_ID = new Map();
+        const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
+        const LIVE_SITE_ORIGINS = [
+          "https://chrisjbawden.github.io",
+          "http://chrisjbawden.github.io"
+        ];
 
         // ===== Helpers =====
         const encodePath = (p) => p.split("/").map(encodeURIComponent).join("/");
 
-        const rawBaseFor = (branch, dir) =>
-          `https://raw.githubusercontent.com/${OWNER}/${REPO}/${encodeURIComponent(branch)}/${dir.replace(/\/+$/,'')}/`;
+        function isExternalUrl(value) {
+          if (!value) return false;
+          return (
+            /^(?:[a-z]+:)?\/\//i.test(value) ||
+            value.startsWith("mailto:") ||
+            value.startsWith("tel:") ||
+            value.startsWith("data:") ||
+            value.startsWith("blob:") ||
+            value.startsWith("javascript:")
+          );
+        }
 
-        // List .html files in POSTS_DIR from the repo (no Pages involved)
+        function runtimeRootUrl() {
+          return PREVIEW_CONTEXT?.rawRoot || window.location.origin + "/";
+        }
+
+        function runtimeDirUrl(dir) {
+          const clean = dir.replace(/^\/+|\/+$/g, "");
+          return `${runtimeRootUrl()}${clean}/`;
+        }
+
+        function toRepoRootUrl(path) {
+          const clean = path.replace(/^\/+/, "");
+          return `${runtimeRootUrl()}${clean}`;
+        }
+
+        function scrubLiveSiteUrl(value) {
+          if (!value) return value;
+          if (value.startsWith("#")) return value;
+
+          if (value.startsWith("/")) {
+            return toRepoRootUrl(value);
+          }
+
+          for (const origin of LIVE_SITE_ORIGINS) {
+            if (value.startsWith(origin)) {
+              const cleaned = value.slice(origin.length).replace(/^\/+/, "");
+              return toRepoRootUrl(cleaned || "index.html");
+            }
+          }
+
+          return value;
+        }
+
+        async function fetchText(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+          return res.text();
+        }
+
+        async function fetchJson(url) {
+          const res = await fetch(url, { cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+          return res.json();
+        }
+
+        // List .html files in POSTS_DIR from a repo-local manifest first,
+        // then fall back to the GitHub API if the manifest is missing.
         async function listPostFiles() {
+          try {
+            const items = await fetchJson(toRepoRootUrl(POSTS_MANIFEST));
+
+            return items
+              .filter(x => x && /\.html?$/i.test(x.file) && x.file.toLowerCase() !== "index.html")
+              .map(x => ({
+                name: x.file,
+                file: x.file,
+                date: x.date || null,
+                rawUrl: toRepoRootUrl(`${POSTS_DIR}/${x.file}`),
+                dirBase: runtimeDirUrl(POSTS_DIR)
+              }));
+          } catch (manifestError) {
+            console.warn("Manifest-based post listing failed, falling back to GitHub API:", manifestError);
+          }
+
           const enc = encodePath(POSTS_DIR);
           for (const branch of BRANCHES) {
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${enc}?ref=${encodeURIComponent(branch)}`;
             console.debug("List posts URL:", url);
-            const res = await fetch(url);
+            const res = await fetch(url, { cache: "no-store" });
             if (res.ok) {
               const items = await res.json();
               return items
                 .filter(x => x.type === "file" && /\.html?$/i.test(x.name) && x.name.toLowerCase() !== "index.html")
                 .map(x => ({
                   name: x.name,
+                  file: x.name,
                   rawUrl: x.download_url,
-                  branch,
-                  dirRawBase: rawBaseFor(branch, POSTS_DIR)
+                  dirBase: runtimeDirUrl(POSTS_DIR)
                 }));
             }
           }
@@ -271,26 +351,44 @@
           return s.replace(/^\s*\d{4}-\d{2}-\d{2}[-_ ]*\s*/,'');
         }
 
-        // Rewrite relative src/href inside the HTML to the raw repo base, so images/CSS in posts work
         function rewriteRelativeUrls(html, base) {
           const doc = new DOMParser().parseFromString(html, "text/html");
           const fixUrl = (u) => {
             if (!u) return u;
-            if (/^[a-z]+:\/\//i.test(u) || u.startsWith("data:") || u.startsWith("mailto:") || u.startsWith("#")) return u;
-            if (u.startsWith("/")) return u; // keep site-root links
-            return base + u.replace(/^\.\/+/, "");
+            if (u.startsWith("#")) return u;
+            if (isExternalUrl(u) && !LIVE_SITE_ORIGINS.some(origin => u.startsWith(origin))) return u;
+
+            const scrubbed = scrubLiveSiteUrl(u);
+            if (scrubbed !== u) return scrubbed;
+
+            if (u.startsWith("/")) return toRepoRootUrl(u);
+
+            try {
+              return new URL(u, base).href;
+            } catch {
+              return u;
+            }
           };
           doc.querySelectorAll("[src]").forEach(el => el.setAttribute("src", fixUrl(el.getAttribute("src"))));
           doc.querySelectorAll("link[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
           doc.querySelectorAll("a[href]").forEach(el => el.setAttribute("href", fixUrl(el.getAttribute("href"))));
+          doc.querySelectorAll("[poster]").forEach(el => el.setAttribute("poster", fixUrl(el.getAttribute("poster"))));
+          doc.querySelectorAll("[srcset]").forEach(el => {
+            const srcset = el.getAttribute("srcset");
+            if (!srcset) return;
+            const rewritten = srcset.split(",").map(candidate => {
+              const parts = candidate.trim().split(/\s+/);
+              const url = parts.shift();
+              return [fixUrl(url), ...parts].join(" ");
+            }).join(", ");
+            el.setAttribute("srcset", rewritten);
+          });
           return doc.body ? doc.body.innerHTML : html;
         }
 
         async function fetchPostMeta(file) {
           try {
-            const res = await fetch(file.rawUrl);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const htmlText = await res.text();
+            const htmlText = await fetchText(file.rawUrl);
 
             const doc = new DOMParser().parseFromString(htmlText, "text/html");
             let title =
@@ -301,7 +399,10 @@
             // Remove any leading date from the title we display
             title = stripLeadingDate(title);
 
-            const cleaned = rewriteRelativeUrls(htmlText, file.dirRawBase);
+            const cleaned = rewriteRelativeUrls(
+              htmlText,
+              file.dirBase || runtimeDirUrl(POSTS_DIR)
+            );
             const date = parseDateFromFilename(file.name);
 
             // Plain text (for searching)
