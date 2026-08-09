@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chris Bawden - Portfolio</title>
+  <script>
+    if (document.cookie.split(';').some(cookie => cookie.trim() === 'portfolio_quote_agreed=1')) {
+      document.documentElement.classList.add('portfolio-agreed');
+    }
+  </script>
   <link rel="stylesheet" href="/stylesheets/styles.css">
 
   <!-- PDF.js (core) for thumbnail rendering -->
@@ -79,6 +84,9 @@
       display: grid;
       place-items: center;
       padding: 24px;
+    }
+    html.portfolio-agreed #notice-gate {
+      display: none !important;
     }
 
     .notice-card {
@@ -194,6 +202,8 @@
 
         const PDF_EXT = new Set([".pdf"]);
         const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
+        const AGREEMENT_COOKIE = "portfolio_quote_agreed";
+        const AGREEMENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
         // PDF.js worker
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -387,6 +397,17 @@
         const gate = document.getElementById('notice-gate');
         const agreeBtn = document.getElementById('agree-btn');
 
+        const hasAgreedCookie = () => {
+          return document.cookie
+            .split(';')
+            .map(part => part.trim())
+            .some(cookie => cookie === `${AGREEMENT_COOKIE}=1`);
+        };
+
+        const setAgreedCookie = () => {
+          document.cookie = `${AGREEMENT_COOKIE}=1; path=/; max-age=${AGREEMENT_COOKIE_MAX_AGE}; samesite=lax`;
+        };
+
         const openGate = () => {
           gate.classList.add('open');
           gate.setAttribute('aria-hidden', 'false');
@@ -397,8 +418,6 @@
           gate.classList.remove('open');
           gate.setAttribute('aria-hidden', 'true');
         };
-
-        openGate();
 
         let loadedOnce = false;
 
@@ -453,7 +472,15 @@
           }
         };
 
+        if (hasAgreedCookie()) {
+          closeGate();
+          loadPortfolioContent();
+        } else {
+          openGate();
+        }
+
         agreeBtn.addEventListener('click', async () => {
+          setAgreedCookie();
           closeGate();
           await loadPortfolioContent();
         });
