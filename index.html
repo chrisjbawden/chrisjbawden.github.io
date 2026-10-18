@@ -937,12 +937,8 @@
 	    <hr>
 
 	    <div id="recent-posts-section" aria-labelledby="recent-posts-heading">
-		    <p>
-			    <span id="recent-posts-heading">Recent -</span>
-			    <br>
-			    <br>
-			    <span id="recent-posts" class="recent-posts-list" aria-live="polite">Loading recent posts…</span>
-		    </p>
+		    <div id="recent-posts-heading">Recent -</div>
+		    <div id="recent-posts" class="recent-posts-list" aria-live="polite">Loading recent posts…</div>
 	    </div>
 
 	    <br>
@@ -988,8 +984,6 @@
 	            const link = document.createElement('a');
 	            link.href = `/blog/blog.html#${postIdFromFilename(post.file)}`;
 	            link.className = 'recent-post';
-	            link.target = '_blank';
-	            link.rel = 'noopener noreferrer';
 
 	            const title = titleFromMarkup(await postResponse.text(), post.file);
 	            link.textContent = title;
