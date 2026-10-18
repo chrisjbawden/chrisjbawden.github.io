@@ -71,6 +71,12 @@
       `${CONFIG.branch}/` +
       `${CONFIG.directory}/`;
 
+    const PROD_RAW_ROOT =
+      RAW_ROOT.replace(
+        `${CONFIG.directory}/`,
+        ""
+      );
+
     let currentPath = CONFIG.entryFile;
 
 
@@ -595,6 +601,77 @@
 
     /*
      * ------------------------------------------------------------
+     * Missing-asset fallback
+     * ------------------------------------------------------------
+     *
+     * DEV does not need to duplicate every image or media file.
+     * Internal assets try DEV first, then retry from the production
+     * tree if the DEV copy is missing. HTML navigation is deliberately
+     * not covered by this fallback.
+     */
+
+    function injectMissingAssetFallback(
+      documentRoot
+    ) {
+      const script =
+        documentRoot.createElement("script");
+
+      script.textContent = `
+        (() => {
+          const devRoot = ${JSON.stringify(RAW_ROOT)};
+          const prodRoot = ${JSON.stringify(PROD_RAW_ROOT)};
+
+          const fallbackUrl = value => {
+            if (!value || !value.startsWith(devRoot)) {
+              return null;
+            }
+
+            return prodRoot + value.slice(devRoot.length);
+          };
+
+          document.addEventListener("error", event => {
+            const element = event.target;
+
+            if (!element || element.dataset.devFallbackAttempted === "1") {
+              return;
+            }
+
+            const attribute = element.hasAttribute("poster")
+              ? "poster"
+              : element.hasAttribute("src")
+                ? "src"
+                : null;
+
+            if (!attribute) {
+              return;
+            }
+
+            const fallback = fallbackUrl(
+              element.getAttribute(attribute)
+            );
+
+            if (!fallback) {
+              return;
+            }
+
+            element.dataset.devFallbackAttempted = "1";
+            element.setAttribute(attribute, fallback);
+
+            if (element.tagName === "VIDEO" || element.tagName === "AUDIO") {
+              element.load();
+            }
+          }, true);
+        })();
+      `;
+
+      documentRoot.body.appendChild(
+        script
+      );
+    }
+
+
+    /*
+     * ------------------------------------------------------------
      * Remove base elements
      * ------------------------------------------------------------
      *
@@ -885,6 +962,11 @@
         rewriteDocumentAssets(
           documentRoot,
           currentPath
+        );
+
+
+        injectMissingAssetFallback(
+          documentRoot
         );
 
 
