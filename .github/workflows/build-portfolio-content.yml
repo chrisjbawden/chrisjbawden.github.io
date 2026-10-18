@@ -1,0 +1,39 @@
+name: Build portfolio content index
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'portfolio/badges/**'
+      - 'portfolio/certificates/**'
+      - 'portfolio/tertiary/**'
+      - 'scripts/build-portfolio-content.py'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Build content.json
+        run: python3 scripts/build-portfolio-content.py portfolio
+
+      - name: Commit generated content.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add portfolio/content.json
+
+          if git diff --cached --quiet; then
+            echo "content.json is already up to date."
+            exit 0
+          fi
+
+          git commit -m "Build portfolio content index"
+          git push

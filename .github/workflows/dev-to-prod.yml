@@ -21,8 +21,6 @@ jobs:
         run: |
           set -e
 
-          echo "Comparing /dev with production files..."
-
           find dev -type f | while read -r SOURCE; do
             DESTINATION="${SOURCE#dev/}"
 
