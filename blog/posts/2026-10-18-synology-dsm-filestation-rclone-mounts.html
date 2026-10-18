@@ -24,6 +24,35 @@ After trying a few different approaches, I ended up writing a small wrapper arou
 That is the whole idea behind the wrapper: keep the rclone mount, but present it to DSM in a way that plays nicely with File Station.
 </p>
 
+<h3>Example rclone mount</h3>
+
+<p>
+Once the wrapper is installed in the location where DSM and rclone can call it as <code>fusermount3</code>, the rclone command itself can stay familiar. For example:
+</p>
+
+<pre><code>rclone mount remote:path /volume1/rclone/remote \
+  --vfs-cache-mode full \
+  --allow-other \
+  --daemon</code></pre>
+
+<p>
+Replace <code>remote:path</code> with the name of your rclone remote and the path you want to mount. Replace <code>/volume1/rclone/remote</code> with an existing folder on your Synology. The important part is that the mount is created through the wrapped <code>fusermount3</code>; rclone still performs the mount, while the wrapper changes how DSM presents it to File Station.
+</p>
+
+<p>
+After the mount is active, open File Station and browse to the mount point. You should be able to work with the remote files through the DSM interface, including moving and organising them.
+</p>
+
+<h3>Still a work in progress</h3>
+
+<p>
+I am still working through this setup and there are some areas that need more testing. One issue I have observed so far involves accessing the mounted files over SMB from macOS. Windows access over SMB appears to work as expected, but the macOS behaviour is not yet as reliable, so I am continuing to investigate that separately.
+</p>
+
+<p>
+For now, I would treat this as a practical workaround rather than a completely finished solution. The File Station integration is the part I was trying to solve, while SMB compatibility—especially with macOS—still needs further testing.
+</p>
+
 <p>
 You can find the script here:
 <a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">DSM/fusermount3 on GitHub</a>
