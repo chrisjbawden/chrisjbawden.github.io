@@ -316,8 +316,12 @@
           }
 
           const enc = encodePath(POSTS_DIR);
+          const apiPath = PREVIEW_CONTEXT
+            ? `${PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]}/${POSTS_DIR}`
+            : POSTS_DIR;
+          const apiEncPath = encodePath(apiPath);
           for (const branch of BRANCHES) {
-            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${enc}?ref=${encodeURIComponent(branch)}`;
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apiEncPath}?ref=${encodeURIComponent(branch)}`;
             console.debug("List posts URL:", url);
             const res = await fetch(url, { cache: "no-store" });
             if (res.ok) {
@@ -327,7 +331,9 @@
                 .map(x => ({
                   name: x.name,
                   file: x.name,
-                  rawUrl: x.download_url,
+                  rawUrl: PREVIEW_CONTEXT
+                    ? toRepoRootUrl(`${POSTS_DIR}/${x.name}`)
+                    : x.download_url,
                   dirBase: runtimeDirUrl(POSTS_DIR)
                 }));
             }
