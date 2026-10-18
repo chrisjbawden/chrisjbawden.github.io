@@ -376,31 +376,116 @@ img {
 }
 
 .icon-button {
-  width: 82px;
-  height: 82px;
+  width: 68px;
+  height: 68px;
   border: 0;
-  border-radius: 16px;
-  background: #111;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #2b2b2b 0%, #111 100%);
   color: #e6e6e6;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 34px;
   cursor: pointer;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
-  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+  box-shadow:
+    0 10px 22px rgba(0, 0, 0, 0.16),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  transition:
+    transform 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    filter 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+}
+
+.terminal-icon {
+  width: 30px;
+  height: 30px;
+  display: block;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.shortcut-button {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-sizing: border-box;
+}
+
+.shortcut-icon {
+  width: 28px;
+  height: 28px;
+  display: block;
+  object-fit: contain;
+  transition: transform 0.18s ease, filter 0.18s ease;
+}
+
+.shortcut-icon--scripts,
+.shortcut-icon--hash {
+  filter: brightness(0) invert(1);
+}
+
+.shortcut-tile {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  color: #1f1f1f;
+  min-width: 72px;
+  cursor: pointer;
+}
+
+.shortcut-tile--button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.shortcut-label {
+  font-size: 0.82rem;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #2a2a2a;
+  text-align: center;
+}
+
+.shortcut-tile:hover .shortcut-label,
+.shortcut-tile:focus-visible .shortcut-label {
+  color: #111;
+}
+
+.shortcut-tile:hover .icon-button,
+.shortcut-tile:focus-visible .icon-button {
+  transform: translateY(-3px) scale(1.03);
+  filter: brightness(1.05);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.22),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+.shortcut-tile:hover .shortcut-icon,
+.shortcut-tile:hover .terminal-icon {
+  transform: scale(1.06);
+}
+
+.shortcut-tile:active .icon-button {
+  transform: translateY(-1px) scale(0.98);
 }
 
 .icon-button:hover {
-  background: #1b1b1b;
-  transform: translateY(-1px);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+  background: linear-gradient(180deg, #2a2a2a 0%, #171717 100%);
 }
 
 .icon-button:focus-visible,
 #terminal-input:focus-visible,
 #terminal-close:focus-visible {
-  outline: 2px solid #69d2ff;
+  outline: 2px solid #f2f2f2;
   outline-offset: 2px;
 }
 
@@ -467,42 +552,44 @@ img {
   position: fixed;
   inset: 0;
   z-index: 10000;
-  align-items: center;
-  justify-content: center;
   background: rgba(6, 10, 14, 0.86);
-  backdrop-filter: blur(2px);
 }
 
 #terminal-window {
+  position: fixed;
+  left: 50%;
+  top: 50%;
   width: min(92vw, 720px);
-  max-height: min(82vh, 640px);
+  height: min(41vh, 320px);
+  resize: both;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: #07110a;
-  color: #cfe8d0;
-  border: 1px solid rgba(150, 255, 173, 0.18);
+  background: #000;
+  color: #f2f2f2;
+  border: 1px solid #777;
   border-radius: 14px;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
-  overflow: hidden;
 }
 
 #terminal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: linear-gradient(180deg, rgba(26, 39, 28, 0.95), rgba(10, 18, 12, 0.95));
-  border-bottom: 1px solid rgba(150, 255, 173, 0.12);
+  padding: 8px 12px;
+  background: #111;
+  border-bottom: 1px solid #666;
   font-family: Monaco, Consolas, "Liberation Mono", monospace;
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
+  cursor: move;
 }
 
 #terminal-close {
   border: 0;
   background: transparent;
-  color: #cfe8d0;
+  color: #f2f2f2;
   font-size: 28px;
   line-height: 1;
   cursor: pointer;
@@ -514,11 +601,9 @@ img {
   font-size: 14px;
   line-height: 1.6;
   overflow: auto;
-  min-height: 220px;
-  max-height: 50vh;
-  background:
-    linear-gradient(rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.02)),
-    radial-gradient(circle at top, rgba(108, 255, 150, 0.08), transparent 36%);
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #050505;
 }
 
 .terminal-line {
@@ -528,25 +613,26 @@ img {
 }
 
 .terminal-system {
-  color: #96b996;
+  color: #bdbdbd;
 }
 
 .terminal-command {
-  color: #e8fce9;
+  color: #f2f2f2;
 }
 
 .terminal-success {
-  color: #81ff9d;
+  color: #f2f2f2;
 }
 
 .terminal-error {
-  color: #ff8f8f;
+  color: #d0d0d0;
 }
 
 #terminal-form {
-  border-top: 1px solid rgba(150, 255, 173, 0.12);
+  flex: 0 0 auto;
+  border-top: 1px solid #666;
   padding: 12px 16px 16px;
-  background: rgba(6, 13, 8, 0.96);
+  background: #111;
 }
 
 #terminal-prompt-line {
@@ -556,7 +642,7 @@ img {
 }
 
 #terminal-prompt {
-  color: #81ff9d;
+  color: #f2f2f2;
   font-family: Monaco, Consolas, "Liberation Mono", monospace;
 }
 
@@ -564,14 +650,118 @@ img {
   flex: 1;
   border: 0;
   background: transparent;
-  color: #e8fce9;
+  color: #f2f2f2;
   font: inherit;
   font-family: Monaco, Consolas, "Liberation Mono", monospace;
-  caret-color: #81ff9d;
+  caret-color: #f2f2f2;
+  outline: none;
+  box-shadow: none;
+  appearance: none;
 }
 
 #terminal-input::placeholder {
-  color: rgba(207, 232, 208, 0.55);
+  color: #a0a0a0;
+}
+
+#terminal-input:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+#nano-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 10001;
+  background: rgba(6, 10, 14, 0.88);
+}
+
+#nano-window {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  width: min(92vw, 880px);
+  height: min(70vh, 560px);
+  resize: both;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #000;
+  color: #f2f2f2;
+  border: 1px solid #777;
+  border-radius: 14px;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45);
+}
+
+#nano-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #111;
+  border-bottom: 1px solid #666;
+  font-family: Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: move;
+}
+
+#nano-close {
+  border: 0;
+  background: transparent;
+  color: #f2f2f2;
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+#nano-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid #444;
+  background: #090909;
+  font-family: Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 12px;
+  color: #bdbdbd;
+}
+
+#nano-path {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#nano-status {
+  flex-shrink: 0;
+}
+
+#nano-editor {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  padding: 14px 12px;
+  background: #050505;
+  color: #f2f2f2;
+  font-family: Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 14px;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+}
+
+#nano-footer {
+  border-top: 1px solid #666;
+  padding: 8px 12px;
+  background: #111;
+  color: #bdbdbd;
+  font-family: Monaco, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  letter-spacing: 0.04em;
 }
 
 @media (max-width: 768px) {
@@ -582,19 +772,39 @@ img {
 
 @media (max-width: 600px) {
   .icon-button {
-    width: 72px;
-    height: 72px;
-    font-size: 30px;
-    border-radius: 14px;
+    width: 60px;
+    height: 60px;
+    font-size: 28px;
+    border-radius: 16px;
+  }
+
+  .shortcut-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .terminal-icon {
+    width: 25px;
+    height: 25px;
+  }
+
+  .shortcut-tile {
+    min-width: 64px;
+    gap: 6px;
+  }
+
+  .shortcut-label {
+    font-size: 0.74rem;
   }
 
   #terminal-window {
     width: calc(100vw - 24px);
-    max-height: calc(100vh - 24px);
+    height: calc(50vh - 12px);
   }
 
-  #terminal-output {
-    min-height: 180px;
+  #nano-window {
+    width: calc(100vw - 24px);
+    height: calc(78vh - 12px);
   }
 }
 
