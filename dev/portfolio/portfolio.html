@@ -213,8 +213,12 @@
           : runtimeRootUrl();
 
         // PDF.js worker
-        const pdfjsLib = window['pdfjs-dist/build/pdf'];
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+        // PDF.js v3 exposes itself as `pdfjsLib`. Keep it optional so a CDN
+        // failure cannot prevent the Continue button from being wired up.
+        const pdfjsLib = window.pdfjsLib || window['pdfjs-dist/build/pdf'] || null;
+        if (pdfjsLib) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@3.4.120/build/pdf.worker.min.js';
+        }
 
         const getExt = (name) => {
           const i = name.lastIndexOf(".");
@@ -335,7 +339,7 @@
             return;
           }
 
-          if (isPdf) {
+          if (isPdf && pdfjsLib) {
             const loadingTask = pdfjsLib.getDocument(file.rawUrl);
             loadingTask.promise.then(function(pdf) {
               pdf.getPage(1).then(function(page) {
