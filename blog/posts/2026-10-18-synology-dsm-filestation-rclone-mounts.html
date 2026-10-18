@@ -27,22 +27,40 @@ That is the whole idea behind the wrapper: keep the rclone mount, but present it
 <h3>Example rclone mount</h3>
 
 <p>
-Install the wrapper as an executable named <code>fusermount3</code> somewhere on the system <code>PATH</code>. For example:
+Place the wrapper in its own directory, name it <code>fusermount3</code>, and make it executable. The directory can then be added to <code>PATH</code> for the rclone command:
 </p>
 
-<pre><code>install -m 755 /path/to/fusermount3 /usr/local/bin/fusermount3</code></pre>
+<pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
+cp /path/to/fusermount3 "$WRAPPER_DIR/fusermount3"
+chmod +x "$WRAPPER_DIR/fusermount3"</code></pre>
 
 <p>
-Once that file is in place, the rclone command itself can stay familiar:
+Once that file is in place, the rclone command can reference the wrapper directory directly. For example:
 </p>
 
-<pre><code>rclone mount remote:path /volume1/rclone/remote \
+<pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
+
+PATH="$WRAPPER_DIR:$PATH" rclone mount2 opendrive: "$MOUNTPOINT" \
+  --config /volume3/DATASTORE/SYS/rclone/config.conf \
   --vfs-cache-mode full \
+  --cache-dir /volume2/@cache-webdav \
+  --metadata \
+  --vfs-cache-max-age 72h \
+  --vfs-cache-max-size 10G \
+  --dir-cache-time 1m \
+  --buffer-size 32M \
+  --transfers 4 \
+  --vfs-write-back 0s \
+  --vfs-fast-fingerprint \
   --allow-other \
-  --daemon</code></pre>
+  --uid 1026 \
+  --gid 100 \
+  --dir-perms 0775 \
+  --file-perms 0664 \
+  &gt;&gt; "$LOG" 2&gt;&amp;1 &amp;</code></pre>
 
 <p>
-Replace <code>/path/to/fusermount3</code> with the location of the downloaded wrapper. Replace <code>remote:path</code> with the name of your rclone remote and the path you want to mount. Replace <code>/volume1/rclone/remote</code> with an existing folder on your Synology. The important part is that the mount is created through the wrapped <code>fusermount3</code>. rclone still performs the mount, while the wrapper changes how DSM presents it to File Station.
+Replace <code>/path/to/fusermount3</code> with the location of the downloaded wrapper. Set <code>MOUNTPOINT</code> to an existing folder on your Synology and set <code>LOG</code> to the log file you want to use. The important part is the <code>PATH="$WRAPPER_DIR:$PATH"</code> prefix. It makes rclone find the wrapped <code>fusermount3</code> while leaving the rest of the rclone command unchanged.
 </p>
 
 <p>
