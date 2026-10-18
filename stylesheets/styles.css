@@ -506,7 +506,8 @@ img {
 }
 
 #recent-posts-heading {
-  display: inline-block;
+  display: block;
+  margin-bottom: 16px;
   font-size: 1.15rem;
   font-weight: 600;
   color: #393939;
@@ -516,6 +517,7 @@ img {
   display: grid;
   gap: 10px;
   width: 100%;
+  margin-bottom: 20px;
 }
 
 .recent-post {
