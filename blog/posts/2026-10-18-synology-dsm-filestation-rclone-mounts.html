@@ -1,0 +1,56 @@
+<br>
+<br>
+<title>Making rclone mounts usable in Synology DSM File Station</title>
+
+<p>
+I have been trying to find a clean solution for using <a href="https://www.synology.com/en-global/dsm" target="_blank">Synology DSM</a> File Station with <a href="https://rclone.org/" target="_blank">rclone</a> mounts for a while now.
+</p>
+
+<p>
+The rclone side of things worked. From the command line, I could mount a remote filesystem and work with the files without any real trouble. The problem was what happened next: DSM File Station did not treat the mount like a normal location. That meant I could not reliably use the DSM interface to browse, move, or manage files on the mounted remote storage.
+</p>
+
+<p>
+For someone who uses a Synology NAS every day, this was frustrating. The command line gave me access, but I still wanted the seamless UI experience that File Station is supposed to provide.
+</p>
+
+<h3>The missing piece</h3>
+
+<p>
+After trying a few different approaches, I ended up writing a small wrapper around <code>fusermount3</code>. The wrapper changes how DSM sees the mount, which makes File Station treat it differently. Instead of seeing a mount that it cannot properly manage, File Station can work with it as a usable file location.
+</p>
+
+<p>
+That is the whole idea behind the wrapper: keep the rclone mount, but present it to DSM in a way that plays nicely with File Station.
+</p>
+
+<p>
+You can find the script here:
+<a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">DSM/fusermount3 on GitHub</a>
+</p>
+
+<h3>Why this is useful</h3>
+
+<p>
+With the wrapper in place, I can use the command line for mounting and automation, while still using File Station for the everyday tasks that are much nicer in a GUI:
+</p>
+
+<ul>
+  <li>Browsing the remote files through DSM</li>
+  <li>Moving and organising files with File Station</li>
+  <li>Managing files without switching between SSH and the DSM interface</li>
+</ul>
+
+<p>
+It is a small change, but it closes the gap between a working CLI mount and a mount that feels properly integrated into DSM.
+</p>
+
+<h3>In summary</h3>
+
+<p>
+The issue was not that rclone could not mount the remote storage. It was that DSM and File Station did not recognise or handle the mount in the way I needed. The <code>fusermount3</code> wrapper solves that by changing how DSM sees the mount, giving me the File Station experience I had been looking for.
+</p>
+
+<p>
+If you are using rclone mounts on Synology and have run into the same File Station limitations, the wrapper may be worth trying. As always, test it with your DSM and rclone setup before relying on it for important data.
+</p>
