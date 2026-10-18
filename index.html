@@ -936,21 +936,81 @@
 </style>
 	    <hr>
 
+	    <section aria-labelledby="recent-posts-heading">
 		    <p>
-			Recent - 
+			    <span id="recent-posts-heading">Recent -</span>
 			    <br>
 			    <br>
-			    > <strong><a href="https://chrisjbawden.github.io/blog/blog.html#multi-tab" target="_blank" > Multi-tab URL launcher</a></strong>
-			    <br>
-		            > <strong><a href="https://chrisjbawden.github.io/blog/blog.html#captcha" target="_blank"> Captcha practice</a></strong>
-			    <br>
-			    
+			    <span id="recent-posts" aria-live="polite">Loading recent posts…</span>
 		    </p>
+	    </section>
 
 	    <br>
 	    <hr>
 
 		    	</section>
+
+	    <script>
+	      (() => {
+	        const recentPosts = document.getElementById('recent-posts');
+	        const manifestUrl = '/blog/posts/index.json';
+
+	        const titleFromMarkup = (html, filename) => {
+	          const doc = new DOMParser().parseFromString(html, 'text/html');
+	          const title = doc.querySelector('h1, h2, title');
+	          if (title && title.textContent.trim()) return title.textContent.trim();
+
+	          return filename
+	            .replace(/\.html?$/i, '')
+	            .replace(/^\d{4}-\d{2}-\d{2}[-_ ]*/, '')
+	            .replace(/[-_]+/g, ' ')
+	            .replace(/\b\w/g, character => character.toUpperCase());
+	        };
+
+	        const postIdFromFilename = filename => filename
+	          .replace(/\.html?$/i, '')
+	          .toLowerCase()
+	          .replace(/[^a-z0-9]+/g, '-');
+
+	        const renderRecentPosts = async () => {
+	          const response = await fetch(manifestUrl, { cache: 'no-store' });
+	          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+	          const posts = (await response.json())
+	            .filter(post => post && post.file)
+	            .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+	            .slice(0, 4);
+
+	          const links = await Promise.all(posts.map(async post => {
+	            const postResponse = await fetch(`/blog/posts/${encodeURIComponent(post.file)}`, { cache: 'no-store' });
+	            if (!postResponse.ok) throw new Error(`HTTP ${postResponse.status}`);
+
+	            const link = document.createElement('a');
+	            link.href = `/blog/blog.html#${postIdFromFilename(post.file)}`;
+	            link.target = '_blank';
+	            link.rel = 'noopener noreferrer';
+
+	            const title = titleFromMarkup(await postResponse.text(), post.file);
+	            link.textContent = `> ${title}`;
+
+	            const line = document.createElement('strong');
+	            line.appendChild(link);
+            return line;
+	          }));
+
+	          recentPosts.replaceChildren();
+          links.forEach((link, index) => {
+            if (index > 0) recentPosts.appendChild(document.createElement('br'));
+            recentPosts.appendChild(link);
+          });
+	        };
+
+	        renderRecentPosts().catch(error => {
+	          console.error('Unable to load recent blog posts:', error);
+	          recentPosts.textContent = 'Recent posts are unavailable right now.';
+	        });
+	      })();
+	    </script>
       <footer>
         <p><span>Projects maintained by </span><script>var s="=b!isfg>#nbjmup;disjtkcbxefoApvumppl/dpn#?Disjt!Cbxefo=0b?";var m="";for(var i=0;i<s.length;i++)m+=String.fromCharCode(s.charCodeAt(i)-1);document.write(m);</script><noscript>You must enable JavaScript to see this text.</noscript></p>
         <p><small>Hosted with GitHub Pages &mdash; Link to <a href="https://chrisjbawden.github.io/blog/blog.html#instructions">instructions</a></small></p>
