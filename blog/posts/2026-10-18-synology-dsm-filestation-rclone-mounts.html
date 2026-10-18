@@ -26,24 +26,38 @@ That is the whole idea behind the wrapper: keep the rclone mount, but present it
 
 <h3>Example rclone mount</h3>
 
+<h4>1. Download or copy the wrapper</h4>
+
 <p>
-Place the wrapper in its own directory, name it <code>fusermount3</code>, and make it executable. The directory can then be added to <code>PATH</code> for the rclone command:
+Download the <a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">fusermount3 wrapper</a>, or copy it from an existing Synology setup.
+</p>
+
+<h4>2. Place the wrapper somewhere accessible</h4>
+
+<p>
+Place the wrapper in its own directory, name it <code>fusermount3</code>, and make it executable:
 </p>
 
 <pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
-cp /path/to/fusermount3 "$WRAPPER_DIR/fusermount3"
+cp /path/to/downloaded/fusermount3 "$WRAPPER_DIR/fusermount3"
 chmod +x "$WRAPPER_DIR/fusermount3"</code></pre>
 
+<h4>3. Add it to your rclone command</h4>
+
 <p>
-Once that file is in place, the rclone command can reference the wrapper directory directly. For example:
+Once the wrapper is in place, add its directory to <code>PATH</code> in your rclone command. For example:
 </p>
 
 <pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
+MOUNTPOINT="/path/to/mountpoint"
+CONFIG="/path/to/rclone/config.conf"
+CACHE_DIR="/path/to/rclone/cache"
+LOG="/path/to/rclone.log"
 
-PATH="$WRAPPER_DIR:$PATH" rclone mount2 opendrive: "$MOUNTPOINT" \
-  --config /volume3/DATASTORE/SYS/rclone/config.conf \
+PATH="$WRAPPER_DIR:$PATH" rclone mount2 remote:path "$MOUNTPOINT" \
+  --config "$CONFIG" \
   --vfs-cache-mode full \
-  --cache-dir /volume2/@cache-webdav \
+  --cache-dir "$CACHE_DIR" \
   --metadata \
   --vfs-cache-max-age 72h \
   --vfs-cache-max-size 10G \
@@ -60,7 +74,7 @@ PATH="$WRAPPER_DIR:$PATH" rclone mount2 opendrive: "$MOUNTPOINT" \
   &gt;&gt; "$LOG" 2&gt;&amp;1 &amp;</code></pre>
 
 <p>
-Replace <code>/path/to/fusermount3</code> with the location of the downloaded wrapper. Set <code>MOUNTPOINT</code> to an existing folder on your Synology and set <code>LOG</code> to the log file you want to use. The important part is the <code>PATH="$WRAPPER_DIR:$PATH"</code> prefix. It makes rclone find the wrapped <code>fusermount3</code> while leaving the rest of the rclone command unchanged.
+Replace the placeholder paths and <code>remote:path</code> with values that match your Synology and rclone setup. The important part is the <code>PATH="$WRAPPER_DIR:$PATH"</code> prefix. It makes rclone find the wrapped <code>fusermount3</code> while leaving the rest of the rclone command unchanged.
 </p>
 
 <p>
@@ -75,11 +89,6 @@ I am still working through this setup and there are some areas that need more te
 
 <p>
 For now, I would treat this as a practical workaround rather than a completely finished solution. The File Station integration is the part I was trying to solve, while SMB compatibility—especially with macOS—still needs further testing.
-</p>
-
-<p>
-You can find the script here:
-<a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">DSM/fusermount3 on GitHub</a>
 </p>
 
 <h3>Why this is useful</h3>
