@@ -27,7 +27,13 @@ That is the whole idea behind the wrapper: keep the rclone mount, but present it
 <h3>Example rclone mount</h3>
 
 <p>
-Once the wrapper is installed in the location where DSM and rclone can call it as <code>fusermount3</code>, the rclone command itself can stay familiar. For example:
+Install the wrapper as an executable named <code>fusermount3</code> somewhere on the system <code>PATH</code>. For example:
+</p>
+
+<pre><code>install -m 755 /path/to/fusermount3 /usr/local/bin/fusermount3</code></pre>
+
+<p>
+Once that file is in place, the rclone command itself can stay familiar:
 </p>
 
 <pre><code>rclone mount remote:path /volume1/rclone/remote \
@@ -36,7 +42,7 @@ Once the wrapper is installed in the location where DSM and rclone can call it a
   --daemon</code></pre>
 
 <p>
-Replace <code>remote:path</code> with the name of your rclone remote and the path you want to mount. Replace <code>/volume1/rclone/remote</code> with an existing folder on your Synology. The important part is that the mount is created through the wrapped <code>fusermount3</code>; rclone still performs the mount, while the wrapper changes how DSM presents it to File Station.
+Replace <code>/path/to/fusermount3</code> with the location of the downloaded wrapper. Replace <code>remote:path</code> with the name of your rclone remote and the path you want to mount. Replace <code>/volume1/rclone/remote</code> with an existing folder on your Synology. The important part is that the mount is created through the wrapped <code>fusermount3</code>. rclone still performs the mount, while the wrapper changes how DSM presents it to File Station.
 </p>
 
 <p>
