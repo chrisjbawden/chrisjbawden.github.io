@@ -138,7 +138,10 @@
 
     <script>
       // Load sidebar and hide link to current page
-      fetch('/sidebar.html')
+      const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
+      const runtimeRootUrl = () => PREVIEW_CONTEXT?.rawRoot || `${window.location.origin}/`;
+
+      fetch(`${runtimeRootUrl()}sidebar.html`)
         .then(res => res.text())
         .then(html => {
           const container = document.getElementById('sidebar-placeholder');
@@ -193,6 +196,7 @@
         const OWNER  = "chrisjbawden";
         const REPO   = "chrisjbawden.github.io";
         const BRANCHES = ["main", "master"];
+        const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
 
         // Folders
         const RESUME_DIR = "portfolio/resume";
@@ -204,6 +208,9 @@
         const IMG_EXT = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg"]);
         const AGREEMENT_COOKIE = "portfolio_quote_agreed";
         const AGREEMENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
+
+        const runtimeRootUrl = () => PREVIEW_CONTEXT?.rawRoot || `${window.location.origin}/`;
+        const toRepoRootUrl = (path) => `${runtimeRootUrl()}${path.replace(/^\/+/, '')}`;
 
         // PDF.js worker
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -225,9 +232,13 @@
 
         const listDir = async (path) => {
           const encPath = encodePath(path);
+          const apiPath = PREVIEW_CONTEXT
+            ? `${PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]}/${path}`
+            : path;
+          const apiEncPath = encodePath(apiPath);
 
           for (const branch of BRANCHES) {
-            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${encPath}?ref=${encodeURIComponent(branch)}`;
+            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apiEncPath}?ref=${encodeURIComponent(branch)}`;
             console.debug("GitHub API URL:", url);
 
             const res = await fetch(url);
@@ -237,7 +248,9 @@
                 .filter(x => x.type === "file")
                 .map(x => ({
                   name: x.name,
-                  rawUrl: x.download_url,
+                rawUrl: PREVIEW_CONTEXT
+                  ? toRepoRootUrl(`${path}/${x.name}`)
+                  : x.download_url,
                   _ext: getExt(x.name)
                 }));
             } else {
