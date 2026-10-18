@@ -170,10 +170,7 @@
             <p class="notice-attrib">— Albert Einstein (attributed)</p>
 
             <button id="agree-btn" type="button" class="btn-modern">
-              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              I agree
+              Continue
             </button>
           </div>
         </div>
@@ -211,6 +208,9 @@
 
         const runtimeRootUrl = () => PREVIEW_CONTEXT?.rawRoot || `${window.location.origin}/`;
         const toRepoRootUrl = (path) => `${runtimeRootUrl()}${path.replace(/^\/+/, '')}`;
+        const productionRootUrl = () => PREVIEW_CONTEXT
+          ? runtimeRootUrl().replace(/dev\/$/, '')
+          : runtimeRootUrl();
 
         // PDF.js worker
         const pdfjsLib = window['pdfjs-dist/build/pdf'];
@@ -231,35 +231,44 @@
         };
 
         const listDir = async (path) => {
-          const encPath = encodePath(path);
-          const apiPath = PREVIEW_CONTEXT
-            ? `${PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]}/${path}`
-            : path;
-          const apiEncPath = encodePath(apiPath);
+          const previewDirectory = PREVIEW_CONTEXT
+            ? PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]
+            : null;
+          const candidatePaths = previewDirectory
+            ? [`${previewDirectory}/${path}`, path]
+            : [path];
+          let lastStatus = 404;
 
-          for (const branch of BRANCHES) {
-            const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apiEncPath}?ref=${encodeURIComponent(branch)}`;
-            console.debug("GitHub API URL:", url);
+          for (const apiPath of candidatePaths) {
+            const apiEncPath = encodePath(apiPath);
 
-            const res = await fetch(url);
-            if (res.ok) {
-              const items = await res.json();
-              return items
-                .filter(x => x.type === "file")
-                .map(x => ({
-                  name: x.name,
-                rawUrl: PREVIEW_CONTEXT
-                  ? toRepoRootUrl(`${path}/${x.name}`)
-                  : x.download_url,
-                  _ext: getExt(x.name)
-                }));
-            } else {
-              console.warn(`listDir: ${path} on branch "${branch}" -> ${res.status}`);
-              if (branch === BRANCHES[BRANCHES.length - 1]) {
-                showMissingDirNote(path, res.status);
+            for (const branch of BRANCHES) {
+              const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apiEncPath}?ref=${encodeURIComponent(branch)}`;
+              console.debug("GitHub API URL:", url);
+
+              const res = await fetch(url);
+              lastStatus = res.status;
+
+              if (res.ok) {
+                const items = await res.json();
+                const isPreviewDirectory = previewDirectory && apiPath.startsWith(`${previewDirectory}/`);
+
+                return items
+                  .filter(x => x.type === "file")
+                  .map(x => ({
+                    name: x.name,
+                    rawUrl: isPreviewDirectory
+                      ? toRepoRootUrl(`${path}/${x.name}`)
+                      : `${productionRootUrl()}${path}/${x.name}`,
+                    _ext: getExt(x.name)
+                  }));
               }
+
+              console.warn(`listDir: ${apiPath} on branch "${branch}" -> ${res.status}`);
             }
           }
+
+          showMissingDirNote(path, lastStatus);
           return [];
         };
 
