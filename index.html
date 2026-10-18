@@ -936,14 +936,14 @@
 </style>
 	    <hr>
 
-	    <section aria-labelledby="recent-posts-heading">
+	    <div id="recent-posts-section" aria-labelledby="recent-posts-heading">
 		    <p>
 			    <span id="recent-posts-heading">Recent -</span>
 			    <br>
 			    <br>
-			    <span id="recent-posts" aria-live="polite">Loading recent posts…</span>
+			    <span id="recent-posts" class="recent-posts-list" aria-live="polite">Loading recent posts…</span>
 		    </p>
-	    </section>
+	    </div>
 
 	    <br>
 	    <hr>
@@ -987,22 +987,17 @@
 
 	            const link = document.createElement('a');
 	            link.href = `/blog/blog.html#${postIdFromFilename(post.file)}`;
+	            link.className = 'recent-post';
 	            link.target = '_blank';
 	            link.rel = 'noopener noreferrer';
 
 	            const title = titleFromMarkup(await postResponse.text(), post.file);
-	            link.textContent = `> ${title}`;
-
-	            const line = document.createElement('strong');
-	            line.appendChild(link);
-            return line;
+	            link.textContent = title;
+            return link;
 	          }));
 
 	          recentPosts.replaceChildren();
-          links.forEach((link, index) => {
-            if (index > 0) recentPosts.appendChild(document.createElement('br'));
-            recentPosts.appendChild(link);
-          });
+          links.forEach(link => recentPosts.appendChild(link));
 	        };
 
 	        renderRecentPosts().catch(error => {
