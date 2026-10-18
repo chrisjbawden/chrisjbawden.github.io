@@ -52,8 +52,9 @@
     const CONFIG = {
       owner: "chrisjbawden",
       repo: "chrisjbawden.github.io",
-      branch: "master",
-      directory: "dev",
+      branch: "main",
+      directory: "",
+      productionBranch: "master",
       entryFile: "index.html",
 
       liveOrigins: [
@@ -64,18 +65,20 @@
 
     const frame = document.getElementById("previewFrame");
 
-    const RAW_ROOT =
+    const RAW_REPOSITORY_ROOT =
       `https://raw.githubusercontent.com/` +
       `${CONFIG.owner}/` +
-      `${CONFIG.repo}/` +
-      `${CONFIG.branch}/` +
-      `${CONFIG.directory}/`;
+      `${CONFIG.repo}/`;
+
+    const branchDirectory = CONFIG.directory
+      ? `${CONFIG.directory.replace(/^\/+|\/+$/g, "")}/`
+      : "";
+
+    const RAW_ROOT =
+      `${RAW_REPOSITORY_ROOT}${CONFIG.branch}/${branchDirectory}`;
 
     const PROD_RAW_ROOT =
-      RAW_ROOT.replace(
-        `${CONFIG.directory}/`,
-        ""
-      );
+      `${RAW_REPOSITORY_ROOT}${CONFIG.productionBranch}/`;
 
     let currentPath = CONFIG.entryFile;
 
