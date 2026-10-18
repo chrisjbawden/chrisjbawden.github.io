@@ -470,20 +470,13 @@
 
 	      const { command, args } = splitCommand(value);
 
-	      if (command === 'dev') {
-	        document.cookie = 'dev=1; path=/; max-age=28800; samesite=lax';
-	        appendLine('Dev cookie set for 8 hours.', 'terminal-line terminal-success');
-	        window.open('/preview.html', '_blank', 'noopener');
-	        return;
-	      }
-
 	      if (command === 'exit') {
 	        closeTerminal();
 	        return;
 	      }
 
 	      if (command === 'help') {
-	        appendLine('Available commands: dev, exit, clear, whoami, pwd, ls, touch <file>, mkdir <dir>, cat <path>, write <file> <text>, wget [-O <file>] <url>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
+	        appendLine('Available commands: exit, clear, whoami, pwd, ls, touch <file>, mkdir <dir>, cat <path>, write <file> <text>, wget [-O <file>] <url>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>', 'terminal-line terminal-system');
 	        return;
 	      }
 
