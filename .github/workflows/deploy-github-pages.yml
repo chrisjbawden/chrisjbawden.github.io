@@ -13,9 +13,17 @@ permissions:
   pages: write
   id-token: write
 
+# Prevent multiple Pages deployments from running at the same time.
+# If another push happens while a deployment is running,
+# cancel the old deployment and deploy the latest commit instead.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
