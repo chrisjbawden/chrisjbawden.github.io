@@ -137,25 +137,26 @@
     <div id="sidebar-placeholder"></div>
 
     <script>
-      // Load sidebar and hide link to current page
-      const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
-      const runtimeRootUrl = () => PREVIEW_CONTEXT?.rawRoot || `${window.location.origin}/`;
+      (() => {
+        // Load sidebar and hide link to current page
+        const runtimeRootUrl = () => `${window.location.origin}/`;
 
-      fetch(`${runtimeRootUrl()}sidebar.html`)
-        .then(res => res.text())
-        .then(html => {
-          const container = document.getElementById('sidebar-placeholder');
-          container.innerHTML = html;
+        fetch(`${runtimeRootUrl()}sidebar.html`)
+          .then(res => res.text())
+          .then(html => {
+            const container = document.getElementById('sidebar-placeholder');
+            container.innerHTML = html;
 
-          const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
-          const links = container.querySelectorAll('#main-menu a');
-          links.forEach(link => {
-            const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
-            if (href === currentPath) {
-              link.style.display = 'none';
-            }
+            const currentPath = window.location.pathname.replace(/\/index\.html$/, '/');
+            const links = container.querySelectorAll('#main-menu a');
+            links.forEach(link => {
+              const href = link.getAttribute('href').replace(/\/index\.html$/, '/');
+              if (href === currentPath) {
+                link.style.display = 'none';
+              }
+            });
           });
-        });
+      })();
     </script>
 
     <section style="padding-top:10%;">
@@ -193,7 +194,6 @@
         const OWNER  = "chrisjbawden";
         const REPO   = "chrisjbawden.github.io";
         const BRANCHES = ["main", "master"];
-        const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
 
         // Folders
         const RESUME_DIR = "portfolio/resume";
@@ -206,11 +206,9 @@
         const AGREEMENT_COOKIE = "portfolio_quote_agreed";
         const AGREEMENT_COOKIE_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
-        const runtimeRootUrl = () => PREVIEW_CONTEXT?.rawRoot || `${window.location.origin}/`;
+        const runtimeRootUrl = () => `${window.location.origin}/`;
         const toRepoRootUrl = (path) => `${runtimeRootUrl()}${path.replace(/^\/+/, '')}`;
-        const productionRootUrl = () => PREVIEW_CONTEXT
-          ? runtimeRootUrl().replace(/dev\/$/, '')
-          : runtimeRootUrl();
+        const productionRootUrl = () => runtimeRootUrl();
 
         // PDF.js worker
         // PDF.js v3 exposes itself as `pdfjsLib`. Keep it optional so a CDN
@@ -235,12 +233,7 @@
         };
 
         const listDir = async (path) => {
-          const previewDirectory = PREVIEW_CONTEXT
-            ? PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]
-            : null;
-          const candidatePaths = previewDirectory
-            ? [`${previewDirectory}/${path}`, path]
-            : [path];
+          const candidatePaths = [path];
           let lastStatus = 404;
 
           for (const apiPath of candidatePaths) {
@@ -255,15 +248,11 @@
 
               if (res.ok) {
                 const items = await res.json();
-                const isPreviewDirectory = previewDirectory && apiPath.startsWith(`${previewDirectory}/`);
-
                 return items
                   .filter(x => x.type === "file")
                   .map(x => ({
                     name: x.name,
-                    rawUrl: isPreviewDirectory
-                      ? toRepoRootUrl(`${path}/${x.name}`)
-                      : `${productionRootUrl()}${path}/${x.name}`,
+                    rawUrl: `${productionRootUrl()}${path}/${x.name}`,
                     _ext: getExt(x.name)
                   }));
               }
