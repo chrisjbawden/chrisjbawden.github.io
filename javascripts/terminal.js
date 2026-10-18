@@ -656,20 +656,13 @@
 
     const { command, args } = parseCommand(value);
 
-    if (command === 'dev') {
-      document.cookie = 'dev=1; path=/; max-age=28800; samesite=lax';
-      appendTerminalLine('Dev cookie set for 8 hours.', 'terminal-line terminal-success');
-      window.open('/preview.html', '_blank', 'noopener');
-      return;
-    }
-
     if (command === 'exit') {
       closeTerminal();
       return;
     }
 
     if (command === 'help') {
-      appendTerminalLine('Available commands: dev, exit, clear, whoami, pwd, ls, cd <dir>, touch <file>, mkdir <dir>, rm [-r] <path>, cp <source> <destination>, cat <path>, nano <file>, write <file> <text>, wget [-O <file>] <url>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>, history', 'terminal-line terminal-system');
+      appendTerminalLine('Available commands: exit, clear, whoami, pwd, ls, cd <dir>, touch <file>, mkdir <dir>, rm [-r] <path>, cp <source> <destination>, cat <path>, nano <file>, write <file> <text>, wget [-O <file>] <url>, echo <text>, date, uname, ping <host>, curl <url>, nslookup <host>, history', 'terminal-line terminal-system');
       return;
     }
 
