@@ -177,11 +177,7 @@
 
       <div id="sidebar-placeholder"></div>
       <script>
-        const sidebarUrl = window.__DEV_PREVIEW__?.rawRoot
-          ? `${window.__DEV_PREVIEW__.rawRoot}sidebar.html`
-          : '/sidebar.html';
-
-        fetch(sidebarUrl)
+        fetch('/sidebar.html')
           .then(res => res.text())
           .then(html => {
             const container = document.getElementById('sidebar-placeholder');
@@ -222,7 +218,6 @@
         const POSTS_DIR = "blog/posts";        // repo path to HTML posts
         const POSTS_MANIFEST = `${POSTS_DIR}/index.json`;
         const POSTS_BY_ID = new Map();
-        const PREVIEW_CONTEXT = window.__DEV_PREVIEW__ || null;
         const LIVE_SITE_ORIGINS = [
           "https://chrisjbawden.github.io",
           "http://chrisjbawden.github.io"
@@ -244,7 +239,7 @@
         }
 
         function runtimeRootUrl() {
-          return PREVIEW_CONTEXT?.rawRoot || window.location.origin + "/";
+          return window.location.origin + "/";
         }
 
         function runtimeDirUrl(dir) {
@@ -307,9 +302,7 @@
           }
 
           const enc = encodePath(POSTS_DIR);
-          const apiPath = PREVIEW_CONTEXT
-            ? `${PREVIEW_CONTEXT.rawRoot.split('/').slice(-2, -1)[0]}/${POSTS_DIR}`
-            : POSTS_DIR;
+          const apiPath = POSTS_DIR;
           const apiEncPath = encodePath(apiPath);
           for (const branch of BRANCHES) {
             const url = `https://api.github.com/repos/${OWNER}/${REPO}/contents/${apiEncPath}?ref=${encodeURIComponent(branch)}`;
@@ -322,9 +315,7 @@
                 .map(x => ({
                   name: x.name,
                   file: x.name,
-                  rawUrl: PREVIEW_CONTEXT
-                    ? toRepoRootUrl(`${POSTS_DIR}/${x.name}`)
-                    : x.download_url,
+                  rawUrl: x.download_url,
                   dirBase: runtimeDirUrl(POSTS_DIR)
                 }));
             }
