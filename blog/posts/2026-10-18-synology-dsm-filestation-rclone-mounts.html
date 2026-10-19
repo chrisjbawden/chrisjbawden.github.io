@@ -11,7 +11,7 @@ The rclone side of things worked. From the command line, I could mount a remote 
 </p>
 
 <p>
-For someone who uses a Synology NAS every day, this was frustrating. The command line gave me access, but I still wanted the seamless UI experience that File Station is supposed to provide.
+For someone who enjoyed the DSM UI, this was frustrating. The command line gave me access, but I still wanted the seamless File Station experience that DSM is supposed to provide.
 </p>
 
 <h3>The missing piece</h3>
@@ -26,27 +26,15 @@ That is the whole idea behind the wrapper: keep the rclone mount, but present it
 
 <h3>Example rclone mount</h3>
 
-<h4>1. Download or copy the wrapper</h4>
-
-<p>
-Download the <a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">fusermount3 wrapper</a>, or copy it from an existing Synology setup.
-</p>
+<h4>1. <a href="https://github.com/chrisjbawden/scripts-programs/blob/master/DSM/fusermount3" target="_blank">Download or copy the wrapper</a></h4>
 
 <h4>2. Place the wrapper somewhere accessible</h4>
-
-<p>
-Place the wrapper in its own directory, name it <code>fusermount3</code>, and make it executable:
-</p>
 
 <pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
 cp /path/to/downloaded/fusermount3 "$WRAPPER_DIR/fusermount3"
 chmod +x "$WRAPPER_DIR/fusermount3"</code></pre>
 
 <h4>3. Add it to your rclone command</h4>
-
-<p>
-Once the wrapper is in place, add its directory to <code>PATH</code> in your rclone command. For example:
-</p>
 
 <pre><code>WRAPPER_DIR="/path/to/rclone-wrap"
 MOUNTPOINT="/path/to/mountpoint"
